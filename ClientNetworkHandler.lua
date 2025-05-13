@@ -1,5 +1,5 @@
 -- Default protocol used for DNS communication via rednet
-local PROTOCOL = "DNS"
+local DNS_PROTOCOL = "DNS"
 
 -- Default file where resolved DNS entries (hostname → ID) are stored
 local CACHE_FILE = "dns_cache.txt"
@@ -14,7 +14,7 @@ local LOG_FILE = "dns_client.log"  -- The file to which logs are written
 -- Allows user to override default settings by providing a config table
 ---------------------------------------------------------------------
 local function init(config)
-    PROTOCOL     = config.PROTOCOL or PROTOCOL         -- Use custom protocol or default
+    DNS_PROTOCOL     = config.DNS_PROTOCOL or DNS_PROTOCOL         -- Use custom protocol or default
     CACHE_FILE   = config.CACHE_FILE or CACHE_FILE     -- Use custom cache file or default
     ENABLE_LOG   = config.ENABLE_LOG or ENABLE_LOG     -- Override log-to-file flag
     ENABLE_PRINT = config.ENABLE_PRINT or ENABLE_PRINT -- Override terminal print flag
@@ -78,18 +78,18 @@ function requestNewDNS()
     ensureRednet()  -- Ensure rednet is ready before sending
 
     -- Look up a server advertising the DNS protocol
-    local serverID = rednet.lookup(PROTOCOL)
+    local serverID = rednet.lookup(DNS_PROTOCOL)
     if not serverID then
         log("DNS server not found.")
         return
     end
 
     -- Send request to the DNS server to get the full DNS table
-    rednet.send(serverID, "get", PROTOCOL)
+    rednet.send(serverID, "get", DNS_PROTOCOL)
     log("Requesting DNS data from server...")
 
     -- Wait for a response for up to 5 seconds
-    local senderID, response = rednet.receive(PROTOCOL, 5)
+    local senderID, response = rednet.receive(DNS_PROTOCOL, 5)
     if response then
         log("Received DNS data. Caching to file...")
 
