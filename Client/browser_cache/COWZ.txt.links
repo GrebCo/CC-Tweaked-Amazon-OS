@@ -1,0 +1,38 @@
+{
+  y = 21,
+  type = "textbox",
+  height = 1,
+  text = "",
+  x = 1,
+  width = 20,
+}
+{
+  y = 26,
+  type = "checkbox",
+  checked = false,
+  height = 1,
+  text = "Yes, cows are very smart!",
+  x = 1,
+  width = 29,
+}
+{
+  type = "button",
+  action = "showResults",
+  text = "Submit Answers",
+  width = 14,
+  y = 28,
+  x = 1,
+  fg = 32768,
+  height = 1,
+  bg = 512,
+  pressed = 8,
+}
+{
+  y = 52,
+  type = "link",
+  x = 5,
+  height = 1,
+  text = "Resources",
+  page = "resources.page",
+  width = 9,
+}

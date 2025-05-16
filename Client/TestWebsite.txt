@@ -1,0 +1,32 @@
+## [text:yellow]MiniMark++ Feature Showcase
+
+Welcome to the [text:lime]MiniMark++[text:reset] demo page!
+
+# Alignment Test
+# [background:green][text:black]Left Aligned[background:black]
+## [background:green][text:black]Centered[background:black]
+### [background:green][text:black]Right Aligned[background:black]
+
+# [text:cyan]Inline Color Test:
+This sentence has [text:red]red[text:reset], [text:blue]blue[text:reset], and [text:green]green[text:reset] words.
+
+# [text:magenta]Background Color Test:
+[background:yellow][text:black] Yellow Background 
+[background:lime][text:black] Lime Background 
+[background:black][text:reset]
+
+# [text:orange]Interactive Elements:
+
+## [button:"Continue","green","white","red","goto:NextPage"][background:black]
+## [button:"Cancel","red","white","green","goto:Home"][background:black]
+
+[checkbox:"I accept the terms and conditions"]
+[checkbox:"Subscribe to newsletter"]
+
+[textbox:30]
+[textbox:40]
+
+# [text:lightBlue]Link Example:
+[link:"Home","Return to Home"]
+
+# [text:gray]That's all, folks!

@@ -1,0 +1,70 @@
+# [text:orange][background:brown]Welcome to Cowpedia![text:reset][background:reset]
+
+## [text:yellow]Your Ultimate Guide to Cows[text:reset]
+
+Cows are incredible animals that have supported human life for centuries. From milk to leather to their calming presence, cows are truly remarkable.
+
+---
+
+## [text:lightBlue]Basic Cow Facts[text:reset]
+
+- Cows are herbivores, eating mainly grass and hay.
+- An adult cow can weigh over 1,500 pounds.
+- Cows have four stomach compartments to help digest tough plant materials.
+- A cow's gestation period is about 9 months, just like humans!
+- Cows can sleep while standing up, but they lie down for REM sleep.
+
+---
+
+## [text:green]Famous Cow Breeds[text:reset]
+
+Here are some well-known breeds of cows:
+
+- [text:cyan]Holstein[text:reset]: Known for their black-and-white spots and high milk production.
+- [text:magenta]Jersey[text:reset]: Small, light brown cows that produce rich, creamy milk.
+- [text:lightBlue]Angus[text:reset]: Popular beef cattle, known for tender meat.
+- [text:lime]Hereford[text:reset]: Red with white faces, known for calm temperament.
+
+---
+
+## [text:orange]Cow Intelligence and Emotions[text:reset]
+
+Cows are more than just farm animals. They are:
+
+- [text:yellow]Social[text:reset]: Cows form close bonds with herd mates.
+- [text:pink]Emotional[text:reset]: They can feel sadness, joy, and fear.
+- [text:purple]Clever[text:reset]: Studies show cows can learn tasks and remember them.
+
+---
+
+## [text:lightGray]Test Your Cow Knowledge![text:reset]
+
+[text:lightGreen]What's your favorite cow breed?[text:reset]
+[textbox:20]
+
+[text:lightGreen]Do you think cows are smarter than dogs?[text:reset]
+[checkbox:"Yes, cows are very smart!"]
+
+[button:"Submit Answers","cyan","black","lightBlue","showResults"]
+
+---
+
+### [text:lightBlue]Cow Appreciation Day![text:reset]
+
+Did you know there's a whole day to celebrate cows? It's called Cow Appreciation Day and it's usually held in July. People dress up like cows and get free treats at certain restaurants.
+
+---
+
+## [text:red]Support Cow Welfare[text:reset]
+
+If you care about cows, consider the following:
+
+- Support local farms with humane treatment practices.
+- Buy organic or grass-fed dairy and beef.
+- Educate others about the emotional lives of cows.
+
+---
+
+# [text:white][background:gray]Thank you for visiting Cowpedia![text:reset][background:reset]
+
+[text:lightGray]To learn more, check out the [link:"resources.page","Resources"] page.

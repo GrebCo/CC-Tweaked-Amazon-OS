@@ -1,0 +1,33 @@
+## [text:yellow]Welcome to COWZ 🌐
+
+Your new favorite place for [text:lime]cool stuff on the web![text:reset]
+
+# Feature Highlights
+# [background:green][text:black]Fast & Friendly[background:black]
+## [background:green][text:black]Moo-dern Design[background:black]
+### [background:green][text:black]Powered by Creativity[background:black]
+
+# [text:cyan]Meet the Herd:
+We’re building [text:red]open-source[text:reset], [text:blue]community-powered[text:reset], and [text:green]super fun[text:reset] web tools for everyone.
+
+# [text:magenta]Themes You’ll Love:
+[background:yellow][text:black] Customizable UI 
+[background:lime][text:black] Vibrant Colors 
+[background:black][text:reset]
+
+# [text:orange]Get Started:
+
+## [button:"Explore","green","white","red","goto:Explore"][background:black]
+## [button:"Join the Herd","red","white","green","goto:SignUp"][background:black]
+
+[checkbox:"I agree to be awesome 😎"]
+[checkbox:"Send me COWZ news!"]
+
+[textbox:Enter your email...]
+[textbox:Optional: Share your favorite cow pun!]
+
+# [text:lightBlue]Need More Info?
+[link:"About","Learn about our mission"]
+[link:"Docs","Read the documentation"]
+
+# [text:gray]See you around the paddock!

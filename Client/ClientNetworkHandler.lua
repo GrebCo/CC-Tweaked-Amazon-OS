@@ -46,8 +46,12 @@ end
 -- Needed before sending or receiving any messages
 ---------------------------------------------------------------------
 function openRednet()
-    peripheral.find("modem", rednet.open)  -- Automatically finds and opens a modem
-    log("Rednet opened.")
+    if not peripheral.find("modem", rednet.open) then
+        log("[ERROR] ModemNotFound, initiating crash!")
+        error("No Modem Found")  
+    else
+        log("Rednet opened.")
+    end
 end
 
 ---------------------------------------------------------------------
@@ -75,25 +79,27 @@ end
 -- Looks up the server using a predefined protocol and caches response
 ---------------------------------------------------------------------
 function requestNewDNS()
-    ensureRednet()  -- Ensure rednet is ready before sending
+    ensureRednet()
 
-    -- Look up a server advertising the DNS protocol
     local serverID = rednet.lookup(DNS_PROTOCOL)
     if not serverID then
         log("DNS server not found.")
         return
     end
 
-    -- Send request to the DNS server to get the full DNS table
     rednet.send(serverID, "get", DNS_PROTOCOL)
     log("Requesting DNS data from server...")
 
-    -- Wait for a response for up to 5 seconds
     local senderID, response = rednet.receive(DNS_PROTOCOL, 5)
     if response then
-        log("Received DNS data. Caching to file...")
+        -- Validate JSON
+        local success, dnsData = pcall(textutils.unserializeJSON, response)
+        if not success or type(dnsData) ~= "table" then
+            log("Received invalid JSON from server.")
+            return
+        end
 
-        -- Write response to the local DNS cache file
+        -- Save raw JSON response
         local file = fs.open(CACHE_FILE, "w")
         if file then
             file.write(response)
@@ -103,8 +109,10 @@ function requestNewDNS()
             log("Error: Could not write to cache file.")
         end
 
-        -- Optionally print DNS data to screen/log
-        log("\nDNS Data:\n" .. response)
+        -- Log parsed DNS table
+        for _, entry in ipairs(dnsData) do
+            log(string.format("Entry: %s : %d (%s)", entry.hostname, entry.id, entry.protocol))
+        end
     else
         log("No response received from DNS server.")
     end
@@ -118,19 +126,26 @@ function resolveHostname(hostname)
     -- Local helper function to read and parse the cache file
     local function parseDNSFile()
         if not fs.exists(CACHE_FILE) then return nil end
-
+    
         local file = fs.open(CACHE_FILE, "r")
         if not file then return nil end
-
+    
+        local content = file.readAll()
+        file.close()
+    
+        local success, dnsData = pcall(textutils.unserializeJSON, content)
+        if not success or type(dnsData) ~= "table" then
+            return nil
+        end
+    
+        -- Convert list of entries into a lookup table
         local dnsTable = {}
-        -- Read each line and parse as "hostname:ID"
-        for line in file.readLine do
-            local name, id = string.match(line, "^(.-):(%d+)$")
-            if name and id then
-                dnsTable[name] = tonumber(id)
+        for _, entry in ipairs(dnsData) do
+            if entry.hostname and entry.id then
+                dnsTable[entry.hostname] = entry.id
             end
         end
-        file.close()
+    
         return dnsTable
     end
 
@@ -194,7 +209,7 @@ end
 -- Sends a query to a target and waits for a response (like RPC)
 -- Target can be a hostname or numeric ID; includes optional timeout
 ---------------------------------------------------------------------
-function query(target, message, protocol, timeout)
+function query(target, message, protocol)
     ensureRednet()
 
     local id = nil
@@ -222,7 +237,7 @@ function query(target, message, protocol, timeout)
     log("Sent query to ID " .. id .. " via protocol '" .. protocol .. "': " .. tostring(message))
 
     -- Wait for response with optional timeout (default 5s)
-    local senderID, response = rednet.receive(protocol, timeout or 5)
+    local senderID, response = rednet.receive(protocol, 5)
     if response then
         log("Received response from ID " .. senderID .. ": " .. tostring(response))
         return response
