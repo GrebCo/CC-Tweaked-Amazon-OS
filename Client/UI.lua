@@ -57,7 +57,7 @@ local UI = {
 
   function UI.handleEvent()
     local event, a, b, c = os.pullEvent()
-    log("Event1 " .. event)
+    
     if event == "mouse_click" then
       UI.handleClick(b, c)
     elseif event == "mouse_scroll" then
@@ -67,7 +67,7 @@ local UI = {
       
       
       if UI.focused and UI.focused.type == "textfield" then
-        log("handling text stuff")
+       
         UI.handleInput(event, a, b)
         
       end
@@ -155,23 +155,37 @@ local UI = {
   end
   
   function UI.handleClick(x, y)
-    log("Handling click")
+    
     for _, e in ipairs(UI.elements) do
       local width = e.width or #e.text
       local height = e.height or 1
       if x >= e.x and x <= e.x + width - 1 and y >= e.y and y < e.y + height then
-        if e.type == "textfield" then
-          log("clicked textfield")
+        if e.type == "minimarkrenderer" then
+          -- Handle minimarkrenderer click events here
+          
+          if e.buttons then
+            for _, buttonWrapper in ipairs(e.buttons) do
+              local button = buttonWrapper.element
+              
+              if button.type == "link" then
+                
+                if x >= button.x and x <= button.x + button.width - 1 and y == button.y then
+                  needRender = true
+                  log(string.format("Link clicked x=%d y=%d width=%d", button.x or -1, button.y or -1, button.width or -1))
+                  e.newlink = button.page
+                end
+              end
+            
+            end
+          end
+        elseif e.type == "textfield" then
           UI.focused = e
-          log("Focusing" .. textutils.serialise(UI.focused))
           needRender = true
         elseif e.type == "checkbox" then
-          log("clicked checkbox")
           e.checked = not e.checked
           e.onclick(e, e.checked)
           needRender = true
         elseif e.type == "button" then
-          log("clicked button")
           if e.toggle then e.state = not e.state else e.pressed = true end
           needRender = true
           if not e.toggle then sleep(0.1) end
@@ -184,7 +198,7 @@ local UI = {
   end
 
   function UI.handleScroll(scroll, x, y)
-    log("Handling Scroll X:" .. x .. " Y:" .. y .. "Scroll: " .. scroll)
+    
     for _, e in ipairs(UI.elements) do
       local width = e.width or #e.text
       local height = e.height or 1
@@ -228,16 +242,16 @@ local UI = {
   
   
   function UI.handleInput(event, a, b)
-    log("Event in handle input: " .. event .. "A: " .. a)
+    
 
     if event == "char" then
-      log("char event")
+      
       
       
       UI.focused.text = UI.focused.text .. a
       needRender = true
     elseif event == "key" and a == keys.backspace then
-      log("key event backspace")
+      
       if(UI.focused.text ~= "") then
         UI.focused.text = UI.focused.text:sub(1, -2)
         needRender = true
@@ -413,7 +427,11 @@ local UI = {
       width = opts.width,
       height = opts.height,
       scrollOffset = opts.scrollOffset or opts.y,
-      scrollSpeed = opts.scrollSpeed or 1
+      scrollSpeed = opts.scrollSpeed or 1,
+      newlink = nil,
+      buttons = {
+        --Shit into that will live update when hyperlinks are visible
+      }
       
       --term = term.create
     }
@@ -432,22 +450,14 @@ local UI = {
       if not e.path then return end
       local lines = e.renderer.loadPage(e.path)
       local y = e.y
-
-      -- for _, line in ipairs(lines) do
-      --   if line:find("^%s*$") then
-      --     y = y + 1
-      --   else
-      --     local align, content = e.renderer.getAlignment(line)
-      --     term.setCursorPos(e.x, e.y)
-      --     --term.redirect(e.term or term.current())
-      --     --e.renderer.renderTextWithTags(content, y, align)
-      --     --y = y + 1
-      --     e.renderer.renderPage(e.path, e.scrollOffset) -- Needs to change to only be called once 
-      --   end
-      -- end
-
-
-      e.renderer.renderPage(e.path, -e.scrollOffset, e.y) -- Needs to change to only be called once 
+      
+      e.buttons = e.renderer.renderPage(e.path, -e.scrollOffset, e.y)
+    
+    for i, entry in ipairs(e.buttons) do
+      local el = entry.element
+      log(string.format("UI[%d] type=%s x=%d y=%d width=%d", i, el.type or "nil", el.x or -1, el.y or -1, el.width or -1))
+    end
+      
   end
 
   

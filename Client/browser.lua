@@ -82,10 +82,6 @@ local submit = ui.button({
     local ok, result = getWebsite(url, protocol)
     if ok then
       
-      -- renderWindow = window.create(term.current(),1,2,screenWidth, screenHeight-1)
-      -- currentTerm = term.redirect(renderWindow)
-      -- shell.run("WebViewer", result) -- Assuming WebViewer is a script that takes a file path
-
       ui.minimarkUpdatePath(renderer, result)
 
 
@@ -98,9 +94,35 @@ local submit = ui.button({
   x = input.width + 2
 })
 
+function run()
+  function updateEvents()
+    while true do
+      ui.handleEvent()
+    end
+  end
 
+  function renderUI()
+    while true do
+      ui.render()
+      if renderer.newlink then
+        local url = renderer.newlink
+        renderer.newlink = nil
 
+        ui.updateLabel(label, "Loading: " .. url)
+        local ok, result = getWebsite(url, protocol)
+        if ok then
+          ui.minimarkUpdatePath(renderer, result)
+          input.text = url
+        else
+          ui.updateLabel(label, "Error: " .. result)
+        end
+      end
+      sleep(0.001)
+    end
+  end
+  parallel.waitForAny(renderUI, updateEvents)
+end
 
 ui.init()
 
-ui.run()
+run()
