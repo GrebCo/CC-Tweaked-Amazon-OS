@@ -48,7 +48,7 @@ end
 function openRednet()
     if not peripheral.find("modem", rednet.open) then
         log("[ERROR] ModemNotFound, initiating crash!")
-        error("No Modem Found")  
+        --error("No Modem Found")  
     else
         log("Rednet opened.")
     end
