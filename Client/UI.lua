@@ -218,7 +218,7 @@ local UI = {
             e.scrollOffset = 0 - e.y
             needRender = false
           else
-            local maxScroll = math.ceil(math.max(0, e.linesCount - e.height*2.25))
+            local maxScroll = math.ceil(math.max(0, e.linesCount - e.height))
             if e.scrollOffset > maxScroll then
               e.scrollOffset = maxScroll
               needRender = false
