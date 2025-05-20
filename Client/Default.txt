@@ -1,0 +1,14 @@
+#Welcome to EEnet  
+##[text:cyan]Your Portal to the Server's Best Pages
+
+[text:green]Available Sites:
+
+[link:"COWS","This is a link back to COWS"]
+
+[link:"news","WE got some news"]
+
+[link:"google","Site Registry"]
+
+  
+##[text:yellow]Submit your own site at: [link:upload, "upload"]
+[text:white]Now accepting raw MiniMark.
