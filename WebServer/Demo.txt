@@ -1,0 +1,39 @@
+#MiniMark Demo Page  
+##[text:cyan]See What You Can Do!
+
+[text:green]Text Formatting:
+This is [text:red]red[text:reset], [text:yellow]yellow[text:reset], [text:lime]lime[text:reset], [text:blue]blue[text:reset], and [text:magenta]magenta[text:reset] text.
+
+[text:white]Background Colors:
+[background:blue][text:white] Blue Background [text:reset][background:reset]  
+[background:green][text:black] Green Background [text:reset][background:reset]  
+[background:red][text:white] Red Background [text:reset][background:reset]  
+
+
+[text:green]Headings:
+#Heading 1  
+##Heading 2  
+###Heading 3  
+
+
+[text:cyan]Links:
+[link:"news", "Go to news"]  
+
+
+
+[text:lime]Alignment Examples:
+#Left Align  
+##Center Align  
+###Right Align  
+
+
+[text:magenta]Line Breaks:
+(this section has blank lines between it)
+
+Line above
+
+Line below  
+
+
+[text:yellow]Thanks for Visiting the Demo!
+Build something cool.

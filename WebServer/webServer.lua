@@ -1,6 +1,6 @@
-local PROTOCOL = "AmazonInternet"
-local WEBSITE_NAME = "COWZ"
-local WEBSITE_FILE = WEBSITE_NAME .. ".txt"
+local PROTOCOL = "EENet"
+local WEBSITE_NAME = "Demo"
+local WEBSITE_FILE = WEBSITE_NAME .. ".txt" -- Default index file
 
 -- Open modem and host the protocol
 peripheral.find("modem", rednet.open)
@@ -10,19 +10,31 @@ print("Web server listening on protocol '" .. PROTOCOL .. "' for site '" .. WEBS
 
 while true do
     local senderID, message = rednet.receive(PROTOCOL, 10)
-
-    if message == WEBSITE_NAME then
-        print("Received request for '" .. WEBSITE_NAME .. "' from ID: " .. tostring(senderID))
-
-        if not fs.exists(WEBSITE_FILE) then
-            print("Error: Website file '" .. WEBSITE_FILE .. "' not found.")
+    
+    if message then
+        print("{DEBUG} Received message: " .. tostring(message) .. " from ID: " .. tostring(senderID))
+        local requestedFile
+        if message == WEBSITE_NAME then
+            requestedFile = WEBSITE_FILE
+        elseif message:sub(1, #WEBSITE_NAME + 1) == WEBSITE_NAME .. "/" then
+            local subPath = message:sub(#WEBSITE_NAME + 2)
+            requestedFile = subPath .. ".txt"
         else
-            local file = fs.open(WEBSITE_FILE, "r")
+            requestedFile = WEBSITE_FILE
+        end
+
+        print("Received request for '" .. tostring(message) .. "' from ID: " .. tostring(senderID))
+
+        if not fs.exists(requestedFile) then
+            print("Error: Website file '" .. requestedFile .. "' not found.")
+        else
+            local file = fs.open(requestedFile, "r")
             local content = file.readAll()
             file.close()
 
             rednet.send(senderID, content, PROTOCOL)
             print("Sent website content to ID: " .. tostring(senderID))
         end
+        senderID, message = nil, nil
     end
 end

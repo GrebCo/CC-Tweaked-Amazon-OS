@@ -1,3 +1,0 @@
-Google:24:AmazonInternet
-Amazon:27:AmazonInternet
-TestWebsite:21:AmazonInternet
