@@ -1,16 +1,21 @@
 local localVersion = fs.open("localVersion.txt", "r")
+local version
 if localVersion then
-    local version = localVersion.readAll()
+    version = localVersion.readAll()
     localVersion.close()
 else
-    local version = 0
+    version = 0
 end
+
+print("Current version: " .. version)
 
 shell.run("wget https://raw.githubusercontent.com/Easease/CC-Tweaked-Amazon-OS/refs/heads/main/version.txt remoteversion.txt")
 
 local file = fs.open("remoteversion.txt", "r")
 local remoteVersion = file.readAll()
 file.close()
+
+print("Remote version: " .. remoteVersion)
 
 shell.run("delete remoteversion.txt")
 
