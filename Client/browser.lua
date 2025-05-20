@@ -1,14 +1,15 @@
 local ui = require("ui")
 local minimark = require("MiniMark")
 local net = require("ClientNetworkHandler")
-local protocol = "AmazonInternet"
+local protocol = "EENet"
 local cacheDir = "/browser_cache"
 
 fs.makeDir(cacheDir)
 local screenWidth, screenHeight = term.getSize()
 
 local function getWebsite(url, protocol)
-  local response = net.query(url,url, protocol)
+  local baseUrl = url:match("([^/]+)")
+  local response = net.query(baseUrl, url, protocol)
   if not response then
     return false, "No response from server"
   end
@@ -29,13 +30,13 @@ end
 -- UI elements
 
 local renderer = ui.minimarkrenderer({
-  path = "/browser_cache/Default.txt",
+  path = "Default.txt",
   position = "center",
   renderer = minimark,
   y = 2,
   scrollOffset = -1,
   width = screenWidth,
-  height = screenHeight,
+  height = screenHeight - 2,
   scrollSpeed = 1
 })
 
@@ -60,6 +61,16 @@ local urlLabel = ui.label({
   position = "topLeft",
   height = 1
 })
+
+local tester = ui.label({
+  text = "This is a test",
+  fg = colors.white,
+  bg = colors.black,
+  position = "right",
+  height = 1
+})
+
+
 
 local input = ui.textfield({
   text = "",
@@ -94,6 +105,8 @@ local submit = ui.button({
   x = input.width + 2
 })
 
+
+
 function run()
   function updateEvents()
     while true do
@@ -104,6 +117,7 @@ function run()
   function renderUI()
     while true do
       ui.render()
+      ui.updateLabel(tester, tostring(math.max(0, renderer.linesCount + renderer.y - renderer.height)) .. " Scroll offset " .. tostring(renderer.scrollOffset))
       if renderer.newlink then
         local url = renderer.newlink
         renderer.newlink = nil

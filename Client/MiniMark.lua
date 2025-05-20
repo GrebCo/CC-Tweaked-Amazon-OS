@@ -77,11 +77,12 @@ end
 -- Main render function for a line of MiniMark text
 local function renderTextWithTags(rawText, y)
   local termWidth = term.getSize()
-  local align, alignedLine = getAlignment(rawText)
-  local stripped = stripTags(alignedLine)
+  local align, line = getAlignment(rawText)
+  local stripped = stripTags(line)
   local pos, x = 1, 1
   local fg, bg = colors.white, colors.black
   local uiPositions = {}
+  
 
   if align == "center" then
     x = math.max(1, math.floor((termWidth - #stripped) / 2) + 1)
@@ -90,8 +91,6 @@ local function renderTextWithTags(rawText, y)
   else
     x = 1 -- Default for left alignment
   end
-
-  local line = alignedLine  -- use cleaned line (no alignment prefix) for tag processing
 
   while pos <= #line do
     local tagStart, tagEnd, tag = line:find("%[(.-)%]", pos)
@@ -197,11 +196,12 @@ end
 end
 
 -- Full page render from file
-local function renderPage(path, scroll, startY)
+local function renderPage(path, scroll, startY) --StartY is Static will not change
   term.clear()
   local uiRegistry = {}
   local lines = loadLinesFromFile(path)
-  local y = (startY or 1) + (scroll or 0)
+  local y = (startY or 1) - (scroll or 0)
+  local lineCount = #lines
 
   for _, line in ipairs(lines) do
     if line:find("^%s*$") then -- skip empty lines
@@ -213,11 +213,12 @@ local function renderPage(path, scroll, startY)
           table.insert(uiRegistry, {y = uiElement.y or y, element = uiElement})
         end
       end
+      
       y = newY + 1
     end
   end
 
-  return uiRegistry
+  return uiRegistry, y + startY
 end
 
 return {

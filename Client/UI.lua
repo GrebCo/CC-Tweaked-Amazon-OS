@@ -205,9 +205,6 @@ local UI = {
       
       if x >= e.x and x <= e.x + width - 1 and y >= e.y and y < e.y + height then
         if e.type == "minimarkrenderer" then
-
-          tempScroll = 0 + e.scrollOffset
-
           -- Safe fallback for missing linesCount or scrollSpeed
           e.scrollSpeed = e.scrollSpeed or 1
           e.linesCount = e.linesCount or 0
@@ -221,11 +218,12 @@ local UI = {
             e.scrollOffset = 0 - e.y
             needRender = false
           else
-            local maxScroll = math.max(0, e.linesCount + e.y - e.height)
+            local maxScroll = math.ceil(math.max(0, e.linesCount - e.height*2.25))
             if e.scrollOffset > maxScroll then
               e.scrollOffset = maxScroll
               needRender = false
             end
+
           end
 
           
@@ -449,10 +447,11 @@ local UI = {
   function UI.drawMinimarkRenderer(e)
       if not e.path then return end
       local lines = e.renderer.loadPage(e.path)
-      local y = e.y
-      
-      e.buttons = e.renderer.renderPage(e.path, -e.scrollOffset, e.y)
-    
+      local endY = nil
+
+      e.buttons , endY  = e.renderer.renderPage(e.path, e.scrollOffset, e.y)
+
+      --e.linesCount = endY - e.y
     for i, entry in ipairs(e.buttons) do
       local el = entry.element
       log(string.format("UI[%d] type=%s x=%d y=%d width=%d", i, el.type or "nil", el.x or -1, el.y or -1, el.width or -1))
