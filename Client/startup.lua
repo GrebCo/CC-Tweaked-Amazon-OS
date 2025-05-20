@@ -39,6 +39,7 @@ if remoteVersion ~= version then
     shell.run("wget https://raw.githubusercontent.com/Easease/CC-Tweaked-Amazon-OS/refs/heads/main/Client/browser.lua browser.lua")
     shell.run("wget https://raw.githubusercontent.com/Easease/CC-Tweaked-Amazon-OS/refs/heads/main/Client/network_config.lua network_config.lua")
     shell.run("wget https://raw.githubusercontent.com/Easease/CC-Tweaked-Amazon-OS/refs/heads/main/Client/Default.txt Default.txt")
+    shell.run("wget https://raw.githubusercontent.com/Easease/CC-Tweaked-Amazon-OS/refs/heads/main/Client/update.lua update.lua")
 
     local newVersion = fs.open("localVersion.txt", "w")
     newVersion.write(remoteVersion)
