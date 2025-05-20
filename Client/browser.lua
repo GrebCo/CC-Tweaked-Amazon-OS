@@ -62,16 +62,6 @@ local urlLabel = ui.label({
   height = 1
 })
 
-local tester = ui.label({
-  text = "This is a test",
-  fg = colors.white,
-  bg = colors.black,
-  position = "right",
-  height = 1
-})
-
-
-
 local input = ui.textfield({
   text = "",
   width = screenWidth / 2,
@@ -117,7 +107,7 @@ function run()
   function renderUI()
     while true do
       ui.render()
-      ui.updateLabel(tester, tostring(math.max(0, renderer.linesCount + renderer.y - renderer.height)) .. " Scroll offset " .. tostring(renderer.scrollOffset))
+      --ui.updateLabel(tester, tostring(math.max(0, renderer.linesCount + renderer.y - renderer.height)) .. " Scroll offset " .. tostring(renderer.scrollOffset))
       if renderer.newlink then
         local url = renderer.newlink
         renderer.newlink = nil
