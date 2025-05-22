@@ -1,8 +1,8 @@
 -- Updated: 5/20/2025
 
-local ui = require("ui")
-local minimark = require("MiniMark")
-local net = require("ClientNetworkHandler")
+local ui = dofile("OSUtil/ui.lua")
+local minimark = dofile("OSUtil/MiniMark.lua")
+local net = dofile("OSUtil/ClientNetworkHandler.lua")
 local protocol = "EENet"
 local cacheDir = "/browser_cache"
 
