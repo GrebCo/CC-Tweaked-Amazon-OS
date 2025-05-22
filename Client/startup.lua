@@ -30,6 +30,7 @@ if remoteVersion ~= version then
     shell.run("delete MiniMark.lua")
     shell.run("delete browser.lua")
     shell.run("delete network_config.lua")
+    shell.run("delete startup.lua")
 
 
     print("Downloading new files...")
@@ -40,6 +41,7 @@ if remoteVersion ~= version then
     shell.run("wget https://raw.githubusercontent.com/GrebCo/CC-Tweaked-Amazon-OS/refs/heads/main/Client/network_config.lua network_config.lua")
     shell.run("wget https://raw.githubusercontent.com/GrebCo/CC-Tweaked-Amazon-OS/refs/heads/main/Client/Default.txt Default.txt")
     shell.run("wget https://raw.githubusercontent.com/GrebCo/CC-Tweaked-Amazon-OS/refs/heads/main/Client/update.lua update.lua")
+    shell.run("wget https://raw.githubusercontent.com/GrebCo/CC-Tweaked-Amazon-OS/refs/heads/main/Client/update.lua startup.lua")
 
     local newVersion = fs.open("localVersion.txt", "w")
     newVersion.write(remoteVersion)
