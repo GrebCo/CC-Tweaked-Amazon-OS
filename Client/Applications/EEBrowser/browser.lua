@@ -9,6 +9,9 @@ local net = dofile("OSUtil/ClientNetworkHandler.lua") -- Handles client-side net
 local protocol = "EENet"                           -- Network protocol used for fetching pages
 local cacheDir = "/browser_cache"                  -- Directory to store cached website files
 
+-- Browser cache of elements
+local elements
+
 -- Ensure cache directory exists
 fs.makeDir(cacheDir)
 
@@ -154,6 +157,7 @@ end
 
 -- Initialize UI system (sets up elements, screen, etc.)
 ui.init()
+elements = ui.elements
 
 -- Start the main browser loop
 run()

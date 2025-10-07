@@ -1,5 +1,5 @@
 -- MiniMark++ Page Renderer for CC:Tweaked
--- Supports headers, alignment, inline text/background colors, links, buttons, checkboxes, textboxes
+-- Supports headers, alignment, inline text/background colors, links, buttons, checkboxes, textboxes, and script tags
 
 -- Maps color names to their corresponding color values
 local colorMap = {
@@ -22,9 +22,9 @@ local function loadLinesFromFile(path)
   return lines
 end
 
--- Removes all formatting tags (e.g., [text:red], [link:"page","text"], etc.)
+-- Removes all formatting tags (e.g., <text:red>, <link:"page","text">, etc.)
 local function stripTags(line)
-  return line:gsub("%[.-%]", "")
+  return line:gsub("%<.-%>", "")
 end
 
 -- Determines alignment based on leading #s and returns the alignment and cleaned line
@@ -39,7 +39,6 @@ local function getAlignment(line)
     return "left", line
   end
 end
-
 
 -- Write text with colors and word wrapping
 local function writeWrappedText(text, x, y, fg, bg)
@@ -82,7 +81,6 @@ local function renderTextWithTags(rawText, y)
   local pos, x = 1, 1
   local fg, bg = colors.white, colors.black
   local uiPositions = {}
-  
 
   if align == "center" then
     x = math.max(1, math.floor((termWidth - #stripped) / 2) + 1)
@@ -93,22 +91,19 @@ local function renderTextWithTags(rawText, y)
   end
 
   while pos <= #line do
-    local tagStart, tagEnd, tag = line:find("%[(.-)%]", pos)
-  
+    local tagStart, tagEnd, tag = line:find("%<(.-)%>", pos)
+
     if tagStart then
       -- write text before the tag
       if tagStart > pos then
         local text = line:sub(pos, tagStart - 1)
         x, y = writeWrappedText(text, x, y, fg, bg)
       end
-   
-
 
       -- Process tag
       if tag:match("^text:") then
         local col = tag:match("^text:(.+)")
         fg = col == "reset" and colors.white or (colorMap[col] or colors.white)
-      
 
       elseif tag:match("^background:") then
         local col = tag:match("^background:(.+)")
@@ -137,7 +132,7 @@ local function renderTextWithTags(rawText, y)
           if x + #label > termWidth then
             y, x = y + 1, 1
           end
-          
+
           local startX = x
           term.setCursorPos(x, y)
           term.setTextColor(colorMap[fg_col] or colors.white)
@@ -181,30 +176,33 @@ local function renderTextWithTags(rawText, y)
           type = "textbox", x = startX, y = y, width = boxWidth
         })
         x = x + boxWidth
+
+      elseif tag:match("^script:") then
+        -- Placeholder: script tag recognized (no execution yet)
+        -- e.g. <script:"onload.lua"> or similar format
       end
 
       pos = tagEnd + 1  -- advance past the tag
-  else
-    -- no more tags, print the rest
-    local text = line:sub(pos)
-    x, y = writeWrappedText(text, x, y, fg, bg)
-    break
+    else
+      -- no more tags, print the rest
+      local text = line:sub(pos)
+      x, y = writeWrappedText(text, x, y, fg, bg)
+      break
+    end
   end
-end
 
   return y, uiPositions
 end
 
 -- Full page render from file
-local function renderPage(path, scroll, startY) --StartY is Static will not change
+local function renderPage(path, scroll, startY)
   term.clear()
   local uiRegistry = {}
   local lines = loadLinesFromFile(path)
   local y = (startY or 1) - (scroll or 0)
-  local lineCount = #lines
 
   for _, line in ipairs(lines) do
-    if line:find("^%s*$") then -- skip empty lines
+    if line:find("^%s*$") then
       y = y + 1
     elseif y > 0 then
       local newY, uiPositions = renderTextWithTags(line, y)
@@ -213,7 +211,6 @@ local function renderPage(path, scroll, startY) --StartY is Static will not chan
           table.insert(uiRegistry, {y = uiElement.y or y, element = uiElement})
         end
       end
-      
       y = newY + 1
     end
   end

@@ -1,4 +1,4 @@
-local localVersion = fs.open("Version.txt", "r")
+local localVersion = fs.open("version.txt", "r")
 local version
 if localVersion then
     version = localVersion.readAll()
@@ -37,7 +37,7 @@ if remoteVersion ~= version then
     shell.run("wget https://raw.githubusercontent.com/GrebCo/CC-Tweaked-Amazon-OS/refs/heads/efraimDev/Client/Applications/EEBrowser/Client/update.lua update.lua")
     shell.run("wget https://raw.githubusercontent.com/GrebCo/CC-Tweaked-Amazon-OS/refs/heads/efraimDev/Client/Applications/EEBrowser/Client/Installer.lua Installer.lua")
     
-    local newVersion = fs.open("Version.txt", "w")
+    local newVersion = fs.open("version.txt", "w")
     newVersion.write(remoteVersion)
     newVersion.close()
 end
