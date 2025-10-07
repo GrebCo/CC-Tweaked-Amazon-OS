@@ -8,8 +8,8 @@ else
 end
 
 print("Current version: " .. version)
-
-shell.run("wget https://raw.githubusercontent.com/GrebCo/CC-Tweaked-Amazon-OS/refs/heads/Version-2.0/Client/Applications/EEBrowser/version.txt remoteversion.txt")
+-- TODO Update urls before release
+shell.run("wget https://raw.githubusercontent.com/GrebCo/CC-Tweaked-Amazon-OS/refs/heads/efraimDev/Client/Applications/EEBrowser/version.txt remoteversion.txt")
 
 local file = fs.open("remoteversion.txt", "r")
 local remoteVersion = file.readAll()
@@ -32,10 +32,10 @@ if remoteVersion ~= version then
 
 
     print("Downloading new files...")
-    shell.run("wget https://raw.githubusercontent.com/GrebCo/CC-Tweaked-Amazon-OS/refs/heads/Version-2.0/Client/Applications/EEBrowser/Client/browser.lua browser.lua")
-    shell.run("wget https://raw.githubusercontent.com/GrebCo/CC-Tweaked-Amazon-OS/refs/heads/Version-2.0/Client/Applications/EEBrowser/Client/Default.txt Default.txt")
-    shell.run("wget https://raw.githubusercontent.com/GrebCo/CC-Tweaked-Amazon-OS/refs/heads/Version-2.0/Client/Applications/EEBrowser/Client/update.lua update.lua")
-    shell.run("wget https://raw.githubusercontent.com/GrebCo/CC-Tweaked-Amazon-OS/refs/heads/Version-2.0/Client/Applications/EEBrowser/Client/Installer.lua Installer.lua")
+    shell.run("wget https://raw.githubusercontent.com/GrebCo/CC-Tweaked-Amazon-OS/refs/heads/efraimDev/Client/Applications/EEBrowser/Client/browser.lua browser.lua")
+    shell.run("wget https://raw.githubusercontent.com/GrebCo/CC-Tweaked-Amazon-OS/refs/heads/efraimDev/Client/Applications/EEBrowser/Client/Default.txt Default.txt")
+    shell.run("wget https://raw.githubusercontent.com/GrebCo/CC-Tweaked-Amazon-OS/refs/heads/efraimDev/Client/Applications/EEBrowser/Client/update.lua update.lua")
+    shell.run("wget https://raw.githubusercontent.com/GrebCo/CC-Tweaked-Amazon-OS/refs/heads/efraimDev/Client/Applications/EEBrowser/Client/Installer.lua Installer.lua")
     
     local newVersion = fs.open("Version.txt", "w")
     newVersion.write(remoteVersion)

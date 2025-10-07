@@ -24,7 +24,7 @@ local function getWebsite(url, protocol)
     return false, "No response from server"            -- Handle failed network response
   end
 
-  -- Sanitize the URL into a safe filename for caching
+  -- Sanitize the URL into a safe filename for caching, turns anyhing that isnt a letter into underscores
   local safeFilename = url:gsub("[^%w_]", "_") .. ".txt"
   local path = fs.combine(cacheDir, safeFilename)
 

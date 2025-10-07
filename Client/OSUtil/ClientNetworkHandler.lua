@@ -81,12 +81,13 @@ end
 function requestNewDNS()
     ensureRednet()
 
-    local serverID = rednet.lookup(DNS_PROTOCOL)
+    local serverID = rednet.lookup(DNS_PROTOCOL) -- TODO possible multiple servers can be returned!
     if not serverID then
         log("DNS server not found.")
         return
     end
 
+    -- TODO cant this be simplified to just query?
     rednet.send(serverID, "get", DNS_PROTOCOL)
     log("Requesting DNS data from server...")
 
