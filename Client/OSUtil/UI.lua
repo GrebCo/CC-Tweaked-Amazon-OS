@@ -444,7 +444,7 @@ local UI = {
     e.scrollOffset = -1
 
     -- Load Scripting as well
-    e.scriptString = e.renderer.getScripts(newPath)
+    contextTable.scripts = e.renderer.getScripts(newPath)
 
     return true
   end

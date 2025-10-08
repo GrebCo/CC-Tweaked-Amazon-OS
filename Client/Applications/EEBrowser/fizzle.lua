@@ -69,3 +69,4 @@ return {
     triggerFizzleEvent = triggerFizzleEvent,
     reset = reset
 }
+
