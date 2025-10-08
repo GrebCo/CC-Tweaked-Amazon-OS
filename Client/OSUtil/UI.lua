@@ -429,8 +429,8 @@ local UI = {
       newlink = nil,
       buttons = {
         --Shit into that will live update when hyperlinks are visible
-      }
-      
+      },
+      scriptString = nil
       --term = term.create
     }
   table.insert(UI.elements, e)
@@ -441,6 +441,10 @@ local UI = {
     e.path = newPath
     e.linesCount = #e.renderer.loadPage(e.path)
     e.scrollOffset = -1
+
+    -- Load Scripting as well
+    e.scriptString = e.renderer.getScripts(newPath)
+
     return true
   end
 

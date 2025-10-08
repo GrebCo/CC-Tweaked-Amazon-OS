@@ -195,36 +195,12 @@ end
 local function renderPage(path, scroll, startY)
   term.clear()
   local uiRegistry = {}
-  local scriptRegistry = {}
   local lines = loadLinesFromFile(path)
   local y = (startY or 1) - (scroll or 0)
-  local inScript = false
-  local scriptBuffer = {}
-  local currentScriptName = nil
 
   for _, line in ipairs(lines) do
-    local scriptStart = line:match('^%s*<script:?\"?(.-)\"?>%s*$')
-    if scriptStart ~= nil then
-      -- Enter script mode (capture optional name)
-      inScript = true
-      scriptBuffer = {}
-      currentScriptName = scriptStart ~= "" and scriptStart or nil
 
-    elseif line:find("^%s*</script>%s*$") then
-      -- Exit script block
-      inScript = false
-      local scriptCode = table.concat(scriptBuffer, "\n")
-      table.insert(scriptRegistry, {
-        name = currentScriptName or ("script_" .. tostring(#scriptRegistry + 1)),
-        code = scriptCode
-      })
-      currentScriptName = nil
-
-    elseif inScript then
-      -- Collect script lines
-      table.insert(scriptBuffer, line)
-
-    elseif line:find("^%s*$") then
+    if line:find("^%s*$") then
       -- Empty line (spacing)
       y = y + 1
 
@@ -240,32 +216,46 @@ local function renderPage(path, scroll, startY)
     end
   end
 
-  -- === Write script registry to log ===
-  -- THIS IS FOR TESTING, REMOVE BEFORE FINAL!!!!
-  -- THIS IS FOR TESTING, REMOVE BEFORE FINAL!!!!
-  -- THIS IS FOR TESTING, REMOVE BEFORE FINAL!!!!
-  if #scriptRegistry > 0 then
-    local logPath = "/logs/script_dump.txt"
-    if not fs.exists("/logs") then fs.makeDir("/logs") end
+  -- Return both UI elements and collected scripts
+  return uiRegistry, y + startY
+end
 
-    local f = fs.open(logPath, "w") -- "w" overwrites; use "a" to append
-    if f then
-      f.writeLine("=== Script Dump from " .. path .. " ===")
-      for _, script in ipairs(scriptRegistry) do
-        f.writeLine(string.format("[Script: %s]", script.name))
-        f.writeLine(script.code)
-        f.writeLine("---")
-      end
-      f.close()
-    else
-      printError("Failed to write script log at " .. logPath)
+-- TODO Implement getting scripts and remove from renderPage
+local function getScripts(path)
+  local lines = loadLinesFromFile(path)
+  local scriptRegistry = {}
+
+  local currentScript = nil
+  local currentName = nil
+
+  for _, line in ipairs(lines) do
+    local startTag = line:match('<script:"(.-)">')
+    local endTag = line:match("</script>")
+
+    if startTag then
+      currentName = startTag
+      currentScript = {}
+    elseif endTag and currentScript then
+      scriptRegistry[currentName] = table.concat(currentScript, "\n")
+      currentScript = nil
+      currentName = nil
+    elseif currentScript then
+      table.insert(currentScript, line)
     end
   end
-  -- THIS IS FOR TESTING, REMOVE BEFORE FINAL!!!!
 
+  -- Dump registry to log once per call
+  local logFile = fs.open("scripts.log", "w")
+  if logFile then
+    for name, code in pairs(scriptRegistry) do
+      logFile.writeLine("[" .. name .. "]")
+      logFile.writeLine(code)
+      logFile.writeLine(("="):rep(20))
+    end
+    logFile.close()
+  end
 
-  -- Return both UI elements and collected scripts
-  return uiRegistry, scriptRegistry, y + startY
+  return scriptRegistry
 end
 
 
