@@ -6,6 +6,7 @@
 local ui = dofile("OSUtil/ui.lua")                 -- Custom UI framework for buttons, labels, etc.
 local minimark = dofile("OSUtil/MiniMark.lua")     -- Renderer for MiniMark markup files (simple HTML-like format)
 local net = dofile("OSUtil/ClientNetworkHandler.lua") -- Handles client-side network communication
+local fizzle = dofile("Applications/EEBrowser/fizzle.lua") -- Handles all fizzle scripts
 local protocol = "EENet"                           -- Network protocol used for fetching pages
 local cacheDir = "/browser_cache"                  -- Directory to store cached website files
 
@@ -158,6 +159,7 @@ end
 -- Initialize UI system (sets up elements, screen, etc.)
 ui.init()
 elements = ui.elements
+fizzle.init(elements)
 
 -- Start the main browser loop
 run()
