@@ -27,21 +27,3 @@ event.registerFunction(specificButtonPressedEvent, doSomething)
 event.trigger(specificButtonPressedEvent, "parameters")
 
 
-minimark=====================================
-
-
-<button:"Text on the button", "color FG", "color background", "uniqueIndentifier", "Send Email">
-<script>
-local minimarkFile = document.get()
-
-function something(args) "Send Email"
-    text = grabtextfromelement("uniqueIndentifier")
-    sendtextoverrednet(text, destination)
-    dosomeLogging("send some text")
-end
-
-function onload(args) "on load"
-   --do something like a main loop
-end
-
-</script>
