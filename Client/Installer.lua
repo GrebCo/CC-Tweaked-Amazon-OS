@@ -9,7 +9,7 @@ end
 
 print("Current version: " .. version)
 
-shell.run("wget https://raw.githubusercontent.com/GrebCo/CC-Tweaked-Amazon-OS/refs/heads/Dev/Elliot/Client/version.txt remoteVersion.txt")
+shell.run("wget https://raw.githubusercontent.com/GrebCo/CC-Tweaked-Amazon-OS/refs/heads/dev/Elliot/Client/version.txt remoteVersion.txt")
 
 local file = fs.open("remoteVersion.txt", "r")
 local remoteVersion = file.readAll()
@@ -35,21 +35,21 @@ if remoteVersion ~= version then
     shell.run("mkdir Config")
     
     print("Downloading new files...")
-    shell.run("wget https://raw.githubusercontent.com/GrebCo/CC-Tweaked-Amazon-OS/refs/heads/Dev/Elliot/Client/OSUtil/UI.lua OSUtil/UI.lua")
-    shell.run("wget https://raw.githubusercontent.com/GrebCo/CC-Tweaked-Amazon-OS/refs/heads/Dev/Elliot/Client/OSUtil/ClientNetworkHandler.lua OSUtil/ClientNetworkHandler.lua")
-    shell.run("wget https://raw.githubusercontent.com/GrebCo/CC-Tweaked-Amazon-OS/refs/heads/Dev/Elliot/Client/OSUtil/MiniMark.lua OSUtil/MiniMark.lua")
-    shell.run("wget https://raw.githubusercontent.com/GrebCo/CC-Tweaked-Amazon-OS/refs/heads/Dev/Elliot/Client/OSUtil/MiniMark.lua OSUtil/events.lua")
-    shell.run("wget https://raw.githubusercontent.com/GrebCo/CC-Tweaked-Amazon-OS/refs/heads/Dev/Elliot/Client/Installer.lua Installer.lua")
-    shell.run("wget https://raw.githubusercontent.com/GrebCo/CC-Tweaked-Amazon-OS/refs/heads/Dev/Elliot/Client/Installer.lua update.lua")
+    shell.run("wget https://raw.githubusercontent.com/GrebCo/CC-Tweaked-Amazon-OS/refs/heads/dev/Elliot/Client/OSUtil/UI.lua OSUtil/UI.lua")
+    shell.run("wget https://raw.githubusercontent.com/GrebCo/CC-Tweaked-Amazon-OS/refs/heads/dev/Elliot/Client/OSUtil/ClientNetworkHandler.lua OSUtil/ClientNetworkHandler.lua")
+    shell.run("wget https://raw.githubusercontent.com/GrebCo/CC-Tweaked-Amazon-OS/refs/heads/dev/Elliot/Client/OSUtil/MiniMark.lua OSUtil/MiniMark.lua")
+    shell.run("wget https://raw.githubusercontent.com/GrebCo/CC-Tweaked-Amazon-OS/refs/heads/dev/Elliot/Client/OSUtil/MiniMark.lua OSUtil/events.lua")
+    shell.run("wget https://raw.githubusercontent.com/GrebCo/CC-Tweaked-Amazon-OS/refs/heads/dev/Elliot/Client/Installer.lua Installer.lua")
+    shell.run("wget https://raw.githubusercontent.com/GrebCo/CC-Tweaked-Amazon-OS/refs/heads/dev/Elliot/Client/Installer.lua update.lua")
 
 
     -- get Browser
-    shell.run("wget https://raw.githubusercontent.com/GrebCo/CC-Tweaked-Amazon-OS/refs/heads/Dev/Elliot/Client/EEBrowser/browser.lua EEBrowser/browser.lua")
-    shell.run("wget https://raw.githubusercontent.com/GrebCo/CC-Tweaked-Amazon-OS/refs/heads/Dev/Elliot/Client/EEBrowser/Default.txt EEBrowser/Default.txt")
-    shell.run("wget https://raw.githubusercontent.com/GrebCo/CC-Tweaked-Amazon-OS/refs/heads/Dev/Elliot/Client/EEBrowser/fizzle.txt EEBrowser/fizzle.lua")
+    shell.run("wget https://raw.githubusercontent.com/GrebCo/CC-Tweaked-Amazon-OS/refs/heads/dev/Elliot/Client/EEBrowser/browser.lua EEBrowser/browser.lua")
+    shell.run("wget https://raw.githubusercontent.com/GrebCo/CC-Tweaked-Amazon-OS/refs/heads/dev/Elliot/Client/EEBrowser/Default.txt EEBrowser/Default.txt")
+    shell.run("wget https://raw.githubusercontent.com/GrebCo/CC-Tweaked-Amazon-OS/refs/heads/dev/Elliot/Client/EEBrowser/fizzle.txt EEBrowser/fizzle.lua")
 
     -- get Network Config
-    shell.run("wget https://raw.githubusercontent.com/GrebCo/CC-Tweaked-Amazon-OS/refs/heads/Dev/Elliot/Client/Config/network_config.lua Config/network_config.lua")
+    shell.run("wget https://raw.githubusercontent.com/GrebCo/CC-Tweaked-Amazon-OS/refs/heads/dev/Elliot/Client/Config/network_config.lua Config/network_config.lua")
     
     local newVersion = fs.open("version.txt", "w")
     newVersion.write(remoteVersion)
