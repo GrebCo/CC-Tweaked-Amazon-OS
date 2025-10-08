@@ -51,7 +51,10 @@ end
 -- UI ELEMENTS
 --=========================================
 
+-- Initialize UI system (sets up elements, screen, etc.)
+
 ui.init(contextTable)
+fizzle.init(contextTable)
 
 -- MiniMark renderer setup
 local renderer = ui.minimarkrenderer({
@@ -162,9 +165,7 @@ function run()
   parallel.waitForAny(renderUI, updateEvents)
 end
 
--- Initialize UI system (sets up elements, screen, etc.)
 
---fizzle.init(contextTable)
 
 -- Start the main browser loop
 run()
