@@ -44,9 +44,9 @@ if remoteVersion ~= version then
 
 
     -- get Browser
-    shell.run("wget https://raw.githubusercontent.com/GrebCo/CC-Tweaked-Amazon-OS/refs/heads/dev/Elliot/Client/EEBrowser/browser.lua EEBrowser/browser.lua")
-    shell.run("wget https://raw.githubusercontent.com/GrebCo/CC-Tweaked-Amazon-OS/refs/heads/dev/Elliot/Client/EEBrowser/Default.txt EEBrowser/Default.txt")
-    shell.run("wget https://raw.githubusercontent.com/GrebCo/CC-Tweaked-Amazon-OS/refs/heads/dev/Elliot/Client/EEBrowser/fizzle.txt EEBrowser/fizzle.lua")
+    shell.run("wget https://raw.githubusercontent.com/GrebCo/CC-Tweaked-Amazon-OS/refs/heads/dev/Elliot/Client/Applications/EEBrowser/browser.lua EEBrowser/browser.lua")
+    shell.run("wget https://raw.githubusercontent.com/GrebCo/CC-Tweaked-Amazon-OS/refs/heads/dev/Elliot/Client/Applications/EEBrowser/Default.txt EEBrowser/Default.txt")
+    shell.run("wget https://raw.githubusercontent.com/GrebCo/CC-Tweaked-Amazon-OS/refs/heads/dev/Elliot/Client/Applications/EEBrowser/fizzle.lua EEBrowser/fizzle.lua")
 
     -- get Network Config
     shell.run("wget https://raw.githubusercontent.com/GrebCo/CC-Tweaked-Amazon-OS/refs/heads/dev/Elliot/Client/Config/network_config.lua Config/network_config.lua")
