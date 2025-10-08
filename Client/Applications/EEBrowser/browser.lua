@@ -6,7 +6,7 @@
 local ui = dofile("OSUtil/ui.lua")                 -- Custom UI framework for buttons, labels, etc.
 local minimark = dofile("OSUtil/MiniMark.lua")     -- Renderer for MiniMark markup files (simple HTML-like format)
 local net = dofile("OSUtil/ClientNetworkHandler.lua") -- Handles client-side network communication
-local fizzle = dofile("Applications/EEBrowser/fizzle.lua") -- Handles all fizzle scripts
+local fizzle = dofile("EEBrowser/fizzle.lua") -- Handles all fizzle scripts
 local protocol = "EENet"                           -- Network protocol used for fetching pages
 local cacheDir = "/browser_cache"                  -- Directory to store cached website files
 
@@ -51,9 +51,11 @@ end
 -- UI ELEMENTS
 --=========================================
 
+ui.init(contextTable)
+
 -- MiniMark renderer setup
 local renderer = ui.minimarkrenderer({
-  path = "Default.txt",          -- Default file to render on startup
+  path = "EEBrowser/Default.txt",          -- Default file to render on startup
   position = "center",           -- Centered on screen
   renderer = minimark,           -- Use MiniMark renderer
   y = 2,                         -- Vertical offset (to leave space for UI at top)
@@ -161,8 +163,8 @@ function run()
 end
 
 -- Initialize UI system (sets up elements, screen, etc.)
-ui.init(contextTable)
-fizzle.init(elements)
+
+--fizzle.init(contextTable)
 
 -- Start the main browser loop
 run()
