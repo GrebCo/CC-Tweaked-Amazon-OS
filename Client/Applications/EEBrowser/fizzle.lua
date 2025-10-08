@@ -1,4 +1,4 @@
- local fizzleElements
+ local fizzleContext
 
 local fizzleEvents
 
@@ -6,8 +6,8 @@ local cacheFilePath
 
 
 -- Must be called prior to any module usages
-local function init(uiElements)
-    fizzleElements = uiElements
+local function init(contextTable)
+    fizzleContext = contextTable
 end
 
 -- Saves the script to a cache file specific to this instance "_websiteName_fizzleCache.lua" and generate a table "vars" "_websiteName_fizzleCookies.lua"
