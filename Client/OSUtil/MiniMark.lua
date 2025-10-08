@@ -260,6 +260,7 @@ end
 
 
 return {
+  getScripts = getScripts,
   renderPage = renderPage,
   renderTextWithTags = renderTextWithTags,
   getAlignment = getAlignment,
