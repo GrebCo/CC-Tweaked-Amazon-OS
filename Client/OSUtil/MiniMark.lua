@@ -177,9 +177,6 @@ local function renderTextWithTags(rawText, y)
         })
         x = x + boxWidth
 
-      elseif tag:match("^script:") then
-        -- Placeholder: script tag recognized (no execution yet)
-        -- e.g. <script:"onload.lua"> or similar format
       end
 
       pos = tagEnd + 1  -- advance past the tag
@@ -198,13 +195,41 @@ end
 local function renderPage(path, scroll, startY)
   term.clear()
   local uiRegistry = {}
+  local scriptRegistry = {}
   local lines = loadLinesFromFile(path)
   local y = (startY or 1) - (scroll or 0)
+  local inScript = false
+  local scriptBuffer = {}
+  local currentScriptName = nil
 
   for _, line in ipairs(lines) do
-    if line:find("^%s*$") then
+    local scriptStart = line:match('^%s*<script:?\"?(.-)\"?>%s*$')
+    if scriptStart ~= nil then
+      -- Enter script mode (capture optional name)
+      inScript = true
+      scriptBuffer = {}
+      currentScriptName = scriptStart ~= "" and scriptStart or nil
+
+    elseif line:find("^%s*</script>%s*$") then
+      -- Exit script block
+      inScript = false
+      local scriptCode = table.concat(scriptBuffer, "\n")
+      table.insert(scriptRegistry, {
+        name = currentScriptName or ("script_" .. tostring(#scriptRegistry + 1)),
+        code = scriptCode
+      })
+      currentScriptName = nil
+
+    elseif inScript then
+      -- Collect script lines
+      table.insert(scriptBuffer, line)
+
+    elseif line:find("^%s*$") then
+      -- Empty line (spacing)
       y = y + 1
+
     elseif y > 0 then
+      -- Normal MiniMark line
       local newY, uiPositions = renderTextWithTags(line, y)
       if uiPositions then
         for _, uiElement in ipairs(uiPositions) do
@@ -215,8 +240,34 @@ local function renderPage(path, scroll, startY)
     end
   end
 
-  return uiRegistry, y + startY
+  -- === Write script registry to log ===
+  -- THIS IS FOR TESTING, REMOVE BEFORE FINAL!!!!
+  -- THIS IS FOR TESTING, REMOVE BEFORE FINAL!!!!
+  -- THIS IS FOR TESTING, REMOVE BEFORE FINAL!!!!
+  if #scriptRegistry > 0 then
+    local logPath = "/logs/script_dump.txt"
+    if not fs.exists("/logs") then fs.makeDir("/logs") end
+
+    local f = fs.open(logPath, "w") -- "w" overwrites; use "a" to append
+    if f then
+      f.writeLine("=== Script Dump from " .. path .. " ===")
+      for _, script in ipairs(scriptRegistry) do
+        f.writeLine(string.format("[Script: %s]", script.name))
+        f.writeLine(script.code)
+        f.writeLine("---")
+      end
+      f.close()
+    else
+      printError("Failed to write script log at " .. logPath)
+    end
+  end
+  -- THIS IS FOR TESTING, REMOVE BEFORE FINAL!!!!
+
+
+  -- Return both UI elements and collected scripts
+  return uiRegistry, scriptRegistry, y + startY
 end
+
 
 return {
   renderPage = renderPage,
