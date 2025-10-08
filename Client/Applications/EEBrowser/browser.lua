@@ -11,7 +11,11 @@ local protocol = "EENet"                           -- Network protocol used for 
 local cacheDir = "/browser_cache"                  -- Directory to store cached website files
 
 -- Browser cache of elements
-local elements
+local contextTable = {
+  elements = {},   -- all UI / MiniMark elements live here
+  functions = {},  -- shared callable functions (e.g. addElement, render, etc.)
+  scripts  = {}    -- script-defined functions or handlers
+}
 
 -- Ensure cache directory exists
 fs.makeDir(cacheDir)
@@ -157,8 +161,7 @@ function run()
 end
 
 -- Initialize UI system (sets up elements, screen, etc.)
-ui.init()
-elements = ui.elements
+ui.init(contextTable)
 fizzle.init(elements)
 
 -- Start the main browser loop

@@ -5,7 +5,7 @@ local LOG_FILE = "/log/log.txt"
 local needRender = true
 
 local UI = {
-    elements = {},
+    contextTable = {},
     term = term,
     focused = nil
   }
@@ -27,7 +27,8 @@ local UI = {
   end
 
   
-  function UI.init()
+  function UI.init(context)
+    UI.contextTable = context
     UI.term.setBackgroundColor(colors.black)
     UI.term.clear()
     UI.term.setCursorPos(1, 1)
@@ -136,7 +137,7 @@ local UI = {
     local w, h = UI.term.getSize()
     UI.term.setBackgroundColor(colors.black)
     UI.term.clear()
-    for _, e in ipairs(UI.elements) do
+    for _, e in ipairs(UI.contextTable.elements) do
       UI.applyPositioning(e)
       if e.type == "button" then
         UI.drawButton(e)
@@ -156,7 +157,7 @@ local UI = {
   
   function UI.handleClick(x, y)
     
-    for _, e in ipairs(UI.elements) do
+    for _, e in ipairs(UI.contextTable.elements) do
       local width = e.width or #e.text
       local height = e.height or 1
       if x >= e.x and x <= e.x + width - 1 and y >= e.y and y < e.y + height then
@@ -199,7 +200,7 @@ local UI = {
 
   function UI.handleScroll(scroll, x, y)
     
-    for _, e in ipairs(UI.elements) do
+    for _, e in ipairs(UI.contextTable.elements) do
       local width = e.width or #e.text
       local height = e.height or 1
       
@@ -325,7 +326,7 @@ local UI = {
       xPercent = opts.xPercent, yPercent = opts.yPercent,
       position = opts.position
     }
-    table.insert(UI.elements, e)
+    table.insert(UI.contextTable.elements, e)
     return e
   end
   
@@ -340,7 +341,7 @@ local UI = {
       xOffset = opts.xOffset,
       yOffset = opts.yOffset
     }
-    table.insert(UI.elements, e)
+    table.insert(UI.contextTable.elements, e)
     return e
   end
   
@@ -357,7 +358,7 @@ local UI = {
       xOffset = opts.xOffset,
       yOffset = opts.yOffset
     }
-    table.insert(UI.elements, e)
+    table.insert(UI.contextTable.elements, e)
     return e
   end
   
@@ -373,7 +374,7 @@ local UI = {
       xOffset = opts.xOffset,
       yOffset = opts.yOffset
     }
-    table.insert(UI.elements, e)
+    table.insert(UI.contextTable.elements, e)
     return e
   end
   
@@ -433,7 +434,7 @@ local UI = {
       scriptString = nil
       --term = term.create
     }
-  table.insert(UI.elements, e)
+  table.insert(UI.contextTable.elements, e)
   return e
   end
 

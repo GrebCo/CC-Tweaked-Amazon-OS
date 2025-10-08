@@ -1,4 +1,4 @@
-local fizzleElements
+ local fizzleElements
 
 local fizzleEvents
 
