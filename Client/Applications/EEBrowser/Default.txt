@@ -1,12 +1,79 @@
-ye#Welcome to EEnet
-##[text:cyan]Your Portal to the Server's Best Pages
+#MiniMark Renderer Test Page
+##<text:cyan>System UI + Tag Parsing Validation
 
-[text:green]Available Sites:
+<text:green>This page tests all currently implemented MiniMark features.
+It includes text color tags, link tags, spacing, and UI placeholders.
 
-[link:"google","Site Registry"]
+---
 
-[link:"news","WE got some news"]
+##<text:yellow>Section 1: Basic Text and Colors
 
-##[text:yellow]Want to make your own website?
-Contact [text:cyan]Easease [text:white]or [text:cyan]EfraimG [text:white] on discord to find out more
-[text:white]Now accepting raw MiniMark.
+<text:white>This is a plain white line of text.
+<text:gray>This is gray text to test color switching.
+<text:red>This is red text for warnings.
+<text:green>This is green text for success.
+<text:blue>This is blue text for info.
+<text:magenta>This is magenta text for flair.
+
+(blank line below)
+
+There is a script below this:
+Words
+<script>
+this is some code that do nothing
+Please work
+
+</script>
+words
+---
+words
+##<text:yellow>Section 2: Links
+
+<link:"home","Go to Homepage">
+<link:"help","Open Help Menu">
+<link:"about","Read About Page">
+<link:"external","Visit External Resource">
+
+(blank lines below)
+
+
+
+---
+
+##<text:yellow>Section 3: UI Element Placeholders
+
+(These won’t be interactive yet, but they verify tag parsing and registry entries.)
+
+<button label="Confirm" action="confirmAction">
+<button label="Cancel" color="red" action="cancelAction">
+<button label="Settings" color="blue" action="openSettings">
+
+<checkbox label="Enable Logs" id="logs">
+<checkbox label="Dark Mode" id="darkmode" checked>
+<checkbox label="Beta Features" id="beta">
+
+<textfield label="Username" id="username">
+<textfield label="Password" id="password">
+
+---
+
+##<text:yellow>Section 4: Spacing and Scroll Test
+
+<text:gray>Scroll down to verify rendering continuity.
+Keep an eye on vertical alignment and empty line handling.
+
+
+
+
+(blank space below to simulate long content)
+
+
+
+
+
+
+
+
+
+
+<text:green>End of Page — all tests complete.
