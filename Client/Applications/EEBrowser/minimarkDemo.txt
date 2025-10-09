@@ -8,7 +8,7 @@ local minimarkFile = document.get()
 function something(args) "Send Email"
     text = grabtextfromelement("uniqueIndentifier")
     sendtextoverrednet(text, destination)
-    dosomeLogging("send some text")
+    dosomeLogging("send som444e text")
 end
 
 function onload(args) "on load"

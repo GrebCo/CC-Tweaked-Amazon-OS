@@ -7,8 +7,18 @@ local ui = dofile("OSUtil/ui.lua")                 -- Custom UI framework for bu
 local minimark = dofile("OSUtil/MiniMark.lua")     -- Renderer for MiniMark markup files (simple HTML-like format)
 local net = dofile("OSUtil/ClientNetworkHandler.lua") -- Handles client-side network communication
 local fizzle = dofile("EEBrowser/fizzle.lua") -- Handles all fizzle scripts
+
 local protocol = "EENet"                           -- Network protocol used for fetching pages
 local cacheDir = "/browser_cache"                  -- Directory to store cached website files
+
+local ENABLE_LOG = true;
+if ENABLE_LOG then
+  local logger = require("OSUtil/Logger")
+  local log = logger.log()
+else
+  local log = function()  end
+end
+
 
 -- Browser cache of elements
 local contextTable = {
@@ -21,6 +31,7 @@ local contextTable = {
 -- Ensure cache directory exists
 fs.makeDir(cacheDir)
 
+
 -- Get terminal dimensions for layout
 local screenWidth, screenHeight = term.getSize()
 
@@ -28,7 +39,7 @@ local screenWidth, screenHeight = term.getSize()
 local function getWebsite(url, protocol)
   local baseUrl = url:match("([^/]+)")                 -- Extract domain or base address
   local response = net.query(baseUrl, url, protocol)   -- Send a query using the network handler
-  
+  log("Attempting to get " .. url)
   if not response then
     return false, "No response from server"            -- Handle failed network response
   end

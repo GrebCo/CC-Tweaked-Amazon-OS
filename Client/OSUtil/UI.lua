@@ -1,5 +1,5 @@
 
-local ENABLE_LOG = false
+local ENABLE_LOG = true
 local ENABLE_PRINT = false
 local LOG_FILE = "/log/log.txt"
 local needRender = true
@@ -10,21 +10,13 @@ local UI = {
     focused = nil
   }
 
-  local function log(msg)
-    -- Write to log file if enabled
-    if ENABLE_LOG then
-        local file = fs.open(LOG_FILE, "a") -- Open file in append mode
-        if file then
-            file.writeLine("[" .. os.time() .. "] " .. msg) -- Timestamped log line
-            file.close()
-        end
-    end
 
-    -- Print to screen if enabled
-    if ENABLE_PRINT then
-        print(msg)
-    end
-  end
+if ENABLE_LOG then
+  local logger = require("OSUtil/Logger")
+  log = logger.log
+else
+  log = function()  end
+end
 
   
   function UI.init(context)
@@ -64,7 +56,7 @@ local UI = {
     elseif event == "mouse_scroll" then
       
       UI.handleScroll(a,b,c)
-    elseif event == "key" or "char" then
+    elseif event == "key" or event == "char" then
       
       
       if UI.focused and UI.focused.type == "textfield" then
@@ -444,7 +436,7 @@ local UI = {
     e.scrollOffset = -1
 
     -- Load Scripting as well
-    contextTable.scripts = e.renderer.getScripts(newPath)
+    UI.contextTable.scripts = e.renderer.getScripts(newPath)
 
     return true
   end
