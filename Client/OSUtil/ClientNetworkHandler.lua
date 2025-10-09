@@ -247,6 +247,13 @@ function query(target, message, protocol)
     end
 end
 
+local function getSanitized()
+    return {
+        send = send,
+        query = query
+    }
+end
+
 ---------------------------------------------------------------------
 -- Return all publicly available functions in this module
 -- So other scripts can use them via `require`
@@ -260,3 +267,5 @@ return {
     send = send,
     query = query
 }
+
+

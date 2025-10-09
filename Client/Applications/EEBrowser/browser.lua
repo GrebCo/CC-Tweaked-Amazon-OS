@@ -14,7 +14,8 @@ local cacheDir = "/browser_cache"                  -- Directory to store cached 
 local contextTable = {
   elements = {},   -- all UI / MiniMark elements live here
   functions = {},  -- shared callable functions (e.g. addElement, render, etc.)
-  scripts  = {}    -- script-defined functions or handlers
+  scripts  = {},    -- script-defined functions or handler
+  events = {}
 }
 
 -- Ensure cache directory exists

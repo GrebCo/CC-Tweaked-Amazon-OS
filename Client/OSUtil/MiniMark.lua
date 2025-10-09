@@ -73,6 +73,16 @@ local function writeWrappedText(text, x, y, fg, bg)
   return x, y
 end
 
+-- Utility: parse key="value" pairs from the tag
+local function parseAttributes(tag)
+  local attrs = {}
+  -- allow optional spaces around = and after commas
+  for key, val in tag:gmatch("(%w+)%s*=%s*\"(.-)\"") do
+    attrs[key] = val
+  end
+  return attrs
+end
+
 -- Main render function for a line of MiniMark text
 local function renderTextWithTags(rawText, y)
   local termWidth = term.getSize()
@@ -127,38 +137,85 @@ local function renderTextWithTags(rawText, y)
         end
 
       elseif tag:match("^button:") then
-        local label, bg_col, fg_col, action = tag:match("^button:\"(.-)\",\"(.-)\",\"(.-)\",\"(.-)\"")
+        -- Capture the main label before the attributes
+        local label = tag:match("^button:\"(.-)\"")
+        local attrs = parseAttributes(tag)
+
         if label then
+          -- Colors
+          local fg_col = colorMap[attrs.fg] or colors.white
+          local bg_col = colorMap[attrs.bg] or colors.gray
+
           if x + #label > termWidth then
             y, x = y + 1, 1
           end
 
           local startX = x
           term.setCursorPos(x, y)
-          term.setTextColor(colorMap[fg_col] or colors.white)
-          term.setBackgroundColor(colorMap[bg_col] or colors.gray)
+          term.setTextColor(fg_col)
+          term.setBackgroundColor(bg_col)
           write(label)
+
           table.insert(uiPositions, {
-            type = "button", x = startX, y = y, width = #label, action = action
+            type = "button",
+            x = startX,
+            y = y,
+            width = #label,
+            label = label,
+            id = attrs.id,
+            onClick = attrs.onClick,
+            onHover = attrs.onHover,
+            fg = fg_col,
+            bg = bg_col,
+            hoverFg = colorMap[attrs.hoverFg] or fg_col,
+            hoverBg = colorMap[attrs.hoverBg] or bg_col,
+            pressFg = colorMap[attrs.pressFg] or fg_col,
+            pressBg = colorMap[attrs.pressBg] or bg_col,
+            isPressed = false,
           })
+
           x = x + #label
         end
 
       elseif tag:match("^checkbox:") then
         local label = tag:match("^checkbox:\"(.-)\"")
+        local attrs = parseAttributes(tag)
+
         if label then
-          local box = "[ ] " .. label
+          local boxUnchecked = attrs.emptyBox or "[ ]"
+          local boxChecked = attrs.box or "[x]"
+          local box = boxUnchecked .. " " .. label
+
           if x + #box > termWidth then
             y, x = y + 1, 1
           end
+
           local startX = x
           term.setCursorPos(x, y)
-          term.setTextColor(fg)
-          term.setBackgroundColor(bg)
+          term.setTextColor(colorMap[attrs.fg] or colors.white)
+          term.setBackgroundColor(colorMap[attrs.bg] or colors.black)
           write(box)
+
           table.insert(uiPositions, {
-            type = "checkbox", x = startX, y = y, width = #box, label = label
+            type = "checkbox",
+            x = startX,
+            y = y,
+            width = #box,
+            label = label,
+            id = attrs.id,
+            onClick = attrs.onClick,
+            onHover = attrs.onHover,
+            fg = colorMap[attrs.fg] or colors.white,
+            bg = colorMap[attrs.bg] or colors.black,
+            hoverFg = colorMap[attrs.hoverFg],
+            hoverBg = colorMap[attrs.hoverBg],
+            checkedFg = colorMap[attrs.checkedFg],
+            checkedBg = colorMap[attrs.checkedBg],
+            boxChecked = boxChecked,
+            boxUnchecked = boxUnchecked,
+            checked = false,
           })
+
           x = x + #box
         end
 
