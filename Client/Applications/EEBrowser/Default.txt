@@ -7,6 +7,22 @@ It includes text color tags, link tags, spacing, and UI placeholders.
 ---
 
 ##<text:yellow>Section 1: Basic Text and Colors
+<script:"test">
+this is a test
+super duper testing
+</script>
+
+<script:"test2">
+this is another test
+Test
+test
+Cowz
+</script>
+
+<script:"testing">
+this is a test
+super duper testing
+</script>
 
 <text:white>This is a plain white line of text.
 <text:gray>This is gray text to test color switching.
@@ -15,18 +31,6 @@ It includes text color tags, link tags, spacing, and UI placeholders.
 <text:blue>This is blue text for info.
 <text:magenta>This is magenta text for flair.
 
-(blank line below)
-
-There is a script below this:
-Words
-<script>
-this is some code that do nothing
-Please work
-
-</script>
-words
----
-words
 ##<text:yellow>Section 2: Links
 
 <link:"home","Go to Homepage">
@@ -34,19 +38,7 @@ words
 <link:"about","Read About Page">
 <link:"external","Visit External Resource">
 
-(blank lines below)
-
-
-
----
-
-##<text:yellow>Section 3: UI Element Placeholders
-
-(These won’t be interactive yet, but they verify tag parsing and registry entries.)
-
-<button label="Confirm" action="confirmAction">
-<button label="Cancel" color="red" action="cancelAction">
-<button label="Settings" color="blue" action="openSettings">
+<button:"Click Me" fg="white" bg="blue" hoverFg="yellow" hoverBg="lightGray" pressFg="black" pressBg="green" id="btn1" onClick="doSomething">
 
 <checkbox label="Enable Logs" id="logs">
 <checkbox label="Dark Mode" id="darkmode" checked>
@@ -66,6 +58,7 @@ Keep an eye on vertical alignment and empty line handling.
 
 
 (blank space below to simulate long content)
+
 
 
 

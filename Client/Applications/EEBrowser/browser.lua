@@ -11,7 +11,7 @@ local fizzle = dofile("EEBrowser/fizzle.lua") -- Handles all fizzle scripts
 local protocol = "EENet"                           -- Network protocol used for fetching pages
 local cacheDir = "/browser_cache"                  -- Directory to store cached website files
 
-local ENABLE_LOG = true;
+local ENABLE_LOG = true
 if ENABLE_LOG then
   local logger = dofile("/OSUtil/Logger.lua")
   log = logger.log
@@ -83,6 +83,7 @@ local renderer = ui.minimarkrenderer({
   width = screenWidth,           -- Match screen width
   height = screenHeight - 2,     -- Leave room for top/bottom labels
   scrollSpeed = 1                -- How fast it scrolls
+
 })
 
 -- Exit button that reboots the system
@@ -186,4 +187,5 @@ end
 
 -- Start the main browser loop
 log("Starting browser main loop.")
+ui.minimarkUpdatePath(renderer, "EEBrowser/Default.txt") -- Load default page
 run()

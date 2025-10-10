@@ -255,27 +255,34 @@ local function renderPage(path, scroll, startY)
   local lines = loadLinesFromFile(path)
   local y = (startY or 1) - (scroll or 0)
 
+  local inScript = false  -- <-- track if we’re inside a script
+
   for _, line in ipairs(lines) do
+    -- Check script start/end
+    if line:match('<script%s*:%s*".-">') then
+      inScript = true
+    elseif line:match('</script>') then
+      inScript = false
+    end
 
-    if line:find("^%s*$") then
-      -- Empty line (spacing)
-      y = y + 1
-
-    elseif y > 0 then
-      -- Normal MiniMark line
-      local newY, uiPositions = renderTextWithTags(line, y)
-      if uiPositions then
-        for _, uiElement in ipairs(uiPositions) do
-          table.insert(uiRegistry, {y = uiElement.y or y, element = uiElement})
+    if not inScript then
+      if line:find("^%s*$") then
+        y = y + 1
+      elseif y > 0 then
+        local newY, uiPositions = renderTextWithTags(line, y)
+        if uiPositions then
+          for _, uiElement in ipairs(uiPositions) do
+            table.insert(uiRegistry, {y = uiElement.y or y, element = uiElement})
+          end
         end
+        y = newY + 1
       end
-      y = newY + 1
     end
   end
 
-  -- Return both UI elements and collected scripts
   return uiRegistry, y + startY
 end
+
 
 -- TODO Implement getting scripts and remove from renderPage
 local function getScripts(path)
@@ -286,22 +293,25 @@ local function getScripts(path)
   local currentName = nil
 
   for _, line in ipairs(lines) do
-    local startTag = line:match('<script:"(.-)">')
-    local endTag = line:match("</script>")
+    -- Try to find a <script:"name"> anywhere in the line
+    local startTag = line:match('<script%s*:%s*"(.-)">')
+    local endTag   = line:match('</script>')
 
     if startTag then
       currentName = startTag
       currentScript = {}
     elseif endTag and currentScript then
+      -- Save the script
       scriptRegistry[currentName] = table.concat(currentScript, "\n")
       currentScript = nil
       currentName = nil
     elseif currentScript then
+      -- Keep collecting lines for this script
       table.insert(currentScript, line)
     end
   end
 
-  -- Dump registry to log once per call
+  -- Optional: dump to log for debugging
   local logFile = fs.open("scripts.log", "w")
   if logFile then
     for name, code in pairs(scriptRegistry) do
@@ -314,6 +324,7 @@ local function getScripts(path)
 
   return scriptRegistry
 end
+
 
 
 return {
