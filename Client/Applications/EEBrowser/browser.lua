@@ -13,10 +13,11 @@ local cacheDir = "/browser_cache"                  -- Directory to store cached 
 
 local ENABLE_LOG = true;
 if ENABLE_LOG then
-  local logger = require("OSUtil/Logger")
-  local log = logger.log()
+  local logger = dofile("/OSUtil/Logger.lua")
+  log = logger.log
+  log("Logger initialized.")
 else
-  local log = function()  end
+  log = function()  end
 end
 
 
@@ -27,6 +28,8 @@ local contextTable = {
   scripts  = {},    -- script-defined functions or handler
   events = {}
 }
+
+contextTable.functions.log = log
 
 -- Ensure cache directory exists
 fs.makeDir(cacheDir)
@@ -66,7 +69,9 @@ end
 -- Initialize UI system (sets up elements, screen, etc.)
 
 ui.init(contextTable)
+log("UI initialized.")
 fizzle.init(contextTable)
+log("Fizzle initialized.")
 
 -- MiniMark renderer setup
 local renderer = ui.minimarkrenderer({
@@ -180,4 +185,5 @@ end
 
 
 -- Start the main browser loop
+log("Starting browser main loop.")
 run()
