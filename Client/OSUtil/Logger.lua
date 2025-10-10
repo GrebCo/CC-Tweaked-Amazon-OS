@@ -41,7 +41,10 @@ local function log(msg, LOG_FILE)
         trimLog(LOG_FILE)
         local file = fs.open(LOG_FILE, "a")
         if file then
-            file.writeLine("[" .. os.time() .. "] " .. msg)
+
+            local timestamp = os.date("%Y-%m-%d %H:%M:%S")
+            file.writeLine("[" .. timestamp .. "] " .. msg)
+
             file.close()
         else
             print("Logger failed to open file: " .. LOG_FILE)
