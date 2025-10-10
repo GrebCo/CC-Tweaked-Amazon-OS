@@ -25,6 +25,9 @@ end
 local contextTable = {
   elements = {},   -- all UI / MiniMark elements live here
   functions = {},  -- shared callable functions (e.g. addElement, render, etc.)
+  scripts  = {},    -- script-defined functions or handlers
+  eventTrigger = nil,
+  -- fizzle Events import is introduced in fizzle.lua init()
   scripts  = {},    -- script-defined functions or handler
   events = {}
 }
