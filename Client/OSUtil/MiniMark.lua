@@ -9,6 +9,44 @@ local colorMap = {
   pink = colors.pink, brown = colors.brown, purple = colors.purple
 }
 
+-- Dumps a tokenized MiniMark page to a file
+-- pageTokens: output of parsePageToLogicalLines(path)
+-- filename: where to write the dump
+local function dumpTokensToFile(pageTokens, filename)
+  local f = fs.open(filename, "w")
+  if not f then error("Could not open " .. filename .. " for writing") end
+
+  local function dumpTable(tbl, indent)
+    indent = indent or ""
+    for k, v in pairs(tbl) do
+      if type(v) == "table" then
+        f.writeLine(indent .. k .. ":")
+        dumpTable(v, indent .. "  ")
+      else
+        f.writeLine(indent .. k .. ": " .. tostring(v))
+      end
+    end
+  end
+
+  for i, logical in ipairs(pageTokens) do
+    f.writeLine("Logical Line " .. i .. " (" .. logical.type .. ")")
+    if logical.type == "line" then
+      f.writeLine("  Alignment: " .. logical.align)
+      for j, el in ipairs(logical.elements) do
+        f.writeLine("  Element " .. j .. " (" .. el.type .. ")")
+        dumpTable(el, "    ")
+      end
+    end
+    f.writeLine(("="):rep(40))
+  end
+
+  f.close()
+end
+
+-- Example usage:
+-- local tokens = parsePageToLogicalLines("test.mm")
+-- dumpTokensToFile(tokens, "token_dump.txt")
+
 -- Loads all lines from a given file
 local function loadLinesFromFile(path)
   local f = fs.open(path, "r")
@@ -38,39 +76,6 @@ local function getAlignment(line)
   else
     return "left", line
   end
-end
-
--- Write text with colors and word wrapping
-local function writeWrappedText(text, x, y, fg, bg)
-  local termWidth = term.getSize()
-  term.setTextColor(fg or colors.white)
-  term.setBackgroundColor(bg or colors.black)
-
-  for segment in text:gmatch("([^\n]+)") do
-    for word, space in segment:gmatch("(%S+)(%s*)") do
-      if x + #word > termWidth then
-        y = y + 1
-        x = 1
-      end
-
-      term.setCursorPos(x, y)
-      write(word)
-      x = x + #word
-
-      if #space > 0 then
-        if x + #space > termWidth then
-          y = y + 1
-          x = 1
-        else
-          term.setCursorPos(x, y)
-          write(space)
-          x = x + #space
-        end
-      end
-    end
-  end
-
-  return x, y
 end
 
 -- Utility: parse key="value" pairs from the tag
@@ -238,6 +243,7 @@ local function renderPageTokenized(path, scroll, startY)
   term.clear()
   local uiRegistry = {}
   local logicalLines = parsePageToLogicalLines(path)
+  dumpTokensToFile(logicalLines, "TokenDump.txt")
   local termWidth = term.getSize()
   local y = (startY or 1) - (scroll or 0)
 
@@ -491,6 +497,9 @@ local function getScripts(path)
 
   return scriptRegistry
 end
+
+
+
 
 
 
