@@ -19,9 +19,15 @@ function triggerEvent(eventName, params)
     end
 end
 
+function resetEvents()
+    -- Nukes events
+    events = {}
+    return true
+end
 
 return {
     registerEvent = registerEvent,
     registerFunction = registerFunction,
-    triggerEvent = triggerEvent
+    triggerEvent = triggerEvent,
+    resetEvents = resetEvents,
 }

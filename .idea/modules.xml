@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/CC-Tweaked-Amazon-OS.iml" filepath="$PROJECT_DIR$/.idea/CC-Tweaked-Amazon-OS.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/Amazon-CC-OS.iml" filepath="$PROJECT_DIR$/.idea/Amazon-CC-OS.iml" />
     </modules>
   </component>
 </project>

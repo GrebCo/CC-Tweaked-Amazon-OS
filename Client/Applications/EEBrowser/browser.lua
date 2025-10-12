@@ -20,10 +20,12 @@ end
 
 -- Context table
 local contextTable = {
-  elements = {},
-  scenes = {},
-  functions = { log = log },
-  scripts = {},
+  
+  elements = {},   -- all active UI / MiniMark elements live here
+  scenes = {},  -- All UI scenes live here
+  functions = {log = log},  -- shared callable functions (e.g. addElement, render, etc.)
+  scripts  = {},    -- script-defined functions or handlers
+  eventTrigger = nil, -- fizzle Events import is introduced in fizzle.lua init()
   events = {}
 }
 
