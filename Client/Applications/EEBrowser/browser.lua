@@ -20,7 +20,7 @@ end
 
 -- Context table
 local contextTable = {
-  
+
   elements = {},   -- all active UI / MiniMark elements live here
   scenes = {},  -- All UI scenes live here
   functions = {log = log},  -- shared callable functions (e.g. addElement, render, etc.)
@@ -59,9 +59,64 @@ ui.init(contextTable)
 fizzle.init(contextTable)
 
 -------------------------------------------------
+-- Scene 0: Confirm Settings Popup
+-------------------------------------------------
+
+-------------------------------------------------
+-- Scene 0: Confirm Settings Popup
+-------------------------------------------------
+
+ui.setScene("ConfirmSettingsPopup")
+
+-- Popup background rectangle
+ui.rectangle({
+  width = 45,
+  height = 6,
+  position = "center",
+  bg = colors.black,
+  filled = true
+})
+
+-- Popup title text
+ui.label({
+  text = "Are you sure you want to open Settings?",
+  position = "center",
+  yOffset = -1,
+  fg = colors.yellow,
+  bg = colors.black
+})
+
+-- "Yes" button
+ui.button({
+  text = "Yes",
+  position = "center",
+  xOffset = -6,
+  yOffset = 2,
+  bg = colors.green,
+  colorPressed = colors.lime,
+  onclick = function()
+    ui.removeChild("ConfirmSettingsPopup")
+    ui.setScene("Settings")
+  end
+})
+
+-- "No" button
+ui.button({
+  text = "No",
+  position = "center",
+  xOffset = 6,
+  yOffset = 2,
+  bg = colors.red,
+  colorPressed = colors.orange,
+  onclick = function()
+    ui.removeChild("ConfirmSettingsPopup")
+  end
+})
+
+
+-------------------------------------------------
 -- Scene 1: Splash Screen
 -------------------------------------------------
-ui.newScene("Splash")
 ui.setScene("Splash")
 
 ui.label({
@@ -148,14 +203,16 @@ local settings = ui.button({
   position = "topRight",
   xOffset = -4,
   onclick = function()
-    ui.setScene("Settings")
+    ui.setChild("ConfirmSettingsPopup", 0, 0, "center")
   end
 })
+
 
 local back = ui.button({
   text = "<<",
   fg = colors.blue,
   bg = colors.gray,
+  colorPressed = colors.lightBlue,
   position = "topLeft",
   onclick = function()
     -- TODO: history
@@ -174,9 +231,9 @@ local forward = ui.button({
   text = ">>",
   fg = colors.blue,
   bg = colors.gray,
+  colorPressed = colors.lightBlue,
   position = "topLeft",
-  xOffset = 3,
-  toggle = true
+  xOffset = 3
 })
 
 local input = ui.textfield({
@@ -227,7 +284,7 @@ ui.checkbox({
   position = "center",
   yOffset = -1,
   onclick = function(e, state)
-    contextTable.functions.log("Developer mode: " .. tostring(state))
+    log("Developer mode: " .. tostring(state))
   end
 })
 
@@ -236,7 +293,7 @@ ui.checkbox({
   position = "center",
   yOffset = 1,
   onclick = function(e, state)
-    contextTable.functions.log("Sound effects: " .. tostring(state))
+    log("Sound effects: " .. tostring(state))
   end
 })
 

@@ -44,23 +44,95 @@ function UI.newScene(name)
 end
 
 function UI.setScene(name)
-    if not name then error("UI.setScene: name required") end
-
-    -- ensure scenes table exists
-    UI.contextTable.scenes = UI.contextTable.scenes or {}
-
-    -- auto-create the scene if missing
     if not UI.contextTable.scenes[name] then
-        UI.contextTable.scenes[name] = { elements = {}, scripts = {} }
+        UI.contextTable.scenes[name] = { elements = {}, children = {} }
     end
 
-    -- point the active elements list to this scene
-    UI.contextTable.elements = UI.contextTable.scenes[name].elements
     UI.activeScene = name
-    needRender = true
+    UI.contextTable.elements = {}
 
-    return UI.contextTable.scenes[name] -- handy if you want the handle
+    local function attachScene(sceneName, offsetX, offsetY)
+        local scene = UI.contextTable.scenes[sceneName]
+        if not scene then return end
+
+        for _, e in ipairs(scene.elements) do
+            e._offsetX = offsetX or 0
+            e._offsetY = offsetY or 0
+            table.insert(UI.contextTable.elements, e)
+        end
+
+        for _, child in ipairs(scene.children or {}) do
+            attachScene(child.name, (offsetX or 0) + (child.xOffset or 0), (offsetY or 0) + (child.yOffset or 0))
+        end
+    end
+
+    attachScene(name, 0, 0)
+    needRender = true
 end
+
+
+function UI.removeChild(target)
+    local parentScene = UI.activeScene
+    local targetName = nil
+
+    -- Case 1: Explicit scene name passed
+    if type(target) == "string" then
+        targetName = target
+
+        -- Case 2: Element table passed (find which scene it belongs to)
+    elseif type(target) == "table" and target.type then
+        for sceneName, sceneData in pairs(UI.contextTable.scenes) do
+            for _, e in ipairs(sceneData.elements or {}) do
+                if e == target then
+                    targetName = sceneName
+                    break
+                end
+            end
+            if targetName then break end
+        end
+    end
+
+    if not targetName then
+        error("UI.removeChild: could not determine child scene to remove.")
+    end
+
+    -- Find parent and remove child reference
+    local parent = UI.contextTable.scenes[parentScene]
+    if not parent or not parent.children then return end
+
+    for i, child in ipairs(parent.children) do
+        if child.name == targetName then
+            table.remove(parent.children, i)
+            break
+        end
+    end
+
+    UI.setScene(parentScene)
+end
+
+function UI.setChild(childName, xOffset, yOffset, position)
+    if not UI.activeScene then
+        error("UI.setChild: no active scene to attach to.")
+    end
+    if not UI.contextTable.scenes[childName] then
+        error("UI.setChild: child scene '" .. childName .. "' does not exist.")
+    end
+
+    local parent = UI.contextTable.scenes[UI.activeScene]
+    parent.children = parent.children or {}
+
+    table.insert(parent.children, {
+        name = childName,
+        xOffset = xOffset or 0,
+        yOffset = yOffset or 0,
+        position = position or "center"
+    })
+
+    -- rebuild scene with new hierarchy
+    UI.setScene(UI.activeScene)
+end
+
+
 
 
 
@@ -151,27 +223,82 @@ function UI.applyPositioning(e)
     if e.y < 1 then e.y = 1 end
 end
 
+function UI.drawElement(e, offsetX, offsetY)
+    offsetX = offsetX or 0
+    offsetY = offsetY or 0
+
+    -- Apply global positioning offset (for child scenes)
+    e.x = (e.x or 1) + (e._offsetX or 0) + offsetX
+    e.y = (e.y or 1) + (e._offsetY or 0) + offsetY
+
+    -- Positioning logic for anchors / percentages
+    UI.applyPositioning(e)
+
+    if e.type == "button" then
+        UI.drawButton(e)
+    elseif e.type == "label" then
+        UI.drawLabel(e)
+    elseif e.type == "checkbox" then
+        UI.drawCheckbox(e)
+    elseif e.type == "textfield" then
+        UI.drawTextfield(e)
+    elseif e.type == "minimarkrenderer" then
+        UI.drawMinimarkRenderer(e)
+    elseif e.type == "rectangle" then
+        UI.drawRectangle(e)
+    else
+        -- Unknown element type
+        UI.term.setCursorPos(1, 1)
+        UI.term.setTextColor(colors.red)
+        UI.term.write("[WARN] Unknown element type: " .. tostring(e.type))
+    end
+end
+
+
 function UI.render()
     if not needRender then return end
     UI.term.setBackgroundColor(colors.black)
     UI.term.clear()
-    for _, e in ipairs(UI.contextTable.elements) do
-        UI.applyPositioning(e)
-        if e.type == "button" then
-            UI.drawButton(e)
-        elseif e.type == "label" then
-            UI.drawLabel(e)
-        elseif e.type == "checkbox" then
-            UI.drawCheckbox(e)
-        elseif e.type == "minimarkrenderer" then
-            UI.drawMinimarkRenderer(e)
-        elseif e.type == "textfield" then
-            UI.drawTextfield(e)
+
+    local function renderScene(scene, offsetX, offsetY)
+        offsetX = offsetX or 0
+        offsetY = offsetY or 0
+
+        -- Draw all elements in this scene
+        for _, e in ipairs(scene.elements or {}) do
+            if UI.drawElement then
+                UI.drawElement(e, offsetX, offsetY)
+            else
+                error("UI.drawElement not defined or nil")
+            end
         end
 
+        -- Recursively draw child scenes
+        if scene.children then
+            for _, child in ipairs(scene.children) do
+                local childScene = UI.contextTable.scenes[child.name]
+                if childScene then
+                    renderScene(
+                            childScene,
+                            offsetX + (child.xOffset or 0),
+                            offsetY + (child.yOffset or 0)
+                    )
+                end
+            end
+        end
     end
+
+    local activeScene = UI.contextTable.scenes[UI.activeScene]
+    if activeScene then
+        renderScene(activeScene)
+    else
+        error("UI.render: No active scene set.")
+    end
+
     needRender = false
 end
+
+
 
 function UI.handleClick(x, y)
 
@@ -317,6 +444,7 @@ function UI.drawCheckbox(e)
     UI.term.write(box .. e.text)
 end
 
+
 function UI.drawTextfield(e)
     UI.term.setCursorPos(e.x, e.y)
     local bg = (UI.focused == e and e.bgActive) or e.bg or colors.gray
@@ -325,6 +453,34 @@ function UI.drawTextfield(e)
     UI.term.setTextColor(fg)
     local display = e.text .. string.rep(" ", (e.width or 10) - #e.text)
     UI.term.write(display:sub(1, e.width or 10))
+end
+
+function UI.drawRectangle(e)
+    local x, y, w, h = e.x, e.y, e.width, e.height
+    local color = e.bg or colors.white
+    local filled = e.filled ~= false
+    local oldBg = UI.term.getBackgroundColor()
+    UI.term.setBackgroundColor(color)
+
+    if filled then
+        for i = 0, h - 1 do
+            UI.term.setCursorPos(x, y + i)
+            UI.term.write(string.rep(" ", w))
+        end
+    else
+        UI.term.setCursorPos(x, y)
+        UI.term.write(string.rep(" ", w))
+        UI.term.setCursorPos(x, y + h - 1)
+        UI.term.write(string.rep(" ", w))
+        for i = 1, h - 2 do
+            UI.term.setCursorPos(x, y + i)
+            UI.term.write(" ")
+            UI.term.setCursorPos(x + w - 1, y + i)
+            UI.term.write(" ")
+        end
+    end
+
+    UI.term.setBackgroundColor(oldBg)
 end
 
 function UI.button(opts)
@@ -409,6 +565,31 @@ function UI.textfield(opts)
             or UI.contextTable.elements
     table.insert(target, e)
 
+    return e
+end
+
+
+function UI.rectangle(opts)
+    local e = {
+        type = "rectangle",
+        x = opts.x or 1,
+        y = opts.y or 1,
+        width = opts.width or 5,
+        height = opts.height or 3,
+        fg = opts.fg or colors.gray,
+        bg = opts.bg or colors.black,
+        filled = opts.filled ~= false, -- default true
+        xOffset = opts.xOffset,
+        yOffset = opts.yOffset,
+        position = opts.position,
+        xPercent = opts.xPercent,
+        yPercent = opts.yPercent,
+    }
+
+    local target = (UI.contextTable.scenes and UI.activeScene and UI.contextTable.scenes[UI.activeScene])
+            and UI.contextTable.scenes[UI.activeScene].elements
+            or UI.contextTable.elements
+    table.insert(target, e)
     return e
 end
 

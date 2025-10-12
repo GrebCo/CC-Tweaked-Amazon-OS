@@ -5,6 +5,7 @@
 - [ ] Access to cookies (cookies library)
 - [ ] Get/change the states of **minimark** only *elements* (UI elements from minimark) (document Library)
 - [ ] Get some OS events (keystrokes mouse pos) (FizzleOS libraries)
+- [ ] Ability to initiate downloads (after a warning screen ofc) (Computer to computer or a wget string)
 
 ```
 cookies[somevar] = something
