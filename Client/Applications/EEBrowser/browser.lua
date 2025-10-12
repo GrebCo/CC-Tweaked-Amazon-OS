@@ -1,191 +1,300 @@
--- Updated: 5/20/2025
--- A simple web browser for CC:Tweaked using a custom UI library and MiniMark renderer.
--- It fetches pages over a network protocol, caches them locally, and renders formatted text.
+-- Updated: Browser with splash screen
+-- Uses scenes (Splash -> Browser)
 
--- Import custom utility modules
-local ui = dofile("OSUtil/ui.lua")                 -- Custom UI framework for buttons, labels, etc.
-local minimark = dofile("OSUtil/MiniMark.lua")     -- Renderer for MiniMark markup files (simple HTML-like format)
-local net = dofile("OSUtil/ClientNetworkHandler.lua") -- Handles client-side network communication
-local fizzle = dofile("EEBrowser/fizzle.lua") -- Handles all fizzle scripts
+local ui = dofile("OSUtil/ui.lua")
+local minimark = dofile("OSUtil/MiniMark.lua")
+local net = dofile("OSUtil/ClientNetworkHandler.lua")
+local fizzle = dofile("EEBrowser/fizzle.lua")
 
-local protocol = "EENet"                           -- Network protocol used for fetching pages
-local cacheDir = "/browser_cache"                  -- Directory to store cached website files
+local protocol = "EENet"
+local cacheDir = "/browser_cache"
 
-local ENABLE_LOG = true
+local ENABLE_LOG = false
 if ENABLE_LOG then
   local logger = dofile("/OSUtil/Logger.lua")
   log = logger.log
   log("Logger initialized.")
 else
-  log = function()  end
+  log = function() end
 end
 
-
--- Browser cache of elements
+-- Context table
 local contextTable = {
-  elements = {},   -- all UI / MiniMark elements live here
-  functions = {},  -- shared callable functions (e.g. addElement, render, etc.)
-  scripts  = {},    -- script-defined functions or handler
+  elements = {},
+  scenes = {},
+  functions = { log = log },
+  scripts = {},
   events = {}
 }
 
-contextTable.functions.log = log
-
--- Ensure cache directory exists
 fs.makeDir(cacheDir)
 
-
--- Get terminal dimensions for layout
-local screenWidth, screenHeight = term.getSize()
-
--- Function: Fetches website content via the network and saves it to cache
+-------------------------------------------------
+-- Website fetching function
+-------------------------------------------------
 local function getWebsite(url, protocol)
-  local baseUrl = url:match("([^/]+)")                 -- Extract domain or base address
-  local response = net.query(baseUrl, url, protocol)   -- Send a query using the network handler
+  local baseUrl = url:match("([^/]+)")
+  local response = net.query(baseUrl, url, protocol)
   log("Attempting to get " .. url)
   if not response then
-    return false, "No response from server"            -- Handle failed network response
+    log("No response from " .. url)
+    return false, "No response from server"
   end
 
-  -- Sanitize the URL into a safe filename for caching
   local safeFilename = url:gsub("[^%w_]", "_") .. ".txt"
   local path = fs.combine(cacheDir, safeFilename)
-
-  -- Try to write the response to a file
-  local file = fs.open(path, "w")
-  if not file then
-    return false, "Failed to open file for writing"
-  end
-
-  file.write(response)
-  file.close()
-  return true, path                                    -- Return success and the cached file path
+  local f = fs.open(path, "w")
+  if not f then return false, "Failed to open file for writing" end
+  f.write(response)
+  f.close()
+  return true, path
 end
 
---=========================================
--- UI ELEMENTS
---=========================================
-
--- Initialize UI system (sets up elements, screen, etc.)
-
+-------------------------------------------------
+-- Initialize UI and Fizzle
+-------------------------------------------------
 ui.init(contextTable)
-log("UI initialized.")
 fizzle.init(contextTable)
-log("Fizzle initialized.")
 
--- MiniMark renderer setup
-local renderer = ui.minimarkrenderer({
-  path = "EEBrowser/Default.txt",          -- Default file to render on startup
-  position = "center",           -- Centered on screen
-  renderer = minimark,           -- Use MiniMark renderer
-  y = 2,                         -- Vertical offset (to leave space for UI at top)
-  scrollOffset = -1,             -- Initial scroll offset
-  width = screenWidth,           -- Match screen width
-  height = screenHeight - 2,     -- Leave room for top/bottom labels
-  scrollSpeed = 1                -- How fast it scrolls
+-------------------------------------------------
+-- Scene 1: Splash Screen
+-------------------------------------------------
+ui.newScene("Splash")
+ui.setScene("Splash")
 
+ui.label({
+  text = "Welcome to EEnet Browser",
+  position = "center",
+  yOffset = -2,
+  fg = colors.yellow
 })
 
--- Exit button that reboots the system
+ui.label({
+  text = "A lightweight network browser for CC:Tweaked",
+  position = "center",
+  yOffset = 0,
+  fg = colors.lightGray
+})
+
+ui.button({
+  text = "Launch Browser",
+  position = "center",
+  yOffset = 2,
+  bg = colors.green,
+  colorPressed = colors.lime,
+  onclick = function()
+    ui.setScene("Browser") -- transition to browser scene
+  end
+})
+
+ui.button({
+  text = "Settings",
+  position = "center",
+  yOffset = 4,
+  bg = colors.cyan,
+  colorPressed = colors.lightBlue,
+  onclick = function()
+    ui.setScene("Settings")
+  end
+})
+
+-------------------------------------------------
+-- Scene 2: Browser Interface
+-------------------------------------------------
+
+ui.setScene("Browser")
+
+local screenWidth, screenHeight = term.getSize()
+
+
+
+local renderer = ui.minimarkrenderer({
+  path = "EEBrowser/Default.txt",
+  position = "center",
+  renderer = minimark,
+  y = 2,
+  scrollOffset = -1,
+  width = screenWidth,
+  height = screenHeight - 2,
+  scrollSpeed = 1
+})
+
 ui.createExitButton(function()
   print("Exiting browser...")
   os.reboot()
 end)
 
--- Label at the bottom showing current status
-local label = ui.label({
+local statusLabel = ui.label({
   text = "Welcome to Browser!",
   fg = colors.yellow,
   bg = colors.black,
-  position = "bottomCenter",
-  height = 1
+  position = "bottomCenter"
 })
 
--- "URL:" label at the top-left
 local urlLabel = ui.label({
-  text = "URL:",
+  text = " URL:",
   fg = colors.white,
-  bg = colors.black,
-  position = "topLeft",
-  height = 1
+  bg = colors.gray,
+  xOffset = 5,
+  position = "topLeft"
 })
 
--- Text input field for user to enter a URL
-local input = ui.textfield({
-  text = "",
-  width = screenWidth / 2,     -- Half the screen width
+local settings = ui.button({
+  text = "set",
+  fg = colors.blue,
+  bg = colors.gray,
+  position = "topRight",
+  xOffset = -4,
+  onclick = function()
+    ui.setScene("Settings")
+  end
+})
+
+local back = ui.button({
+  text = "<<",
+  fg = colors.blue,
+  bg = colors.gray,
+  position = "topLeft",
+  onclick = function()
+    -- TODO: history
+  end
+})
+
+ui.label({
+  text = "|",
   fg = colors.white,
   bg = colors.gray,
   position = "topLeft",
-  height = 2,
-  xOffset = #urlLabel.text     -- Position next to the "URL:" label
+  xOffset = 2,
 })
 
--- Submit button that fetches and displays the requested URL
+local forward = ui.button({
+  text = ">>",
+  fg = colors.blue,
+  bg = colors.gray,
+  position = "topLeft",
+  xOffset = 3,
+  toggle = true
+})
+
+local input = ui.textfield({
+  text = "",
+  width = screenWidth / 2,
+  fg = colors.white,
+  bg = colors.gray,
+  position = "topLeft",
+  xOffset = #urlLabel.text + 6
+})
+
 local submit = ui.button({
   text = "Submit",
   fg = colors.white,
   bg = colors.green,
-  colorPressed = colors.lime,  -- Lighter color when pressed
+  colorPressed = colors.lime,
   onclick = function()
     local url = input.text
-    ui.updateLabel(label, "Loading: " .. url)
-
+    ui.updateLabel(statusLabel, "Loading: " .. url)
     local ok, result = getWebsite(url, protocol)
     if ok then
-      ui.minimarkUpdatePath(renderer, result)   -- Update renderer with new cached file
+      ui.minimarkUpdatePath(renderer, result)
     else
-      ui.updateLabel(label, "Error: " .. result)
+      ui.updateLabel(statusLabel, "Error: " .. result)
     end
   end,
   width = 8,
   height = 1,
-  x = input.width + 2           -- Position just after the text field
+  xOffset = 5 + #urlLabel.text + input.width,
+  position = "topLeft"
 })
 
---=========================================
--- MAIN RUNTIME LOOP
---=========================================
+-------------------------------------------------
+-- Scene 3: Settings Interface
+-------------------------------------------------
+ui.setScene("Settings")
 
+-- Dummy Settings Screen
+ui.label({
+  text = "=== Settings ===",
+  position = "topCenter",
+  yOffset = 1,
+  fg = colors.yellow
+})
+
+ui.checkbox({
+  text = "Enable Developer Mode",
+  position = "center",
+  yOffset = -1,
+  onclick = function(e, state)
+    contextTable.functions.log("Developer mode: " .. tostring(state))
+  end
+})
+
+ui.checkbox({
+  text = "Enable Sound Effects",
+  position = "center",
+  yOffset = 1,
+  onclick = function(e, state)
+    contextTable.functions.log("Sound effects: " .. tostring(state))
+  end
+})
+
+ui.button({
+  text = "Clear Cache",
+  position = "center",
+  yOffset = 3,
+  bg = colors.red,
+  colorPressed = colors.orange,
+  onclick = function()
+    fs.delete("/browser_cache")
+    fs.makeDir("/browser_cache")
+    ui.label({ text = "Cache cleared!", position = "bottomCenter", fg = colors.green })
+  end
+})
+
+ui.button({
+  text = "Back to Browser",
+  position = "bottomCenter",
+  yOffset = -1,
+  bg = colors.gray,
+  colorPressed = colors.lightGray,
+  onclick = function()
+    ui.setScene("Browser")
+  end
+})
+
+-------------------------------------------------
+-- Main runtime loop
+-------------------------------------------------
 function run()
-  -- Thread: listens for and handles UI events
-  function updateEvents()
-    while true do
-      ui.handleEvent()          -- Pass events (clicks, keypresses, etc.) to UI system
-    end
+  local function updateEvents()
+    while true do ui.handleEvent() end
   end
 
-  -- Thread: renders the UI and handles hyperlink clicks from MiniMark
-  function renderUI()
+  local function renderUI()
     while true do
-      ui.render()               -- Redraw all UI elements
+      ui.render()
 
-      -- Detect if MiniMark renderer set a new link (clicked)
-      if renderer.newlink then
+      if ui.activeScene == "Browser" and renderer.newlink then
         local url = renderer.newlink
-        renderer.newlink = nil  -- Clear link flag
-
-        ui.updateLabel(label, "Loading: " .. url)
+        renderer.newlink = nil
+        ui.updateLabel(statusLabel, "Loading: " .. url)
         local ok, result = getWebsite(url, protocol)
         if ok then
-          ui.minimarkUpdatePath(renderer, result)  -- Display linked page
-          input.text = url                         -- Update URL field
+          ui.minimarkUpdatePath(renderer, result)
+          input.text = url
         else
-          ui.updateLabel(label, "Error: " .. result)
+          ui.updateLabel(statusLabel, "Error: " .. result)
         end
       end
-
-      sleep(0.001)              -- Small delay to reduce CPU usage
+      sleep(0.001)
     end
   end
 
-  -- Run both loops in parallel: UI event handling and rendering
   parallel.waitForAny(renderUI, updateEvents)
 end
 
-
-
--- Start the main browser loop
-log("Starting browser main loop.")
-ui.minimarkUpdatePath(renderer, "EEBrowser/Default.txt") -- Load default page
+-------------------------------------------------
+-- Start on Splash
+-------------------------------------------------
+ui.setScene("Splash")
 run()
