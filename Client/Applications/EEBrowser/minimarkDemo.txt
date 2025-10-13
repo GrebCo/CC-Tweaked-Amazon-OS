@@ -1,17 +1,25 @@
 minimark=====================================
 
 
-<button:"Text on the button", "color FG", "color background", "uniqueIndentifier", "Send Email">
+<button:"Text on the button", "color FG", "color background", "uniqueIndentifier", "sendEmailEvent">
 <script>
 local minimarkFile = document.get()
 
-function something(args) "Send Email"
+function something(args) "sendEmailEvent"
     text = grabtextfromelement("uniqueIndentifier")
     sendtextoverrednet(text, destination)
     dosomeLogging("send som444e text")
 end
 
-function onload(args) "on load"
+function doPopup(args) "sendEmailEvent"
+    if success then
+        popup("Title", "Message", "color FG", "color BG", "button1Text", "button2Text", "uniqueIndentifier")
+    else
+        popup("Title", "Message", "color FG", "color BG", "button1Text", "uniqueIndentifier")
+    end
+end
+
+function onload(args) "onload"
    --do something like a main loop
 end
 

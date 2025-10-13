@@ -1,4 +1,4 @@
- local fizzleContext
+local fizzleContext
 
 local fizzleEvents
 
@@ -14,17 +14,7 @@ end
 -- TODO [p2] Optimize the for loops
 -- Extracts from "local function foo(bar) eventName" returns bool ok
 local function registerEventsFromCache()
-    local f = fs.open(cacheFilePath, "r")
-    if not f then error("[fzzl] Could not open cache file path: " .. cacheFilePath) end
-
-
-    -- First Extract the lines, _ means ignored variable
-    local lines = {}
-    for _, line in function() return f.readLine() end do
-        table.insert(lines, line)
-    end
-    f.close()
-
+    lines = fizzleContext.scripts[1] -- fizzleContext.scripts should be an array of lines of the script
 
     -- Extract the events
     local fizzleEvents = {}
