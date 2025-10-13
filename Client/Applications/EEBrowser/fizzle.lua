@@ -96,7 +96,13 @@ local function registerEventsFromCache()
         end
 
         -- Detect function declaration right after
+        -- Support multiple declaration styles:
+        --   local function name(...)
+        --   function name(...)
+        --   local name = function(...)
         local funcName = line:match("local%s+function%s+(%w+)%s*%(")
+                or line:match("function%s+(%w+)%s*%(")
+                or line:match("local%s+(%w+)%s*=%s*function%s*%(")
         if funcName and lastEventName then
             events.registerEvent(lastEventName)
             log(string.format("[fzzl] Registered event '%s' for function '%s'", lastEventName, funcName))
@@ -134,14 +140,16 @@ local function assignFizzleFunctionsToEventsFromCache()
         local eventTag = line:match("@([%w_]+)")
         if eventTag then
             lastEventName = eventTag
-        elseif line:match("local%s+function%s+(%w+)%s*%(") then
+            cacheLua_scriptFile.writeLine(line)
+        else
+            -- detect several forms of function declaration
             local funcName = line:match("local%s+function%s+(%w+)%s*%(")
+                    or line:match("function%s+(%w+)%s*%(")
+                    or line:match("local%s+(%w+)%s*=%s*function%s*%(")
             if funcName and lastEventName then
                 functionEventMap[funcName] = lastEventName
                 lastEventName = nil
             end
-            cacheLua_scriptFile.writeLine(line)
-        else
             cacheLua_scriptFile.writeLine(line)
         end
     end
@@ -217,20 +225,20 @@ local function load()
     return true
 end
 
- -- External, only way to refresh fizzle
+-- External, only way to refresh fizzle
 local function renew()
     reset()
     load()
     return true
 end
 
- -- Must be called prior to any module usages
- local function init(contextTable)
-     fizzleContext = contextTable
-     fizzleContext.triggerEvent = triggerFizzleEvent
-     log = fizzleContext.functions.log or function() end
-     log("Fizzle initialized!")
- end
+-- Must be called prior to any module usages
+local function init(contextTable)
+    fizzleContext = contextTable
+    fizzleContext.triggerEvent = triggerFizzleEvent
+    log = fizzleContext.functions.log or function() end
+    log("Fizzle initialized!")
+end
 
 
 
