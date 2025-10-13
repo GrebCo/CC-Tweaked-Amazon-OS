@@ -4,13 +4,10 @@ local log = function()  end
 
 local fizzleEvents = {}
 
-local cacheFilePath
+local cacheFilePath = "/cache/"
 
 -- Import events module
-local events = require("OSUtil/events")
-
--- Store sandboxed functions for each event
-local sandboxedFunctions = {}
+local events = dofile("OSUtil/events.lua")
 
 -- Create a safe sandbox environment
 local function createSandbox()
@@ -25,7 +22,7 @@ local function createSandbox()
         string = string,
         table = table,
         math = math,
-        print = print,
+        print = log,
         error = error,
         assert = assert,
         -- Add other safe functions as needed
@@ -80,94 +77,79 @@ end
 -- TODO [p2] Optimize the for loops
 -- Extracts from "local function foo(bar) eventName" returns bool ok
 local function registerEventsFromCache()
-    local lines = fizzleContext.scripts[1] -- fizzleContext.scripts should be an array of lines of the script
-
-    -- Handle if scripts is array of arrays or single array
-    if type(lines) == "string" then
-        lines = fizzleContext.scripts
+    local lines = {}
+    for _, script in ipairs(fizzleContext.scripts) do
+        for line in script:gmatch("[^\r\n]+") do
+            table.insert(lines, line)
+        end
     end
 
-    -- Extract the events
     fizzleEvents = {}
+    local lastEventName = nil
 
     for _, line in ipairs(lines) do
-        -- Extract event name from function declarations like: "local function foo(params) eventName"
-        local eventName = string.match(line, "function%s+%w+%s*%([^)]*%)%s+(%w+)")
-        if eventName then
-            log("[fzzl] Found event: " .. eventName)
-            table.insert(fizzleEvents, eventName)
-            events.registerEvent(eventName)
+        -- Detect annotation first
+        local eventTag = line:match("@([%w_]+)")
+        if eventTag then
+            lastEventName = eventTag
+            log("[fzzl] Found event annotation @" .. eventTag)
+        end
+
+        -- Detect function declaration right after
+        local funcName = line:match("local%s+function%s+(%w+)%s*%(")
+        if funcName and lastEventName then
+            events.registerEvent(lastEventName)
+            log(string.format("[fzzl] Registered event '%s' for function '%s'", lastEventName, funcName))
+            lastEventName = nil -- reset for next pair
         end
     end
 
     return true
 end
 
+
 -- TODO Not tested yet
 local function assignFizzleFunctionsToEventsFromCache()
-    -- Generate Sandboxed Function to subscribe to events
-    local f = fs.open(cacheFilePath, "r")
-    if not f then
-        log("[fzzl] Could not open cache file path: " .. cacheFilePath)
-        return false
-    end
-
-    -- First Extract the lines
-    local lines = {}
-    local fileLine = f.readLine()
-    while fileLine do -- TODO verify that this correctly reads all the lines
-        table.insert(lines, fileLine)
-        fileLine = f.readLine()
-    end
-    f.close()
-
     local cache_luaPath = fs.getDir(cacheFilePath) .. "/cache_lua/"
-    local cache_LuaFile = cache_luaPath .. "script.lua" -- /cache_lua/script.lua
-
-    -- Create directory for temporary script
+    local cache_LuaFile = cache_luaPath .. "script.lua"
     fs.makeDir(cache_luaPath)
 
-    -- Check that there isn't a cacheLua file already
-    if fs.exists(cache_LuaFile) then
-        fs.delete(cache_LuaFile)
-    end
-
-    -- Create cachelua script file (contains standard lua code without event names)
     local cacheLua_scriptFile = fs.open(cache_LuaFile, "w")
     if not cacheLua_scriptFile then
         log("[fzzl] Could not create cache lua file: " .. cache_LuaFile)
         return false
     end
 
-    -- Process each line to extract functions and their event names
+    -- Build function→event mapping from annotations
     local functionEventMap = {}
-
-    for _, scriptLine in ipairs(lines) do
-        -- Detect if it is a function declaration line
-        local funcName, eventName = string.match(scriptLine, "local%s+function%s+(%w+)%s*%([^)]*%)%s+(%w+)")
-        if funcName and eventName then
-            -- Store the mapping of function to event
-            functionEventMap[funcName] = eventName
-            -- Write the function without the event name
-            local cleanLine = string.gsub(scriptLine, "(%s+)(%w+)$", "")
-            cacheLua_scriptFile.writeLine(cleanLine)
-        else
-            -- Regular line, write as-is
-            cacheLua_scriptFile.writeLine(scriptLine)
+    local lines = {}
+    for _, script in ipairs(fizzleContext.scripts) do
+        for line in script:gmatch("[^\r\n]+") do
+            table.insert(lines, line)
         end
     end
-    cacheLua_scriptFile.close()
 
-    -- Load and execute the script in sandbox
-    local scriptContent = ""
-    local scriptFile = fs.open(cache_LuaFile, "r")
-    if scriptFile then
-        local content = scriptFile.readAll()
-        scriptFile.close()
-        scriptContent = content
+    local lastEventName = nil
+    for _, line in ipairs(lines) do
+        local eventTag = line:match("@([%w_]+)")
+        if eventTag then
+            lastEventName = eventTag
+        elseif line:match("local%s+function%s+(%w+)%s*%(") then
+            local funcName = line:match("local%s+function%s+(%w+)%s*%(")
+            if funcName and lastEventName then
+                functionEventMap[funcName] = lastEventName
+                lastEventName = nil
+            end
+            cacheLua_scriptFile.writeLine(line)
+        else
+            cacheLua_scriptFile.writeLine(line)
+        end
     end
 
-    -- Create sandbox and load the script
+    cacheLua_scriptFile.close()
+
+    -- Load the script content
+    local scriptContent = table.concat(fizzleContext.scripts, "\n")
     local sandbox = createSandbox()
     local scriptFunc, err = load(scriptContent, "fizzle_script", "t", sandbox)
 
@@ -176,37 +158,33 @@ local function assignFizzleFunctionsToEventsFromCache()
         return false
     end
 
-    -- Execute the script to define functions in sandbox
     local execSuccess, execErr = pcall(scriptFunc)
     if not execSuccess then
         log("[fzzl] Error executing script: " .. (execErr or "unknown error"))
         return false
     end
 
-    -- Register functions with their corresponding events
+    -- Register functions
     for funcName, eventName in pairs(functionEventMap) do
         local func = sandbox[funcName]
         if func and type(func) == "function" then
-            -- Create a wrapper that calls the sandboxed function
-            local wrappedFunc = function(params)
-                local callSuccess, result = pcall(func, params)
-                if not callSuccess then
-                    print("[fzzl] Error in event handler '" .. funcName .. "': " .. tostring(result))
+            events.registerFunction(eventName, function(params)
+                local ok, res = pcall(func, params)
+                if not ok then
+                    print("[fzzl] Error in event '" .. eventName .. "': " .. tostring(res))
                 end
-                return result
-            end
-
-            events.registerFunction(eventName, wrappedFunc)
-            print("[fzzl] Registered function '" .. funcName .. "' for event '" .. eventName .. "'")
+                return res
+            end)
+            print("[fzzl] Registered '" .. funcName .. "' for event '" .. eventName .. "'")
         else
-            print("[fzzl] Warning: Function '" .. funcName .. "' not found in sandbox")
+            print("[fzzl] Warning: function '" .. funcName .. "' not found in sandbox")
         end
     end
 
-    -- Clean up temporary files
-    fs.delete(cache_luaPath)
+    --fs.delete(cache_luaPath)
     return true
 end
+
 
 local function triggerFizzleEvent(eventName, params)
     print("[fzzl] Triggering event: " .. eventName)
@@ -250,7 +228,8 @@ end
  local function init(contextTable)
      fizzleContext = contextTable
      fizzleContext.triggerEvent = triggerFizzleEvent
-        log = fizzleContext.functions.log or function() end
+     log = fizzleContext.functions.log or function() end
+     log("Fizzle initialized!")
  end
 
 

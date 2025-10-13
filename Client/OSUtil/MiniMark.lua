@@ -460,43 +460,38 @@ end
 -- TODO Implement getting scripts and remove from renderPage
 local function getScripts(path)
   local lines = loadLinesFromFile(path)
-  local scriptRegistry = {}
+  local scripts = {}
 
   local currentScript = nil
-  local currentName = nil
 
   for _, line in ipairs(lines) do
-    -- Try to find a <script:"name"> anywhere in the line
-    local startTag = line:match('<script%s*:%s*"(.-)">')
-    local endTag   = line:match('</script>')
+    local startTag = line:match("<script%s*>")
+    local endTag = line:match("</script>")
 
     if startTag then
-      currentName = startTag
       currentScript = {}
     elseif endTag and currentScript then
-      -- Save the script
-      scriptRegistry[currentName] = table.concat(currentScript, "\n")
+      table.insert(scripts, table.concat(currentScript, "\n"))
       currentScript = nil
-      currentName = nil
     elseif currentScript then
-      -- Keep collecting lines for this script
       table.insert(currentScript, line)
     end
   end
 
-  -- Optional: dump to log for debugging
+  -- Optional: write scripts to log for debugging
   local logFile = fs.open("scripts.log", "w")
   if logFile then
-    for name, code in pairs(scriptRegistry) do
-      logFile.writeLine("[" .. name .. "]")
+    for i, code in ipairs(scripts) do
+      logFile.writeLine("[Script " .. i .. "]")
       logFile.writeLine(code)
       logFile.writeLine(("="):rep(20))
     end
     logFile.close()
   end
 
-  return scriptRegistry
+  return scripts
 end
+
 
 
 
