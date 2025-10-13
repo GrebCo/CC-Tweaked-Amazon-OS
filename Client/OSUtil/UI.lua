@@ -70,7 +70,6 @@ function UI.setScene(name)
     needRender = true
 end
 
-
 function UI.removeChild(target)
     local parentScene = UI.activeScene
     local targetName = nil
@@ -132,10 +131,6 @@ function UI.setChild(childName, xOffset, yOffset, position)
     UI.setScene(UI.activeScene)
 end
 
-
-
-
-
 function UI._addElementToActive(e)
     if UI.activeScene then
         table.insert(contextTable.scenes[UI.activeScene].elements, e)
@@ -143,9 +138,6 @@ function UI._addElementToActive(e)
         table.insert(contextTable.elements, e) -- fallback if no scene active
     end
 end
-
-
-
 
 function UI.handleEvent()
     local event, a, b, c = os.pullEvent()
@@ -254,7 +246,6 @@ function UI.drawElement(e, offsetX, offsetY)
     end
 end
 
-
 function UI.render()
     if not needRender then return end
     UI.term.setBackgroundColor(colors.black)
@@ -297,8 +288,6 @@ function UI.render()
 
     needRender = false
 end
-
-
 
 function UI.handleClick(x, y)
 
@@ -384,7 +373,6 @@ function UI.handleScroll(scroll, x, y)
     return false
 end
 
-
 function UI.handleInput(event, a, b)
 
 
@@ -443,7 +431,6 @@ function UI.drawCheckbox(e)
     local box = e.checked and "[x] " or "[ ] "
     UI.term.write(box .. e.text)
 end
-
 
 function UI.drawTextfield(e)
     UI.term.setCursorPos(e.x, e.y)
@@ -567,7 +554,6 @@ function UI.textfield(opts)
 
     return e
 end
-
 
 function UI.rectangle(opts)
     local e = {

@@ -6,22 +6,7 @@
 - [ ] Get/change the states of **minimark** only *elements* (UI elements from minimark) (document Library)
 - [ ] Get some OS events (keystrokes mouse pos) (FizzleOS libraries)
 - [ ] Ability to initiate downloads (after a warning screen ofc) (Computer to computer or a wget string)
-
-```
-cookies[somevar] = something
-
-fizzleOS.lua
-pullEvent(something)
-    if something == sensitiveEvent
-    return error
-    local event, button, x, y = os.pullEvent("mouse_click")
-end
+- [ ] Create custom UI/popups via fizzle (UI library)
 
 
-<script>
-fizzleOS.pullevent("mouse_click")
-</script>
-```
-
-
-
+- [ ] Browser needs to create ui elements based on the minimark file, and then bind those elements to fizzle functions.
