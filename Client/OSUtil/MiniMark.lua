@@ -1,5 +1,31 @@
--- MiniMark++ Page Renderer for CC:Tweaked
--- Supports headers, alignment, inline text/background colors, links, buttons, checkboxes, textboxes, and script tags
+-- MiniMark v0.91 (Spec-Conformant) for CC:Tweaked
+-- Drop-in renderer + tokenizer with UI registry output
+-- Implements: line-based blocks, persistent attributes (fg/bg/id), <hr>, <br>,
+-- escape sequences (\\, \<, \>, \"), links (3 forms), buttons, checkboxes, textboxes,
+-- script extraction with optional @EventName annotations or event:"Name" attribute.
+--
+-- This is a structural rewrite to simplify parsing and clearly separate:
+--   1) Preprocess (escapes)  2) Tokenization to logical lines  3) Layout/Render  4) Script extraction
+--
+-- Exported API:
+--   renderPage(path, scroll?, startY?) -> uiRegistry, lastY
+--   getScripts(path) -> { {event?<string>, code<string>}, ... }
+--   getAlignment(line) -> "left"|"center"|"right", cleanedLine
+--   stripTags(line) -> line with <...> removed
+--   loadPage(path) -> { lines }
+--
+-- Notes:
+--   • Links support: <link "Target","Label">, <link "Target">, <link target:"T" label:"L" fg:color bg:color>
+--   • <textbox> supports width:"N", id:"...", fg/bg, blinkChar:"_"
+--   • <button> supports label:"...", fg/bg, pressFg/pressBg, id:"...", onClick:EventName
+--   • <checkbox> supports label:"...", boxChecked:"[X]", boxUnchecked:"[ ]", id:"...", onClick:EventName
+--   • <id:"..."> applies to subsequent text/inline elements until reset/newline
+--   • <fg:color>/<bg:color> are aliases for <text:color>/<background:color>
+--   • <reset> resets fg/bg/id to defaults
+--   • <hr:"--+"> repeats pattern across terminal width
+--   • <br> inserts a blank line
+--
+-- Rendering: returns uiRegistry entries like { y = Y, element = {type="button"|..., x, y, width, ...} }
 
 -- Maps color names to their corresponding color values
 local colorMap = {
@@ -9,49 +35,30 @@ local colorMap = {
   pink = colors.pink, brown = colors.brown, purple = colors.purple
 }
 
--- Dumps a tokenized MiniMark page to a file
--- pageTokens: output of parsePageToLogicalLines(path)
--- filename: where to write the dump
-local function dumpTokensToFile(pageTokens, filename)
-  local f = fs.open(filename, "w")
-  if not f then error("Could not open " .. filename .. " for writing") end
+---------------------------------------------------------------------
+-- Utilities
+---------------------------------------------------------------------
 
-  local function dumpTable(tbl, indent)
-    indent = indent or ""
-    for k, v in pairs(tbl) do
-      if type(v) == "table" then
-        f.writeLine(indent .. k .. ":")
-        dumpTable(v, indent .. "  ")
-      else
-        f.writeLine(indent .. k .. ": " .. tostring(v))
-      end
-    end
-  end
-
-  for i, logical in ipairs(pageTokens) do
-    f.writeLine("Logical Line " .. i .. " (" .. logical.type .. ")")
-    if logical.type == "line" then
-      f.writeLine("  Alignment: " .. logical.align)
-      for j, el in ipairs(logical.elements) do
-        f.writeLine("  Element " .. j .. " (" .. el.type .. ")")
-        dumpTable(el, "    ")
-      end
-    end
-    f.writeLine(("="):rep(40))
-  end
-
-  f.close()
+local function protectEscapes(s)
+  s = s:gsub("\\\\", "__MM_BS__")
+  s = s:gsub("\\<", "__MM_LT__")
+  s = s:gsub("\\>", "__MM_GT__")
+  s = s:gsub('\\"', "__MM_QUOTE__")
+  return s
 end
 
--- Example usage:
--- local tokens = parsePageToLogicalLines("test.mm")
--- dumpTokensToFile(tokens, "token_dump.txt")
+local function restoreEscapes(s)
+  s = s:gsub("__MM_LT__", "<")
+  s = s:gsub("__MM_GT__", ">")
+  s = s:gsub("__MM_QUOTE__", '"')
+  s = s:gsub("__MM_BS__", "\\")
+  return s
+end
 
--- Loads all lines from a given file
+
 local function loadLinesFromFile(path)
   local f = fs.open(path, "r")
   if not f then error("Could not open " .. path) end
-
   local lines = {}
   for line in function() return f.readLine() end do
     table.insert(lines, line)
@@ -60,12 +67,12 @@ local function loadLinesFromFile(path)
   return lines
 end
 
--- Removes all formatting tags (e.g., <text:red>, <link:"page","text">, etc.)
+-- Remove all <...> tags (used for text-only extractions)
 local function stripTags(line)
-  return line:gsub("%<.-%>", "")
+  return (line:gsub("%<.-%>", ""))
 end
 
--- Determines alignment based on leading #s and returns the alignment and cleaned line
+-- Alignment by leading #, returns align + line with the # removed
 local function getAlignment(line)
   if line:match("^###") then
     return "right", line:sub(4)
@@ -78,430 +85,537 @@ local function getAlignment(line)
   end
 end
 
--- Utility: parse key="value" pairs from the tag
-local function parseAttributes(tag)
-  local attrs = {}
-  -- allow optional spaces around = and after commas
-  for key, val in tag:gmatch("(%w+)%s*=%s*\"(.-)\"") do
-    attrs[key] = val
-  end
-  return attrs
+-- Preprocess escapes: \\ -> \, \< -> <, \> -> >, \" -> "
+-- (No \n inline-breaks per user's latest note)
+local function unescape(s)
+  -- Replace backslash escapes; order matters
+  s = s:gsub("\\\\", "\0")      -- temp mark real backslash
+  s = s:gsub("\\<", "<")
+  s = s:gsub("\\>", ">")
+  s = s:gsub('\\"', '"')
+  s = s:gsub("\0", "\\")
+  return s
 end
 
--- Helper: split text into leading spaces + sequence of (word,space) pairs
-local function splitTextIntoWordSpaceRuns(text)
-  local runs = {}
+-- Parse attributes in colon syntax with optional quotes:
+--   key:"value"  key:value   key:"val with spaces"
+-- Returns table and also the baseName (first word before any whitespace/colon chain)
+local function parseTag(tagInner)
+  -- normalize inner spacing
+  local s = tagInner:gsub("^%s+", ""):gsub("%s+$", "")
 
-  -- Leading spaces
-  local leading = text:match("^(%s+)")
-  if leading then
-    table.insert(runs, {type="space", text=leading, width = #leading})
-    text = text:sub(#leading + 1)
+  -- Extract tag name: first contiguous word before any space or colon
+  local name = s:match("^([%w]+)")
+  if not name then return nil, {} end
+  local rest = s:sub(#name + 1)
+
+  local attrs = {}
+
+  -- Handle shorthand for <text:color>, <background:color>, <fg:color>, <bg:color>
+  -- Also handle constructs like <hr:"--+"> or <link "Target","Label"> without keys.
+  -- We'll tokenize positional arguments while also scanning key:value pairs.
+
+  -- First, collect quoted positional strings: "value" or 'value'
+  local posArgs = {}
+  for quoted in rest:gmatch("%b\"\"") do
+    table.insert(posArgs, quoted:sub(2, -2))
   end
 
-  -- Words with their trailing spaces
-  for word, space in text:gmatch("(%S+)(%s*)") do
-    table.insert(runs, {type="word", text=word, width = #word})
-    if #space > 0 then
-      table.insert(runs, {type="space", text=space, width = #space})
+  -- If no double-quoted, try single quotes too (rare in CC but supported)
+  if #posArgs == 0 then
+    for quoted in rest:gmatch("%b''") do
+      table.insert(posArgs, quoted:sub(2, -2))
     end
   end
 
-  -- If text was entirely spaces (no matches), handle (rare) case
-  if #runs == 0 and #text > 0 then
-    table.insert(runs, {type="space", text=text, width = #text})
+  -- Key:value or key:"value"
+  for key, val in rest:gmatch("([%w]+)%s*:%s*\"([^\"]*)\"") do
+    attrs[key] = val
+  end
+  for key, val in rest:gmatch("([%w]+)%s*:%s*([%w%p]+)") do
+    if attrs[key] == nil then
+      attrs[key] = val
+    end
   end
 
+  return name, attrs, posArgs
+end
+
+-- Split visible text into runs of words/spaces for wrapping
+local function splitTextRuns(text)
+  local runs = {}
+  local leading = text:match("^(%s+)")
+  if leading then
+    table.insert(runs, {type="space", text=leading, width=#leading})
+    text = text:sub(#leading + 1)
+  end
+  for word, space in text:gmatch("(%S+)(%s*)") do
+    table.insert(runs, {type="word", text=word, width=#word})
+    if #space > 0 then
+      table.insert(runs, {type="space", text=space, width=#space})
+    end
+  end
+  if #runs == 0 and #text > 0 then
+    table.insert(runs, {type="space", text=text, width=#text})
+  end
   return runs
 end
 
--- Convert a raw line (already stripped of leading header markers) into element tokens
-local function parseLineToElements(line)
-  local tokens = {}
-  local pos = 1
-  local fg, bg = colors.white, colors.black
+---------------------------------------------------------------------
+-- Tokenization: Lines -> Logical Blocks
+---------------------------------------------------------------------
 
-  while pos <= #line do
-    local tagStart, tagEnd, tag = line:find("%<(.-)%>", pos)
-    if tagStart then
-      -- text before tag
-      if tagStart > pos then
-        local txt = line:sub(pos, tagStart - 1)
-        table.insert(tokens, { type = "text", text = txt, fg = fg, bg = bg })
-      end
-
-      -- process tag (update fg/bg or add element token)
-      if tag:match("^text:") then
-        local col = tag:match("^text:(.+)")
-        fg = (col == "reset") and colors.white or (colorMap[col] or colors.white)
-
-      elseif tag:match("^background:") then
-        local col = tag:match("^background:(.+)")
-        bg = (col == "reset") and colors.black or (colorMap[col] or colors.black)
-
-      elseif tag:match("^link:") then
-        local page, label = tag:match("^link:\"(.-)\",\"(.-)\"")
-        if page and label then
-          table.insert(tokens, {
-            type = "link",
-            label = label,
-            page = page,
-            fg = colorMap.lightBlue, bg = colorMap.gray
-          })
-        end
-
-      elseif tag:match("^button:") then
-        local label = tag:match("^button:\"(.-)\"")
-        local attrs = parseAttributes(tag)
-        if label then
-          table.insert(tokens, {
-            type = "button",
-            label = label,
-            attrs = attrs,
-            fg = colorMap[attrs.fg] or colors.white,
-            bg = colorMap[attrs.bg] or colors.gray,
-            hoverFg = colorMap[attrs.hoverFg],
-            hoverBg = colorMap[attrs.hoverBg],
-            pressFg = colorMap[attrs.pressFg],
-            pressBg = colorMap[attrs.pressBg],
-            id = attrs.id,
-            onClick = attrs.onClick,
-            onHover = attrs.onHover
-          })
-        end
-
-      elseif tag:match("^checkbox:") then
-        local label = tag:match("^checkbox:\"(.-)\"")
-        local attrs = parseAttributes(tag)
-        if label then
-          table.insert(tokens, {
-            type = "checkbox",
-            label = label,
-            attrs = attrs,
-            fg = colorMap[attrs.fg] or colors.white,
-            bg = colorMap[attrs.bg] or colors.black,
-            boxChecked = attrs.box or "[x]",
-            boxUnchecked = attrs.emptyBox or "[ ]",
-            id = attrs.id,
-            onClick = attrs.onClick
-          })
-        end
-
-      elseif tag:match("^textbox:") then
-        local width = tonumber(tag:match("^textbox:(%d+)")) or 10
-        table.insert(tokens, {
-          type = "textbox",
-          width = width,
-          fg = fg, bg = bg
-        })
-      end
-
-      pos = tagEnd + 1
-    else
-      -- remaining text
-      if pos <= #line then
-        local txt = line:sub(pos)
-        table.insert(tokens, { type = "text", text = txt, fg = fg, bg = bg })
-      end
-      break
-    end
-  end
-
-  return tokens
+-- Renderer state that persists within a single line
+local function defaultState()
+  return {
+    fg = colors.white,
+    bg = colors.black,
+    id = nil,
+  }
 end
 
--- Parse whole page into logical lines (skip script content)
+-- Produces a sequence of logical entries:
+--   { type="line", align="left|center|right", elements={...} }
+--   { type="blank" }
+--   { type="hr", pattern="--+" }
+-- Script regions are skipped from visual output.
 local function parsePageToLogicalLines(path)
   local rawLines = loadLinesFromFile(path)
-  local logicalLines = {}
+  local logical = {}
+
   local inScript = false
+
   for _, raw in ipairs(rawLines) do
-    -- script handling: skip script contents entirely from rendering
-    local startTag = raw:match('<script%s*:%s*".-">')
-    local endTag   = raw:match('</script>')
+    local line = protectEscapes(raw or "")
+
+    -- script begin / end (visual renderer skips contents)
+    local startTag = line:match("<%s*script[^>]*>")
+    local endTag   = line:match("</%s*script%s*>")
+
     if startTag then
       inScript = true
     elseif endTag then
       inScript = false
     elseif inScript then
-      -- ignore
+      -- skip script content from visual rendering
     else
-      if raw:find("^%s*$") then
-        table.insert(logicalLines, { type = "blank" })
+      if line:find("^%s*$") then
+        table.insert(logical, {type="blank"})
       else
-        local align, cleaned = getAlignment(raw)
-        local elements = parseLineToElements(cleaned)
-        table.insert(logicalLines, { type = "line", align = align, elements = elements })
+        -- Check for structural single-line tags first: <hr:"..."> or <br>
+        local structural = line:match("^%s*<%s*hr[^>]*>%s*$")
+        if structural then
+          local _, attrs, posArgs = parseTag(line:match("<(.-)>"))
+          local pattern = attrs[1] or (posArgs[1] or "-")
+          table.insert(logical, {type="hr", pattern = pattern ~= "" and pattern or "-"})
+        elseif line:match("^%s*<%s*br%s*>%s*$") then
+          table.insert(logical, {type="blank"})
+        else
+          local align, body = getAlignment(line)
+          local st = defaultState()
+          local elements = {}
+
+          local pos = 1
+          while pos <= #body do
+            local tagStart, tagEnd, inner = body:find("<(.-)>", pos)
+            if tagStart then
+              -- text before this tag
+              if tagStart > pos then
+                local txt = body:sub(pos, tagStart - 1)
+                if #txt > 0 then
+                  table.insert(elements, {type="text", text=restoreEscapes(txt), fg=st.fg, bg=st.bg, id=st.id})
+                end
+              end
+
+              -- process tag
+              local name, attrs, posArgs = parseTag(inner or "")
+              name = name or ""
+
+              -- Aliases + reset + persistent id
+              if name == "text" or name == "fg" then
+                -- shorthand <text:green> OR key color:"green"
+                local colorKey = attrs.color or attrs[1] or posArgs[1] or inner:match("^text:%s*([%w]+)")
+                if colorKey == "reset" then
+                  st.fg = colors.white
+                else
+                  st.fg = colorMap[colorKey] or colors.white
+                end
+              elseif name == "background" or name == "bg" then
+                local colorKey = attrs.color or attrs[1] or posArgs[1] or inner:match("^background:%s*([%w]+)")
+                if colorKey == "reset" then
+                  st.bg = colors.black
+                else
+                  st.bg = colorMap[colorKey] or colors.black
+                end
+              elseif name == "reset" then
+                st = defaultState()
+              elseif name == "id" then
+                local idv = attrs[1] or attrs.id or posArgs[1]
+                if not idv then idv = inner:match('^id:%s*"(.-)"') end
+                -- Starting a new persistent attribute mid-line => new block (spec)
+                -- We'll emulate this by inserting a soft line break marker
+                if #elements > 0 then
+                  table.insert(elements, {type="softbreak"})
+                end
+                st.id = idv
+
+              elseif name == "link" then
+                -- three forms
+                local target, label, lfg, lbg
+                if #posArgs >= 1 then
+                  target = posArgs[1]
+                  label = posArgs[2] or target
+                else
+                  target = attrs.target or attrs[1]
+                  label  = attrs.label or attrs[2] or target
+                end
+                lfg = attrs.fg and (colorMap[attrs.fg] or st.fg) or st.fg
+                lbg = attrs.bg and (colorMap[attrs.bg] or st.bg) or st.bg
+
+                table.insert(elements, {
+                  type="link",
+                  label=restoreEscapes(label or ""),
+                  target=target or "",
+                  fg=lfg, bg=lbg, id=st.id,
+                })
+
+              elseif name == "button" then
+                local label = restoreEscapes(attrs.label or attrs[1] or "Button")
+                local fg = attrs.fg and (colorMap[attrs.fg] or st.fg) or st.fg
+                local bg = attrs.bg and (colorMap[attrs.bg] or st.bg) or st.bg
+
+                local meta = {
+                  pressFg = attrs.pressFg and colorMap[attrs.pressFg] or nil,
+                  pressBg = attrs.pressBg and colorMap[attrs.pressBg] or nil,
+                  id = attrs.id or st.id,
+                  onClick = attrs.onClick
+                }
+                table.insert(elements, {
+                  type="button", label=label, fg=fg, bg=bg, meta=meta, id=meta.id
+                })
+
+              elseif name == "checkbox" then
+                local label = restoreEscapes(attrs.label or attrs[1] or "Checkbox")
+                local fg = attrs.fg and (colorMap[attrs.fg] or st.fg) or st.fg
+                local bg = attrs.bg and (colorMap[attrs.bg] or st.bg) or st.bg
+                local meta = {
+                  id = attrs.id or st.id,
+                  onClick = attrs.onClick,
+                  boxChecked = attrs.boxChecked or "[x]",
+                  boxUnchecked = attrs.boxUnchecked or "[ ]",
+                }
+                table.insert(elements, {
+                  type="checkbox", label=label, fg=fg, bg=bg, meta=meta, id=meta.id
+                })
+
+              elseif name == "textbox" then
+                local width = tonumber(attrs.width or attrs[1] or posArgs[1]) or 10
+                local fg = attrs.fg and (colorMap[attrs.fg] or st.fg) or st.fg
+                local bg = attrs.bg and (colorMap[attrs.bg] or st.bg) or st.bg
+                local meta = {
+                  id = attrs.id or st.id,
+                  blinkChar = attrs.blinkChar or "_",
+                  onEnter = attrs.onEnter,
+                }
+                table.insert(elements, {
+                  type="textbox", width=width, fg=fg, bg=bg, meta=meta, id=meta.id
+                })
+              end
+
+              pos = tagEnd + 1
+            else
+              -- trailing text
+              local txt = body:sub(pos)
+              if #txt > 0 then
+                table.insert(elements, {type="text", text=restoreEscapes(txt), fg=st.fg, bg=st.bg, id=st.id})
+              end
+              break
+            end
+          end
+
+          -- Insert as a logical line
+          table.insert(logical, {type="line", align=align, elements=elements})
+        end
       end
     end
   end
-  return logicalLines
+
+  return logical
 end
 
--- Main improved renderPage: uses token model, wraps, aligns, and registers UI elements
-local function renderPageTokenized(path, scroll, startY)
+---------------------------------------------------------------------
+-- Layout & Render (token -> terminal + UI registry)
+---------------------------------------------------------------------
+
+-- Optional debug dump of tokens
+local function dumpTokensToFile(pageTokens, filename)
+  local f = fs.open(filename, "w")
+  if not f then return end
+
+  local function dumpTable(tbl, indent)
+    indent = indent or ""
+    for k, v in pairs(tbl) do
+      if type(v) == "table" then
+        f.writeLine(indent .. tostring(k) .. ":")
+        dumpTable(v, indent .. "  ")
+      else
+        f.writeLine(indent .. tostring(k) .. ": " .. tostring(v))
+      end
+    end
+  end
+
+  for i, logical in ipairs(pageTokens) do
+    f.writeLine("Logical " .. i .. " [" .. logical.type .. "]")
+    if logical.type == "line" then
+      f.writeLine("  align: " .. tostring(logical.align))
+      for j, el in ipairs(logical.elements) do
+        f.writeLine("  element " .. j .. " (" .. el.type .. ")")
+        dumpTable(el, "    ")
+      end
+    elseif logical.type == "hr" then
+      f.writeLine("  pattern: " .. tostring(logical.pattern))
+    end
+    f.writeLine(("="):rep(40))
+  end
+  f.close()
+end
+
+-- Build display fragments for a line
+local function lineElementsToFragments(elements)
+  local frags = {}
+  for _, el in ipairs(elements) do
+    if el.type == "softbreak" then
+      -- represent as zero-width separator handled by wrapper (start a new physical line)
+      table.insert(frags, {type="softbreak"})
+    elseif el.type == "text" then
+      for _, r in ipairs(splitTextRuns(el.text)) do
+        table.insert(frags, {type=r.type, text=r.text, width=r.width, fg=el.fg, bg=el.bg, id=el.id})
+      end
+    elseif el.type == "link" then
+      local disp = el.label or ""
+      table.insert(frags, {type="link", text=disp, width=#disp, fg=el.fg, bg=el.bg, meta=el})
+    elseif el.type == "button" then
+      local disp = el.label or "Button"
+      table.insert(frags, {type="button", text=disp, width=#disp, fg=el.fg, bg=el.bg, meta=el.meta})
+    elseif el.type == "checkbox" then
+      local box = (el.meta.boxUnchecked or "[ ]")
+      local disp = box .. " " .. (el.label or "")
+      table.insert(frags, {type="checkbox", text=disp, width=#disp, fg=el.fg, bg=el.bg, meta=el.meta})
+    elseif el.type == "textbox" then
+      local disp = (" "):rep(el.width or 10)
+      table.insert(frags, {type="textbox", text=disp, width=(el.width or 10), fg=el.fg, bg=el.bg, meta=el.meta})
+    end
+  end
+  return frags
+end
+
+local function renderPage(path, scroll, startY)
   term.clear()
-  local uiRegistry = {}
-  local logicalLines = parsePageToLogicalLines(path)
-  dumpTokensToFile(logicalLines, "TokenDump.txt")
   local termWidth = term.getSize()
   local y = (startY or 1) - (scroll or 0)
 
-  for _, logical in ipairs(logicalLines) do
-    if logical.type == "blank" then
+  local registry = {}
+  local logical = parsePageToLogicalLines(path)
+  -- Uncomment for debugging:
+  -- dumpTokensToFile(logical, "TokenDump.txt")
+
+  for _, entry in ipairs(logical) do
+    if entry.type == "blank" then
       y = y + 1
 
-    else -- logical.type == "line"
-      -- Build fragments for this logical line (words/spaces/buttons/etc.)
-      local fragments = {} -- each: {type, text, width, fg, bg, meta = {..}}
-      for _, el in ipairs(logical.elements) do
-        if el.type == "text" then
-          -- split text into leading spaces + word/space runs
-          local runs = splitTextIntoWordSpaceRuns(el.text)
-          for _, r in ipairs(runs) do
-            table.insert(fragments, {
-              type = r.type,           -- "word" or "space"
-              text = r.text,
-              width = r.width,
-              fg = el.fg, bg = el.bg
-            })
-          end
-
-        elseif el.type == "button" then
-          local label = el.label
-          local disp = label
-          table.insert(fragments, {
-            type = "button",
-            text = disp,
-            width = #disp,
-            fg = el.fg, bg = el.bg,
-            meta = el
-          })
-
-        elseif el.type == "link" then
-          local disp = el.label
-          table.insert(fragments, {
-            type = "link",
-            text = disp,
-            width = #disp,
-            fg = el.fg, bg = el.bg,
-            meta = el
-          })
-
-        elseif el.type == "checkbox" then
-          local boxText = (el.boxUnchecked or "[ ]") .. " " .. (el.label or "")
-          table.insert(fragments, {
-            type = "checkbox",
-            text = boxText,
-            width = #boxText,
-            fg = el.fg, bg = el.bg,
-            meta = el
-          })
-
-        elseif el.type == "textbox" then
-          local disp = (" "):rep(el.width or 10)
-          table.insert(fragments, {
-            type = "textbox",
-            text = disp,
-            width = el.width or 10,
-            fg = el.fg, bg = el.bg,
-            meta = el
-          })
-        end
+    elseif entry.type == "hr" then
+      local pattern = entry.pattern or "-"
+      local rep = ""
+      if #pattern == 0 then pattern = "-" end
+      while #rep < termWidth do
+        rep = rep .. pattern
       end
+      rep = rep:sub(1, termWidth)
+      term.setCursorPos(1, y)
+      term.setTextColor(colors.white)
+      term.setBackgroundColor(colors.black)
+      write(rep)
+      y = y + 1
 
-      -- Wrap fragments into physical lines (lists of fragments)
+    elseif entry.type == "line" then
+      -- Compose fragments
+      local frags = lineElementsToFragments(entry.elements)
+
+      -- Wrap into physical lines (consider softbreak markers)
       local physLines = {}
-      local curLine = {}
-      local curWidth = 0
+      local cur, w = {}, 0
+      local function pushLine()
+        if #cur > 0 then table.insert(physLines, cur) end
+        cur, w = {}, 0
+      end
 
-      for _, frag in ipairs(fragments) do
-        -- If frag is a long word longer than terminal width, split it into chunks
-        if (frag.type == "word" or frag.type == "button" or frag.type == "link") and frag.width > termWidth then
-          -- split text into chunks of termWidth
-          local t = frag.text
-          local i = 1
-          while i <= #t do
-            local chunk = t:sub(i, i + termWidth - 1)
-            local chunkFrag = {
-              type = (frag.type == "word") and "word" or frag.type,
-              text = chunk,
-              width = #chunk,
-              fg = frag.fg, bg = frag.bg,
-              meta = frag.meta
-            }
-            -- place chunk
-            if curWidth + chunkFrag.width <= termWidth then
-              table.insert(curLine, chunkFrag)
-              curWidth = curWidth + chunkFrag.width
-            else
-              table.insert(physLines, curLine)
-              curLine = { chunkFrag }
-              curWidth = chunkFrag.width
-            end
-            i = i + termWidth
-          end
-
+      for _, f in ipairs(frags) do
+        if f.type == "softbreak" then
+          pushLine()
         else
-          -- Normal placement decision
-          if curWidth + frag.width <= termWidth then
-            table.insert(curLine, frag)
-            curWidth = curWidth + frag.width
+          if (f.type == "word" or f.type == "link" or f.type == "button") and f.width > termWidth then
+            -- split long segments across lines
+            local t = f.text
+            local i = 1
+            while i <= #t do
+              local chunk = t:sub(i, i + termWidth - 1)
+              local cf = {type=f.type == "word" and "word" or f.type, text=chunk, width=#chunk, fg=f.fg, bg=f.bg, meta=f.meta}
+              if w + cf.width <= termWidth then
+                table.insert(cur, cf); w = w + cf.width
+              else
+                pushLine(); table.insert(cur, cf); w = cf.width
+              end
+              i = i + termWidth
+            end
           else
-            -- push current and start new line
-            table.insert(physLines, curLine)
-            curLine = { frag }
-            curWidth = frag.width
+            if w + (f.width or 0) <= termWidth then
+              table.insert(cur, f); w = w + (f.width or 0)
+            else
+              pushLine(); table.insert(cur, f); w = f.width or 0
+            end
           end
         end
       end
+      pushLine()
 
-      -- push last physical line
-      if #curLine > 0 then table.insert(physLines, curLine) end
-      if #physLines == 0 then
-        y = y + 1
-      else
-        -- Render each physical line with alignment
-        for _, pl in ipairs(physLines) do
-          -- compute total width of this physical line
-          local total = 0
-          for _, f in ipairs(pl) do total = total + (f.width or 0) end
+      -- Render each physical line with alignment and register interactives
+      for _, pl in ipairs(physLines) do
+        local total = 0
+        for _, f in ipairs(pl) do total = total + (f.width or 0) end
 
-          local baseX = 1
-          if logical.align == "center" then
-            baseX = math.max(1, math.floor((termWidth - total) / 2) + 1)
-          elseif logical.align == "right" then
-            baseX = math.max(1, termWidth - total + 1)
-          else
-            baseX = 1
-          end
-
-          -- Write fragments in this physical line
-          local x = baseX
-          for _, f in ipairs(pl) do
-            term.setCursorPos(x, y)
-            term.setTextColor(f.fg or colors.white)
-            term.setBackgroundColor(f.bg or colors.black)
-
-            -- write and register interactive elements
-            if f.type == "word" or f.type == "space" then
-              write(f.text)
-            elseif f.type == "button" then
-              write(f.text)
-              -- register button
-              local element = {
-                type = "button",
-                x = x,
-                y = y,
-                width = f.width,
-                label = f.text,
-                id = f.meta.id,
-                onClick = f.meta.onClick,
-                onHover = f.meta.onHover,
-                fg = f.fg, bg = f.bg,
-                hoverFg = f.meta.hoverFg, hoverBg = f.meta.hoverBg,
-                pressFg = f.meta.pressFg, pressBg = f.meta.pressBg
-              }
-              table.insert(uiRegistry, { y = y, element = element })
-
-            elseif f.type == "link" then
-              write(f.text)
-              local element = {
-                type = "link",
-                x = x,
-                y = y,
-                width = f.width,
-                page = f.meta.page,
-                label = f.text
-              }
-              table.insert(uiRegistry, { y = y, element = element })
-
-            elseif f.type == "checkbox" then
-              write(f.text)
-              local element = {
-                type = "checkbox",
-                x = x,
-                y = y,
-                width = f.width,
-                label = f.meta.label,
-                id = f.meta.id,
-                checked = false,
-                boxChecked = f.meta.boxChecked,
-                boxUnchecked = f.meta.boxUnchecked,
-                fg = f.fg, bg = f.bg
-              }
-              table.insert(uiRegistry, { y = y, element = element })
-
-            elseif f.type == "textbox" then
-              write(f.text)
-              local element = {
-                type = "textbox",
-                x = x,
-                y = y,
-                width = f.width,
-                value = "",
-                fg = f.fg, bg = f.bg
-              }
-              table.insert(uiRegistry, { y = y, element = element })
-            end
-
-            x = x + (f.width or 0)
-          end
-
-          y = y + 1
+        local baseX = 1
+        if entry.align == "center" then
+          baseX = math.max(1, math.floor((termWidth - total)/2) + 1)
+        elseif entry.align == "right" then
+          baseX = math.max(1, termWidth - total + 1)
         end
+
+        local x = baseX
+        for _, f in ipairs(pl) do
+          term.setCursorPos(x, y)
+          term.setTextColor(f.fg or colors.white)
+          term.setBackgroundColor(f.bg or colors.black)
+
+          if f.type == "word" or f.type == "space" then
+            write(f.text)
+
+          elseif f.type == "link" then
+            write(f.text)
+            table.insert(registry, { y = y, element = {
+              type="link", x=x, y=y, width=f.width, target=f.meta.target, label=f.text
+            }})
+
+          elseif f.type == "button" then
+            write(f.text)
+            local meta = f.meta or {}
+            table.insert(registry, { y = y, element = {
+              type="button", x=x, y=y, width=f.width, label=f.text,
+              id=meta.id, onClick=meta.onClick, pressFg=meta.pressFg, pressBg=meta.pressBg,
+              fg=f.fg, bg=f.bg
+            }})
+
+          elseif f.type == "checkbox" then
+            write(f.text)
+            local meta = f.meta or {}
+            table.insert(registry, { y = y, element = {
+              type="checkbox", x=x, y=y, width=f.width, label=(meta.label or ""), id=meta.id,
+              checked=false, boxChecked=meta.boxChecked, boxUnchecked=meta.boxUnchecked, fg=f.fg, bg=f.bg
+            }})
+
+          elseif f.type == "textbox" then
+            write(f.text)
+            local meta = f.meta or {}
+            table.insert(registry, { y = y, element = {
+              type="textbox", x=x, y=y, width=f.width, value="", id=meta.id,
+              blinkChar=meta.blinkChar or "_", fg=f.fg, bg=f.bg, onEnter=meta.onEnter
+            }})
+          end
+
+          x = x + (f.width or 0)
+        end
+
+        y = y + 1
       end
     end
   end
 
-  return uiRegistry, y + (startY or 1)
+  return registry, y + (startY or 1)
 end
 
--- TODO Implement getting scripts and remove from renderPage
+---------------------------------------------------------------------
+-- Script Extraction
+---------------------------------------------------------------------
+
+-- getScripts(path) -> array of { event?<string>, code<string> }
+-- Accepts:
+--   <script event:"ConfirmStuff"> ... </script>
+--   <script> @ConfirmStuff  function ... end </script>
 local function getScripts(path)
   local lines = loadLinesFromFile(path)
   local scripts = {}
 
-  local currentScript = nil
+  local inScript = false
+  local current = {}
+  local currentEvent = nil
 
-  for _, line in ipairs(lines) do
-    local startTag = line:match("<script%s*>")
-    local endTag = line:match("</script>")
-
-    if startTag then
-      currentScript = {}
-    elseif endTag and currentScript then
-      table.insert(scripts, table.concat(currentScript, "\n"))
-      currentScript = nil
-    elseif currentScript then
-      table.insert(currentScript, line)
+  local function commit()
+    if #current > 0 then
+      local code = table.concat(current, "\n")
+      table.insert(scripts, {event=currentEvent, code=code})
     end
+    current = {}
+    currentEvent = nil
   end
 
-  -- Optional: write scripts to log for debugging
-  local logFile = fs.open("scripts.log", "w")
-  if logFile then
-    for i, code in ipairs(scripts) do
-      logFile.writeLine("[Script " .. i .. "]")
-      logFile.writeLine(code)
-      logFile.writeLine(("="):rep(20))
+  for _, raw in ipairs(lines) do
+    local line = raw
+
+    if not inScript then
+      local start = line:match("<%s*script(.-)>")
+      if start then
+        -- detect event:"Name" in the start tag (colon syntax or classic attr syntax)
+        local _, attrs = (function()
+          -- reuse parseTag on the inner of the start tag
+          local inner = line:match("<(script.-)>")
+          if inner then
+            return parseTag(inner)
+          end
+          return nil, {}
+        end)()
+
+        if attrs and type(attrs) == "table" then
+          currentEvent = attrs.event
+        end
+
+        inScript = true
+      end
+    else
+      if line:match("</%s*script%s*>") then
+        -- end script
+        commit()
+        inScript = false
+      else
+        -- capture, also check for @EventName line
+        local atEvent = line:match("^%s*@([%w_]+)")
+        if atEvent and not currentEvent then
+          currentEvent = atEvent
+        end
+        table.insert(current, line)
+      end
     end
-    logFile.close()
   end
 
   return scripts
 end
 
-
-
-
-
-
+---------------------------------------------------------------------
+-- Module export
+---------------------------------------------------------------------
 
 return {
+  renderPage = renderPage,
   getScripts = getScripts,
-  renderPage = renderPageTokenized,
   getAlignment = getAlignment,
   stripTags = stripTags,
-  loadPage = loadLinesFromFile
+  loadPage = loadLinesFromFile,
 }

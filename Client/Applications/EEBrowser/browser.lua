@@ -9,7 +9,7 @@ local fizzle = dofile("EEBrowser/fizzle.lua")
 local protocol = "EENet"
 local cacheDir = "/browser_cache"
 
-local ENABLE_LOG = false
+local ENABLE_LOG = true
 if ENABLE_LOG then
   local logger = dofile("/OSUtil/Logger.lua")
   log = logger.log
@@ -165,21 +165,59 @@ local screenWidth, screenHeight = term.getSize()
 
 
 
-local renderer = ui.minimarkrenderer({
+local function makeMiniMarkElement(opts)
+  local e = {
+    type = "minimarkrenderer",
+    path = opts.path,
+    renderer = opts.renderer, -- MiniMark module
+    scrollOffset = opts.scrollOffset or 0,
+    width = opts.width or select(1, term.getSize()),
+    height = opts.height or select(2, term.getSize()),
+    y = opts.y or 1,
+    position = opts.position,
+    xOffset = opts.xOffset,
+    yOffset = opts.yOffset,
+    newlink = nil,
+    buttons = {},
+
+    draw = function(self)
+      -- Render MiniMark file directly using its internal renderer
+      self.buttons, _ = self.renderer.renderPage(self.path, self.scrollOffset, self.y)
+    end,
+
+    onScroll = function(self, dir)
+      -- Adjust scroll offset
+      self.scrollOffset = math.max(self.scrollOffset + dir, 0)
+      ui.markDirty()
+    end,
+
+    onClick = function(self, x, y)
+    for _, entry in ipairs(self.buttons) do
+      local b = entry.element
+      if b.type == "link" and x >= b.x and x <= b.x + b.width - 1 and y == b.y then
+        self.newlink = b.target
+        ui.markDirty()
+        break
+      end
+    end
+  end
+
+  }
+  return ui.addElement(opts.scene or ui.activeScene, e)
+end
+
+local mmRenderer = makeMiniMarkElement({
   path = "EEBrowser/Default.txt",
-  position = "center",
   renderer = minimark,
+  position = "center",
   y = 2,
-  scrollOffset = -1,
-  width = screenWidth,
-  height = screenHeight - 2,
-  scrollSpeed = 1
+  height = screenHeight - 2
 })
 
-ui.createExitButton(function()
-  print("Exiting browser...")
-  os.reboot()
-end)
+--ui.createExitButton(function()
+  --print("Exiting browser...")
+  --os.reboot()
+--end)
 
 local statusLabel = ui.label({
   text = "Welcome to Browser!",
@@ -252,12 +290,13 @@ local submit = ui.button({
   colorPressed = colors.lime,
   onclick = function()
     local url = input.text
-    ui.updateLabel(statusLabel, "Loading: " .. url)
+    statusLabel.text = "Loading: " .. url
+    os.sleep(0.25) -- allow UI to update
     local ok, result = getWebsite(url, protocol)
     if ok then
-      ui.minimarkUpdatePath(renderer, result)
+      mmRenderer.path = result
     else
-      ui.updateLabel(statusLabel, "Error: " .. result)
+      statusLabel.text = "Error: " .. result
     end
   end,
   width = 8,
@@ -333,18 +372,19 @@ function run()
     while true do
       ui.render()
 
-      if ui.activeScene == "Browser" and renderer.newlink then
-        local url = renderer.newlink
-        renderer.newlink = nil
-        ui.updateLabel(statusLabel, "Loading: " .. url)
-        local ok, result = getWebsite(url, protocol)
-        if ok then
-          ui.minimarkUpdatePath(renderer, result)
-          input.text = url
-        else
-          ui.updateLabel(statusLabel, "Error: " .. result)
-        end
-      end
+      if ui.activeScene == "Browser" and mmRenderer.newlink then
+  local url = mmRenderer.newlink
+  mmRenderer.newlink = nil
+  statusLabel.text = "Loading: " .. url
+  local ok, result = getWebsite(url, protocol)
+  if ok then
+    mmRenderer.path = result
+    ui.markDirty()
+  else
+    statusLabel.text = "Error: " .. result
+  end
+end
+
       sleep(0.001)
     end
   end

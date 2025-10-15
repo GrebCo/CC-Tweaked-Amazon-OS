@@ -1,18 +1,66 @@
-#MiniMark Renderer Test Page
-##<text:cyan>System UI + Tag Parsing Validation
+# <text:cyan>MiniMark v0.91 Feature Test Page
 
-<text:green>This page tests all currently implemented MiniMark features.
-It includes text color tags, link tags, spacing, and UI placeholders.
+<text:green>This page tests all supported tags, attributes, persistence, and Fizzle-ready interactivity.
+<hr:"=-">
 
----
+## <text:yellow>1. Color + Reset System
+<fg:lime>This text should be lime<bg:gray> on gray background.<text:reset> Now fg is white again.<background:reset>
+<text:red>This text is red.<reset> Back to default white/black.
 
-##<text:yellow>Section 1: Basic Text and Colors
+## 2. Persistent ID
+<id:"persistTest"><text:lightBlue>This block is tagged as "persistTest" and stays that way
+until reset or newline.<reset> Now ID cleared.
+
+## 3. Alignment
+#Left-aligned line
+##Center-aligned line
+###Right-aligned line
+
+##4. Links (three forms)
+<link "Home","Return Home">
+<link "Help">
+<link target:"About" label:"About Page" fg:yellow bg:blue>
+
+## 5. Buttons
+<button label:"Confirm" fg:white bg:gray pressBg:lime id:"confirm" onClick:ConfirmEvent>
+<button label:"Cancel" fg:black bg:orange pressBg:red id:"cancel" onClick:CancelEvent>
+
+## 6. Checkboxes
+<checkbox label:"Enable Sound" boxChecked:"[X]" boxUnchecked:"[ ]" fg:green bg:black id:"soundBox" onClick:ToggleSound>
+<checkbox label:"Hard Mode" id:"hardMode">
+
+## 7. Textboxes
+<textbox width:"12" id:"nameField">
+<textbox width:"8" fg:yellow bg:gray blinkChar:"_" onEnter:NameEntered>
+
+## 8. HR + BR
+<hr:"--+">
+Line above should be a repeating pattern of --+
+<br>
+This line is separated by a blank line above.
+
+## 9. Escape Sequences
+This should show: \<escaped tag\> and a quote: \"cool\" and a backslash: \\
+Do I even need to escape these " or perhaps > or <
+
+## 10. Script Tags
+<script event:"ConfirmEvent">
+  print("ConfirmEvent triggered!")
+</script>
 
 <script>
---@helloevent
-  function sayHello()
-    print("hi!")
+  @ToggleSound
+  function toggle()
+    print("Sound toggled")
   end
 </script>
 
+<script>
+  @NameEntered
+  function onEnter()
+    print("Textbox submitted!")
+  end
+</script>
 
+<hr:"=">
+<text:gray>End of test page.
