@@ -145,7 +145,7 @@ local function registerEventsFromCache()
 end
 
 
--- TODO Not tested yet
+
 local function assignFizzleFunctionsToEventsFromCache()
     local cache_luaPath = fs.getDir(cacheFilePath) .. "/cache_lua/"
     local cache_LuaFile = cache_luaPath .. "script.lua"
@@ -169,7 +169,7 @@ local function assignFizzleFunctionsToEventsFromCache()
     log("[fzzl] DEBUG: Processing " .. #lines .. " lines from cache")
     local lastEventName = nil
     for i, line in ipairs(lines) do
-        local eventTag = line:match("@([%w_]+)")
+        local eventTag = line:match("@([%w_]+)") -- detect annotation
         if eventTag then
             lastEventName = eventTag
             cacheLua_scriptFile.writeLine(line)
@@ -387,6 +387,20 @@ local function renew(mmScripts)
     return true
 end
 
+-- Deep copy utility (not currently used) May be useful for future enhancements
+-- Cannot copy tables, table = tableOriginal simply references the original table, that's why we need deep copy
+local function deepCopy(original)
+    local copy = {}
+    for key, value in pairs(original) do
+        if type(value) == "table" then
+            copy[key] = deepCopy(value) -- Recursively copy nested tables
+        else
+            copy[key] = value
+        end
+    end
+    return copy
+end
+
 -- Must be called prior to any module usages
 -- contextTable should have: functions.log (optional)
 local function init(contextTable)
@@ -404,3 +418,5 @@ return {
     triggerFizzleEvent = triggerFizzleEvent,
     renew = renew
 }
+
+
