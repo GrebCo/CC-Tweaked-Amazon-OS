@@ -67,6 +67,8 @@ local function saveScriptToCache()
         return false
     end
 
+
+    -- TODO Implement (fizzleContext.scripts is a table of eventName -> {code lines})
     for _, line in ipairs(fizzleContext.scripts) do
         f.writeLine(line)
     end
@@ -74,14 +76,37 @@ local function saveScriptToCache()
     return true
 end
 
+-- Helper function to read lines from cache file
+local function getLinesFromCache()
+    if not fs.exists(cacheFilePath) then
+        log("[fzzl] Cache file does not exist: " .. cacheFilePath)
+        return {}
+    end
+
+    local lines = {}
+    local f = fs.open(cacheFilePath, "r")
+    if not f then
+        log("[fzzl] Could not read cache file: " .. cacheFilePath)
+        return {}
+    end
+
+    local line = f.readLine()
+    while line do
+        table.insert(lines, line)
+        line = f.readLine()
+    end
+    f.close()
+
+    return lines
+end
+
 -- TODO [p2] Optimize the for loops
 -- Extracts from "local function foo(bar) eventName" returns bool ok
 local function registerEventsFromCache()
-    local lines = {}
-    for _, script in ipairs(fizzleContext.scripts) do
-        for line in script:gmatch("[^\r\n]+") do
-            table.insert(lines, line)
-        end
+    local lines = getLinesFromCache()
+    if #lines == 0 then
+        log("[fzzl] No lines found in cache")
+        return false
     end
 
     fizzleEvents = {}
@@ -128,11 +153,11 @@ local function assignFizzleFunctionsToEventsFromCache()
 
     -- Build function→event mapping from annotations
     local functionEventMap = {}
-    local lines = {}
-    for _, script in ipairs(fizzleContext.scripts) do
-        for line in script:gmatch("[^\r\n]+") do
-            table.insert(lines, line)
-        end
+    local lines = getLinesFromCache()
+    if #lines == 0 then
+        log("[fzzl] No lines found in cache")
+        cacheLua_scriptFile.close()
+        return false
     end
 
     local lastEventName = nil
@@ -156,8 +181,8 @@ local function assignFizzleFunctionsToEventsFromCache()
 
     cacheLua_scriptFile.close()
 
-    -- Load the script content
-    local scriptContent = table.concat(fizzleContext.scripts, "\n")
+    -- Load the script content from cache
+    local scriptContent = table.concat(lines, "\n")
     local sandbox = createSandbox()
     local scriptFunc, err = load(scriptContent, "fizzle_script", "t", sandbox)
 
@@ -179,13 +204,14 @@ local function assignFizzleFunctionsToEventsFromCache()
             events.registerFunction(eventName, function(params)
                 local ok, res = pcall(func, params)
                 if not ok then
-                    print("[fzzl] Error in event '" .. eventName .. "': " .. tostring(res))
+                    log("[fzzl] Error in event '" .. eventName .. "': " .. tostring(res))
+                    return false
                 end
                 return res
             end)
-            print("[fzzl] Registered '" .. funcName .. "' for event '" .. eventName .. "'")
+            log("[fzzl] Registered '" .. funcName .. "' for event '" .. eventName .. "'")
         else
-            print("[fzzl] Warning: function '" .. funcName .. "' not found in sandbox")
+            log("[fzzl] Warning: function '" .. funcName .. "' not found in sandbox")
         end
     end
 
