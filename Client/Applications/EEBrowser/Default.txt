@@ -45,22 +45,28 @@ Do I even need to escape these " or perhaps > or <
 
 ## 10. Script Tags
 <script event:"ConfirmEvent">
-  print("ConfirmEvent triggered!")
+  print("ConfirmEvent triggered! from the file!")
 </script>
+
+
 
 <script>
   @ToggleSound
   function toggle()
-    print("Sound toggled")
+    print("Sound toggledfrom the file!")
   end
 </script>
 
 <script>
   @NameEntered
   function onEnter()
-    print("Textbox submitted!")
+    print("Textbox submitted!from the file!")
   end
 </script>
 
 <hr:"=">
 <text:gray>End of test page.
+
+<script event:"secondShorthand">
+  print("secondShorthand triggered! from the file!")
+</script>
