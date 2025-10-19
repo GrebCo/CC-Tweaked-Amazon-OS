@@ -28,6 +28,7 @@ function UI.init(context)
 end
 
 -------------------------------------------------
+-------------------------------------------------
 -- Scene Management
 -------------------------------------------------
 function UI.newScene(name)
@@ -108,13 +109,18 @@ function UI.applyPositioning(e)
     local yOffset = e.yOffset or 0
 
     if e.position then
-        local pos = e.position
-        local cx = math.floor((w - width) / 2) + 1 + xOffset
-        local cy = math.floor((h - height) / 2) + 1 + yOffset
+        local pos = e.position --Anchor position
+        local cx = math.floor((w - width) / 2) + 1 + xOffset -- center of screen x
+        local cy = math.floor((h - height) / 2) + 1 + yOffset -- center of screen y
         local lookup = {
-            center = {cx, cy}, topLeft = {1 + xOffset, 1 + yOffset},
-            topCenter = {cx, 1 + yOffset}, topRight = {w - width + 1 + xOffset, 1 + yOffset},
-            left = {1 + xOffset, cy}, right = {w - width + 1 + xOffset, cy},
+            center = {cx, cy},
+            topLeft = {1 + xOffset, 1 + yOffset},
+            topCenter = {cx, 1 + yOffset},
+            topRight = {w - width + 1 + xOffset, 1 + yOffset},
+            left = {1 + xOffset, cy},
+            leftCenter = {1 + xOffset, cy},
+            right = {w - width + 1 + xOffset, cy},
+            rightCenter = {w - width + 1 + xOffset, cy},
             bottomLeft = {1 + xOffset, h - height + 1 + yOffset},
             bottomCenter = {cx, h - height + 1 + yOffset}, bottomRight = {w - width + 1 + xOffset, h - height + 1 + yOffset}
         }
@@ -130,14 +136,14 @@ end
 -------------------------------------------------
 function UI.render()
     if not needRender then return end
-    UI.term.setBackgroundColor(colors.black)
+    UI.term.setBackgroundColor(colors.black) --TODO make configurable
     UI.term.clear()
 
     local function drawScene(scene, offsetX, offsetY)
         for _, e in ipairs(scene.elements or {}) do
-            UI.applyPositioning(e)
-            if e.draw then e:draw(offsetX or 0, offsetY or 0)
-            elseif UI["draw" .. e.type:sub(1, 1):upper() .. e.type:sub(2)] then
+            UI.applyPositioning(e) --Recalculate positioning each render in case of element changing size/position
+            if e.draw then e:draw(offsetX or 0, offsetY or 0) --If has own draw function, use it
+            elseif UI["draw" .. e.type:sub(1, 1):upper() .. e.type:sub(2)] then --Legacy style draw function support (no longer suppoted)
                 UI["draw" .. e.type:sub(1, 1):upper() .. e.type:sub(2)](e)
             end
         end

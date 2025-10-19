@@ -539,6 +539,13 @@ local function renderPage(path, scroll, startY)
     end
   end
 
+  for _, e in ipairs(registry) do
+    log(("Registry: y=%d type=%s x=%d width=%s id=%s"):format()
+      e.y or -1, tostring(e.element.type), tonumber(e.element.x or -1),
+      tostring(e.element.width or "-"), tostring(e.element.id or "-")
+    ), "logs/MiniMarkRegistry.log")
+  end
+
   return registry, y + (startY or 1)
 end
 
