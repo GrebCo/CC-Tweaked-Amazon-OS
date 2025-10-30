@@ -10,13 +10,17 @@ local protocol = "EENet"
 local cacheDir = "/browser_cache"
 
 local ENABLE_LOG = true
+local logger
 if ENABLE_LOG then
-    local logger = dofile("/OSUtil/Logger.lua")
+    logger = dofile("/OSUtil/Logger.lua")
     log = logger.log
+    logQueue = logger.queue
+    logPush = logger.push
     log("Logger initialized.")
 else
-    log = function()
-    end
+    log = function() end
+    logQueue = function() end
+    logPush = function() end
 end
 
 -- Context table
@@ -24,7 +28,7 @@ local contextTable = {
 
     mmElements = {}, -- all active UI / MiniMark elements live here
     scenes = {}, -- All UI scenes live here
-    functions = { log = log }, -- shared callable functions (e.g. addElement, render, etc.)
+    functions = { log = log, logQueue = logQueue, logPush = logPush }, -- shared callable functions
     scripts = {}, -- script-defined functions or handlers
     eventTrigger = nil, -- fizzle Events import is introduced in fizzle.lua init()
     events = {}
@@ -55,50 +59,6 @@ local function getWebsite(url, protocol)
     return true, path
 end
 
--------------------------------------------------
--- MiniMark Element Factory
--------------------------------------------------
-
-local function makeMiniMarkElement(opts)
-    local e = {
-        type = "minimarkrenderer",
-        path = opts.path,
-        renderer = opts.renderer, -- MiniMark module
-        scrollOffset = opts.scrollOffset or 0,
-        width = opts.width or select(1, term.getSize()),
-        height = opts.height or select(2, term.getSize()),
-        y = opts.y or 1,
-        position = opts.position,
-        xOffset = opts.xOffset,
-        yOffset = opts.yOffset,
-        newlink = nil,
-        buttons = {},
-
-        draw = function(self)
-            -- Render MiniMark file directly using its internal renderer
-            self.buttons, _ = self.renderer.renderPage(self.path, self.scrollOffset, self.y)
-        end,
-
-        onScroll = function(self, dir)
-            -- Adjust scroll offset
-            self.scrollOffset = math.max(self.scrollOffset + dir, 0)
-            ui.markDirty()
-        end,
-
-        onClick = function(self, x, y)
-            for _, entry in ipairs(self.buttons) do
-                local b = entry.element
-                if b.type == "link" and x >= b.x and x <= b.x + b.width - 1 and y == b.y then
-                    self.newlink = b.target
-                    ui.markDirty()
-                    break
-                end
-            end
-        end
-
-    }
-    return ui.addElement(opts.scene or ui.activeScene, e)
-end
 
 -------------------------------------------------
 -- Initialize UI and Fizzle
@@ -210,13 +170,22 @@ local screenWidth, screenHeight = term.getSize()
 
 
 
-local mmRenderer = makeMiniMarkElement({
+local mmRenderer = ui.addElement(nil, minimark.createRenderer({
     path = "EEBrowser/Default.txt",
-    renderer = minimark,
-    position = "center",
+    x = 1,
     y = 2,
-    height = screenHeight - 2
-})
+    height = screenHeight - 2,
+    width = 45,
+    scene = "Browser",  -- Specify which scene to add interactive elements to
+    onPageLoaded = function(pagePath)
+        -- Extract and load scripts into Fizzle when page is loaded
+        local scripts = minimark.getScripts(pagePath)
+        if scripts and #scripts > 0 then
+            log("[Browser] Loading " .. #scripts .. " scripts from " .. pagePath)
+            fizzle.renew(scripts)
+        end
+    end
+}, ui))
 
 --ui.createExitButton(function()
 --print("Exiting browser...")
@@ -298,6 +267,7 @@ local submit = ui.button({
         local ok, result = getWebsite(url, protocol)
         if ok then
             mmRenderer.path = result
+            mmRenderer:prepareRender()
         else
             statusLabel.text = "Error: " .. result
         end
@@ -371,7 +341,8 @@ function checkIfnewLink()
         local ok, result = getWebsite(url, protocol)
         if ok then
             mmRenderer.path = result
-            ui.markDirty()
+            mmRenderer:prepareRender()  -- Pre-tokenize BEFORE marking dirty
+            ui.markDirty()  -- Triggers draw() which syncs UI elements
         else
             statusLabel.text = "Error: " .. result
         end
@@ -379,30 +350,14 @@ function checkIfnewLink()
 end
 
 -------------------------------------------------
--- Main runtime loop
--------------------------------------------------
-function run()
-    local function updateEvents()
-        while true do
-            ui.handleEvent()
-        end
-    end
-
-    local function renderUI()
-        while true do
-            checkIfnewLink()
-
-            ui.render()
-            sleep(0.03) -- ~30 FPS
-        end
-    end
-
-    parallel.waitForAny(renderUI, updateEvents)
-end
-
--------------------------------------------------
--- Start on Splash
+-- Start on Splash and run
 -------------------------------------------------
 
 ui.setScene("Splash")
-run()
+ui.run({
+    fps = 30,
+    onTick = function()
+        checkIfnewLink()
+        logPush()  -- Push queued logs after each frame
+    end
+})

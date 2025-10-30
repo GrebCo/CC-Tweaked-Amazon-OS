@@ -87,16 +87,6 @@ end
 
 -- Preprocess escapes: \\ -> \, \< -> <, \> -> >, \" -> "
 -- (No \n inline-breaks per user's latest note)
-local function unescape(s)
-  -- Replace backslash escapes; order matters
-  s = s:gsub("\\\\", "\0")      -- temp mark real backslash
-  s = s:gsub("\\<", "<")
-  s = s:gsub("\\>", ">")
-  s = s:gsub('\\"', '"')
-  s = s:gsub("\0", "\\")
-  return s
-end
-
 -- Parse attributes in colon syntax with optional quotes:
 --   key:"value"  key:value   key:"val with spaces"
 -- Returns table and also the baseName (first word before any whitespace/colon chain)
@@ -347,39 +337,6 @@ end
 -- Layout & Render (token -> terminal + UI registry)
 ---------------------------------------------------------------------
 
--- Optional debug dump of tokens
-local function dumpTokensToFile(pageTokens, filename)
-  local f = fs.open(filename, "w")
-  if not f then return end
-
-  local function dumpTable(tbl, indent)
-    indent = indent or ""
-    for k, v in pairs(tbl) do
-      if type(v) == "table" then
-        f.writeLine(indent .. tostring(k) .. ":")
-        dumpTable(v, indent .. "  ")
-      else
-        f.writeLine(indent .. tostring(k) .. ": " .. tostring(v))
-      end
-    end
-  end
-
-  for i, logical in ipairs(pageTokens) do
-    f.writeLine("Logical " .. i .. " [" .. logical.type .. "]")
-    if logical.type == "line" then
-      f.writeLine("  align: " .. tostring(logical.align))
-      for j, el in ipairs(logical.elements) do
-        f.writeLine("  element " .. j .. " (" .. el.type .. ")")
-        dumpTable(el, "    ")
-      end
-    elseif logical.type == "hr" then
-      f.writeLine("  pattern: " .. tostring(logical.pattern))
-    end
-    f.writeLine(("="):rep(40))
-  end
-  f.close()
-end
-
 -- Build display fragments for a line
 local function lineElementsToFragments(elements)
   local frags = {}
@@ -400,7 +357,7 @@ local function lineElementsToFragments(elements)
     elseif el.type == "checkbox" then
       local box = (el.meta.boxUnchecked or "[ ]")
       local disp = box .. " " .. (el.label or "")
-      table.insert(frags, {type="checkbox", text=disp, width=#disp, fg=el.fg, bg=el.bg, meta=el.meta})
+      table.insert(frags, {type="checkbox", text=disp, width=#disp, fg=el.fg, bg=el.bg, meta=el.meta, label=el.label})
     elseif el.type == "textbox" then
       local disp = (" "):rep(el.width or 10)
       table.insert(frags, {type="textbox", text=disp, width=(el.width or 10), fg=el.fg, bg=el.bg, meta=el.meta})
@@ -409,19 +366,16 @@ local function lineElementsToFragments(elements)
   return frags
 end
 
-local function renderPage(path, scroll, startY)
-  term.clear()
-  local termWidth = term.getSize()
-  local y = (startY or 1) - (scroll or 0)
-
-  local registry = {}
-  local logical = parsePageToLogicalLines(path)
-  -- Uncomment for debugging:
-  -- dumpTokensToFile(logical, "TokenDump.txt")
+-- NEW: Convert logical lines to physical lines (word-wrapped, aligned)
+-- This is the EXPENSIVE part - do once per page, cache the result
+-- Returns a flat list of physical lines ready to render
+local function layoutFromTokens(logical, maxWidth)
+  local termWidth = maxWidth or term.getSize()
+  local physicalLines = {}
 
   for _, entry in ipairs(logical) do
     if entry.type == "blank" then
-      y = y + 1
+      table.insert(physicalLines, {type = "blank"})
 
     elseif entry.type == "hr" then
       local pattern = entry.pattern or "-"
@@ -431,11 +385,12 @@ local function renderPage(path, scroll, startY)
         rep = rep .. pattern
       end
       rep = rep:sub(1, termWidth)
-      term.setCursorPos(1, y)
-      term.setTextColor(colors.white)
-      term.setBackgroundColor(colors.black)
-      write(rep)
-      y = y + 1
+      table.insert(physicalLines, {
+        type = "hr",
+        text = rep,
+        fg = colors.white,
+        bg = colors.black
+      })
 
     elseif entry.type == "line" then
       -- Compose fragments
@@ -478,7 +433,7 @@ local function renderPage(path, scroll, startY)
       end
       pushLine()
 
-      -- Render each physical line with alignment and register interactives
+      -- Calculate alignment for each physical line
       for _, pl in ipairs(physLines) do
         local total = 0
         for _, f in ipairs(pl) do total = total + (f.width or 0) end
@@ -490,60 +445,118 @@ local function renderPage(path, scroll, startY)
           baseX = math.max(1, termWidth - total + 1)
         end
 
-        local x = baseX
-        for _, f in ipairs(pl) do
-          term.setCursorPos(x, y)
-          term.setTextColor(f.fg or colors.white)
-          term.setBackgroundColor(f.bg or colors.black)
-
-          if f.type == "word" or f.type == "space" then
-            write(f.text)
-
-          elseif f.type == "link" then
-            write(f.text)
-            table.insert(registry, { y = y, element = {
-              type="link", x=x, y=y, width=f.width, target=f.meta.target, label=f.text
-            }})
-
-          elseif f.type == "button" then
-            write(f.text)
-            local meta = f.meta or {}
-            table.insert(registry, { y = y, element = {
-              type="button", x=x, y=y, width=f.width, label=f.text,
-              id=meta.id, onClick=meta.onClick, pressFg=meta.pressFg, pressBg=meta.pressBg,
-              fg=f.fg, bg=f.bg
-            }})
-
-          elseif f.type == "checkbox" then
-            write(f.text)
-            local meta = f.meta or {}
-            table.insert(registry, { y = y, element = {
-              type="checkbox", x=x, y=y, width=f.width, label=(meta.label or ""), id=meta.id,
-              checked=false, boxChecked=meta.boxChecked, boxUnchecked=meta.boxUnchecked, fg=f.fg, bg=f.bg
-            }})
-
-          elseif f.type == "textbox" then
-            write(f.text)
-            local meta = f.meta or {}
-            table.insert(registry, { y = y, element = {
-              type="textbox", x=x, y=y, width=f.width, value="", id=meta.id,
-              blinkChar=meta.blinkChar or "_", fg=f.fg, bg=f.bg, onEnter=meta.onEnter
-            }})
-          end
-
-          x = x + (f.width or 0)
-        end
-
-        y = y + 1
+        -- Store physical line with pre-calculated positions
+        table.insert(physicalLines, {
+          type = "text",
+          fragments = pl,
+          baseX = baseX,
+          align = entry.align
+        })
       end
     end
   end
 
-  for _, e in ipairs(registry) do
-    log(("Registry: y=%d type=%s x=%d width=%s id=%s"):format()
-      e.y or -1, tostring(e.element.type), tonumber(e.element.x or -1),
-      tostring(e.element.width or "-"), tostring(e.element.id or "-")
-    ), "logs/MiniMarkRegistry.log")
+  return physicalLines
+end
+
+-- NEW: Fast render from pre-calculated physical lines
+-- This is FAST (<1ms) - just draws, no calculations
+-- Respects element bounds (x, y, width, height)
+local function renderFromPhysicalLines(physicalLines, scroll, startY, elemX, elemWidth, elemHeight)
+  elemX = elemX or 1
+  elemWidth = elemWidth or term.getSize()
+  elemHeight = elemHeight or select(2, term.getSize())
+
+  local y = (startY or 1) - (scroll or 0)
+  local registry = {}
+  local endY = startY + elemHeight - 1  -- Bottom boundary
+
+  for _, pline in ipairs(physicalLines) do
+    -- Skip lines above viewport
+    if y < startY then
+      if pline.type == "blank" or pline.type == "hr" or pline.type == "text" then
+        y = y + 1
+      end
+      goto continue
+    end
+
+    -- Stop rendering below viewport
+    if y > endY then
+      break
+    end
+
+    if pline.type == "blank" then
+      y = y + 1
+
+    elseif pline.type == "hr" then
+      term.setCursorPos(elemX, y)
+      term.setTextColor(pline.fg)
+      term.setBackgroundColor(pline.bg)
+      -- Clip to element width
+      local hrText = pline.text:sub(1, elemWidth)
+      write(hrText)
+      y = y + 1
+
+    elseif pline.type == "text" then
+      local x = pline.baseX + elemX - 1  -- Offset by element's x position
+      for _, f in ipairs(pline.fragments) do
+        -- Clip fragments that exceed element width
+        if x - elemX + 1 > elemWidth then
+          break  -- Rest of line is outside bounds
+        end
+
+        term.setCursorPos(x, y)
+        term.setTextColor(f.fg or colors.white)
+        term.setBackgroundColor(f.bg or colors.black)
+
+        -- Clip text to remaining width
+        local remainingWidth = elemWidth - (x - elemX)
+        local text = f.text
+        if #text > remainingWidth then
+          text = text:sub(1, remainingWidth)
+        end
+
+        if f.type == "word" or f.type == "space" then
+          write(text)
+
+        elseif f.type == "link" then
+          write(text)
+          table.insert(registry, { y = y, element = {
+            type="link", x=x, y=y, width=math.min(f.width, remainingWidth), target=f.meta.target, label=f.text
+          }})
+
+        elseif f.type == "button" then
+          write(text)
+          local meta = f.meta or {}
+          table.insert(registry, { y = y, element = {
+            type="button", x=x, y=y, width=math.min(f.width, remainingWidth), label=f.text,
+            id=meta.id, onClick=meta.onClick, pressFg=meta.pressFg, pressBg=meta.pressBg,
+            fg=f.fg, bg=f.bg
+          }})
+
+        elseif f.type == "checkbox" then
+          write(text)
+          local meta = f.meta or {}
+          table.insert(registry, { y = y, element = {
+            type="checkbox", x=x, y=y, width=math.min(f.width, remainingWidth), label=(f.label or (meta and meta.label) or ""), id=meta.id,
+            checked=false, boxChecked=meta.boxChecked, boxUnchecked=meta.boxUnchecked, fg=f.fg, bg=f.bg
+          }})
+
+        elseif f.type == "textbox" then
+          write(text)
+          local meta = f.meta or {}
+          table.insert(registry, { y = y, element = {
+            type="textbox", x=x, y=y, width=math.min(f.width, remainingWidth), value="", id=meta.id,
+            blinkChar=meta.blinkChar or "_", fg=f.fg, bg=f.bg, onEnter=meta.onEnter
+          }})
+        end
+
+        x = x + (f.width or 0)
+      end
+      y = y + 1
+    end
+
+    ::continue::
   end
 
   return registry, y + (startY or 1)
@@ -616,11 +629,267 @@ local function getScripts(path)
 end
 
 ---------------------------------------------------------------------
--- Module export
+-- UI Element Constructor
 ---------------------------------------------------------------------
+-- Creates a MiniMark renderer element for use with the UI framework
+-- Returns an element that can be added to a scene with ui.addElement()
+local function createRenderer(opts, ui)
+  local self = {
+    type = "minimarkrenderer",
+    path = opts.path,
+    scrollOffset = opts.scrollOffset or 0,
+    x = opts.x or 1,
+    width = opts.width or select(1, term.getSize()),
+    height = opts.height or select(2, term.getSize()),
+    y = opts.y or 1,
+    position = opts.position,
+    xOffset = opts.xOffset,
+    yOffset = opts.yOffset,
+    newlink = nil,
+    scene = opts.scene,  -- Parent scene for MiniMark renderer
+    childScene = nil,    -- Child overlay scene for interactive elements (created below)
+
+    -- Callbacks
+    onPageLoaded = opts.onPageLoaded,  -- Called after page is tokenized and laid out
+
+    -- UI element overlays for interactive content (buttons, checkboxes, textfields)
+    _uiElements = {},
+
+    -- 3-stage cache: MMfile -> tokens -> physical lines -> render
+    _cachedTokens = nil,        -- Logical lines (from parsing)
+    _cachedPhysicalLines = nil, -- Physical lines (after word wrap/alignment)
+    _cachedPath = nil,
+    _needsTokenize = true,
+
+    -- Helper: Create UI elements from cached physical lines
+    createUIElementsFromPhysicalLines = function(self)
+      if not ui then return end
+
+      local targetScene = self.childScene or self.scene
+      self._uiElements = {}
+
+      -- Walk through physical lines to find interactive elements
+      local lineIdx = 0  -- Tracks which physical line we're on
+      for _, pline in ipairs(self._cachedPhysicalLines) do
+        if pline.type == "text" then
+          local fragX = pline.baseX + self.x - 1
+          for _, f in ipairs(pline.fragments) do
+            if f.type == "button" then
+              local meta = f.meta or {}
+              local uiElem = ui.button({
+                scene = targetScene,
+                text = f.text,
+                x = fragX,
+                y = self.y + lineIdx,  -- Initial position (will be updated by update())
+                width = f.width,
+                fg = f.fg or colors.white,
+                bg = f.bg or colors.gray,
+                colorPressed = meta.pressBg or colors.lightGray,
+                onclick = function()
+                  if meta.onClick and ui.contextTable.triggerEvent then
+                    ui.contextTable.triggerEvent(meta.onClick)
+                  end
+                end
+              })
+              uiElem._mmLineIdx = lineIdx  -- Store which physical line this element is on
+              uiElem._mmX = fragX          -- Store X position (doesn't change with scroll)
+              table.insert(self._uiElements, uiElem)
+
+            elseif f.type == "checkbox" then
+              local meta = f.meta or {}
+              local uiElem = ui.checkbox({
+                scene = targetScene,
+                text = f.label or "",
+                x = fragX,
+                y = self.y + lineIdx,
+                initial = false,
+                fg = f.fg or colors.white,
+                bg = f.bg or colors.black,
+                onclick = function(elem, checked)
+                  if meta.onClick and ui.contextTable.triggerEvent then
+                    ui.contextTable.triggerEvent(meta.onClick, checked)
+                  end
+                end
+              })
+              uiElem._mmLineIdx = lineIdx
+              uiElem._mmX = fragX
+              table.insert(self._uiElements, uiElem)
+
+            elseif f.type == "textbox" then
+              local meta = f.meta or {}
+              local uiElem = ui.textfield({
+                scene = targetScene,
+                text = "",
+                x = fragX,
+                y = self.y + lineIdx,
+                width = f.width or 10,
+                fg = f.fg or colors.white,
+                bg = f.bg or colors.gray
+              })
+              uiElem._mmLineIdx = lineIdx
+              uiElem._mmX = fragX
+              table.insert(self._uiElements, uiElem)
+            end
+
+            fragX = fragX + (f.width or 0)
+          end
+          lineIdx = lineIdx + 1
+        elseif pline.type == "blank" or pline.type == "hr" then
+          lineIdx = lineIdx + 1
+        end
+      end
+    end,
+
+    -- Pre-tokenize AND layout (call BEFORE rendering to avoid flicker)
+    prepareRender = function(self)
+      local pathChanged = (self.path ~= self._cachedPath)
+
+      if pathChanged or self._needsTokenize then
+        -- Stage 1: Parse file -> logical lines (expensive: 50-100ms)
+        self._cachedTokens = parsePageToLogicalLines(self.path)
+
+        -- Stage 2: Layout logical -> physical lines (expensive: 2-5ms)
+        self._cachedPhysicalLines = layoutFromTokens(self._cachedTokens, self.width)
+
+        self._cachedPath = self.path
+        self._needsTokenize = false
+
+        -- Page changed: clear old UI elements from child scene
+        if pathChanged and ui and self.childScene then
+          ui.clearScene(self.childScene)
+          self._uiElements = {}
+        end
+
+        -- Create UI elements from physical lines
+        self:createUIElementsFromPhysicalLines()
+
+        -- Call onPageLoaded callback if provided
+        if self.onPageLoaded then
+          self.onPageLoaded(self.path)
+        end
+
+        -- Mark dirty to trigger re-render
+        if ui then ui.markDirty() end
+      end
+    end,
+
+    -- Update UI element positions based on scroll offset (called every frame)
+    update = function(self, dt)
+      if not ui or #self._uiElements == 0 then return false end
+
+      local changed = false
+
+      -- Update each UI element's position based on its physical line index and current scroll
+      for _, uiElem in ipairs(self._uiElements) do
+        local lineIdx = uiElem._mmLineIdx
+
+        -- Calculate screen Y position: element Y + line index - scroll offset
+        local screenY = self.y + lineIdx - self.scrollOffset
+
+        -- Update Y position if changed
+        if uiElem.y ~= screenY then
+          uiElem.y = screenY
+          changed = true
+        end
+
+        -- Set visibility based on viewport bounds
+        local inViewport = (screenY >= self.y and screenY < self.y + self.height)
+        if uiElem._visible ~= inViewport then
+          uiElem._visible = inViewport
+          changed = true
+        end
+      end
+
+      return changed  -- Tell UI framework if we changed something
+    end,
+
+    draw = function(self)
+      -- Stage 3: Render physical lines (FAST: <1ms - just drawing!)
+      -- Physical lines MUST be pre-cached via prepareRender()
+      -- NO file I/O or calculations allowed during draw() - causes flicker!
+      if not self._cachedPhysicalLines then
+        error("MiniMark draw() called without cached layout! Call prepareRender() first!")
+      end
+
+      -- Render visual content only (UI elements are handled by update())
+      renderFromPhysicalLines(
+        self._cachedPhysicalLines,
+        self.scrollOffset,
+        self.y,
+        self.x,
+        self.width,
+        self.height
+      )
+    end,
+
+    onScroll = function(self, dir)
+      -- Adjust scroll offset
+      self.scrollOffset = math.max(self.scrollOffset + dir, 0)
+      -- Mark dirty to trigger re-render
+      if ui then ui.markDirty() end
+    end,
+
+    onClick = function(self, x, y)
+      -- Handle link clicks by walking through physical lines
+      -- (UI overlays handle buttons/checkboxes/textboxes automatically)
+      local lineIdx = 0
+      for _, pline in ipairs(self._cachedPhysicalLines) do
+        local screenY = self.y + lineIdx - self.scrollOffset
+
+        -- Check if this line is at the clicked Y position
+        if screenY == y and pline.type == "text" then
+          local fragX = pline.baseX + self.x - 1
+          for _, f in ipairs(pline.fragments) do
+            if f.type == "link" then
+              local linkEndX = fragX + f.width - 1
+              if x >= fragX and x <= linkEndX then
+                self.newlink = f.meta.target
+                if ui then ui.markDirty() end
+                return true
+              end
+            end
+            fragX = fragX + (f.width or 0)
+          end
+        end
+
+        if pline.type == "text" or pline.type == "blank" or pline.type == "hr" then
+          lineIdx = lineIdx + 1
+        end
+      end
+
+      -- Return false to allow click passthrough to UI overlays
+      return false
+    end
+  }
+
+  -- Create child overlay scene for interactive elements (buttons, checkboxes, textfields)
+  -- Child scenes render after their parent, so overlays naturally draw on top
+  if ui then
+    local parentScene = self.scene or "Main"
+    self.childScene = parentScene .. "_overlay"
+
+    -- Create child scene if it doesn't exist
+    if not ui.contextTable.scenes[self.childScene] then
+      ui.newScene(self.childScene)
+      ui.setChild(self.childScene, 0, 0, "center")
+    end
+  end
+
+  -- Tokenize AND layout initial content immediately (prevents flicker on first render)
+  self:prepareRender()
+
+  return self
+end
+
+----------------------------------------------------------------------
+--- Module export
+----------------------------------------------------------------------
 
 return {
-  renderPage = renderPage,
+  tokenizePage = parsePageToLogicalLines,  -- Export tokenization for caching
+  layoutFromTokens = layoutFromTokens,  -- Layout physical lines (expensive, cache this!)
+  renderFromPhysicalLines = renderFromPhysicalLines,  -- Fast render from layout cache
+  createRenderer = createRenderer,  -- UI element constructor (main production API)
   getScripts = getScripts,
   getAlignment = getAlignment,
   stripTags = stripTags,

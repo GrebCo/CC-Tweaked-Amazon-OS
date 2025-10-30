@@ -3,6 +3,9 @@ local TRIM_KEEP_LINES = 200 -- lines to keep
 
 local ENABLE_LOG = true
 
+-- Queue for batched logging
+local logQueue = {}
+
 local function trimLog(LOG_FILE)
     if not fs.exists(LOG_FILE) then return end
     local size = fs.getSize(LOG_FILE)
@@ -30,6 +33,7 @@ local function trimLog(LOG_FILE)
     file.close()
 end
 
+-- Immediate logging (original behavior)
 local function log(msg, LOG_FILE)
     LOG_FILE = LOG_FILE or "logs/log.log"
 
@@ -52,4 +56,60 @@ local function log(msg, LOG_FILE)
     end
 end
 
-return { log = log }
+-- Queue a log message (no I/O, just memory)
+local function queue(msg, LOG_FILE)
+    if ENABLE_LOG then
+        LOG_FILE = LOG_FILE or "logs/log.log"
+        local timestamp = os.date("%Y-%m-%d %H:%M:%S")
+        table.insert(logQueue, {
+            timestamp = timestamp,
+            msg = msg,
+            file = LOG_FILE
+        })
+    end
+end
+
+-- Push all queued messages to disk (call after rendering)
+local function push()
+    if not ENABLE_LOG or #logQueue == 0 then return end
+
+    -- Group messages by file
+    local fileGroups = {}
+    for _, entry in ipairs(logQueue) do
+        fileGroups[entry.file] = fileGroups[entry.file] or {}
+        table.insert(fileGroups[entry.file], entry)
+    end
+
+    -- Write each file's messages
+    for LOG_FILE, entries in pairs(fileGroups) do
+        -- make sure folder exists
+        local dir = fs.getDir(LOG_FILE)
+        if not fs.exists(dir) then fs.makeDir(dir) end
+
+        trimLog(LOG_FILE)
+        local file = fs.open(LOG_FILE, "a")
+        if file then
+            for _, entry in ipairs(entries) do
+                file.writeLine("[" .. entry.timestamp .. "] " .. entry.msg)
+            end
+            file.close()
+        else
+            print("Logger failed to open file: " .. LOG_FILE)
+        end
+    end
+
+    -- Clear queue
+    logQueue = {}
+end
+
+-- Clear queue without writing (in case you want to discard)
+local function clear()
+    logQueue = {}
+end
+
+return {
+    log = log,      -- Immediate write
+    queue = queue,  -- Add to queue
+    push = push,    -- Write all queued
+    clear = clear   -- Discard queue
+}
