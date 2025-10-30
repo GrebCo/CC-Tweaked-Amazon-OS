@@ -50,6 +50,7 @@ if remoteVersion ~= version then
     shell.run("wget https://raw.githubusercontent.com/GrebCo/CC-Tweaked-Amazon-OS/refs/heads/dev/Elliot/Client/Applications/EEBrowser/fizzle.lua EEBrowser/fizzle.lua")
     shell.run("wget https://raw.githubusercontent.com/GrebCo/CC-Tweaked-Amazon-OS/refs/heads/dev/Elliot/Client/Applications/EEBrowser/fizzleLibraries/libraries.lua EEBrowser/fizzleLibraries/libraries.lua")
     shell.run("wget https://raw.githubusercontent.com/GrebCo/CC-Tweaked-Amazon-OS/refs/heads/dev/Elliot/Client/Applications/EEBrowser/fizzleLibraries/fizzleNetwork.lua EEBrowser/fizzleLibraries/fizzleNetwork.lua")
+    shell.run("wget https://raw.githubusercontent.com/GrebCo/CC-Tweaked-Amazon-OS/refs/heads/dev/Elliot/Client/Applications/EEBrowser/fizzleLibraries/document.lua EEBrowser/fizzleLibraries/document.lua")
 
     -- get Network Config
     shell.run("wget https://raw.githubusercontent.com/GrebCo/CC-Tweaked-Amazon-OS/refs/heads/dev/Elliot/Client/Config/network_config.lua Config/network_config.lua")
