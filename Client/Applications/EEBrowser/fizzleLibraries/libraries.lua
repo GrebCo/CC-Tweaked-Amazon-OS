@@ -1,4 +1,4 @@
-local fizzleLibraryGenerator = dofile("/Client/Applications/EEBrowser/fizzleLibraries/fizzleNetwork.lua")
+local fizzleLibraryGenerator = dofile("EEBrowser/fizzleLibraries/fizzleNetwork.lua")
 
 local function generateNetworkLibrary(contextTable)
     local networkLibrary = fizzleLibraryGenerator(contextTable)

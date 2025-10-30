@@ -7,7 +7,7 @@ local fizzleEvents = {}
 local cacheFilePath = "/cache/"
 
 -- Fizzle Libraries
-local fizzleLibraryGenerator = dofile("OSUtil/fizzleLibraries/libraries.lua")
+local fizzleLibraryGenerator = dofile("EEBrowser/fizzleLibraries/libraries.lua")
 local fizzleNetworkLibrary = nil
 
 
