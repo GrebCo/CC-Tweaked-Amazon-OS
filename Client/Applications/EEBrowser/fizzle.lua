@@ -1,6 +1,6 @@
 local fizzleContext
 
-local log = function()  end
+local log = function() end
 
 local fizzleEvents = {}
 
@@ -30,9 +30,7 @@ local sandbox = {
 }
 
 -- Fizzle Libraries
-local fizzleLibraryGenerator = dofile("EEBrowser/fizzleLibraries/libraries.lua")
-local fizzleNetworkLibrary = nil
-local fizzleDocumentLibrary = nil
+local libraries = nil
 
 
 -- Import events module
@@ -41,7 +39,6 @@ local events = dofile("OSUtil/events.lua")
 
 -- Create a safe sandbox environment
 local function createSandbox()
-
     -- Set up metatable to prevent access to global environment
     setmetatable(sandbox, {
         __index = function(t, k)
@@ -197,7 +194,8 @@ local function assignFizzleFunctionsToEventsFromCache()
 
             if funcName and lastEventName then
                 functionEventMap[funcName] = lastEventName
-                log("[fzzl] DEBUG: Line " .. i .. " - Mapped function '" .. funcName .. "' to event '" .. lastEventName .. "'")
+                log("[fzzl] DEBUG: Line " ..
+                        i .. " - Mapped function '" .. funcName .. "' to event '" .. lastEventName .. "'")
                 lastEventName = nil
             end
             cacheLua_scriptFile.writeLine(line)
@@ -419,7 +417,8 @@ local function init(contextTable)
     log = (fizzleContext.functions and fizzleContext.functions.log) or function() end
 
     -- setup libraries
-    libraries.augmentSandbox(fizzleContext, sandbox)
+    libraries = dofile("EEBrowser/fizzleLibraries/libraries.lua")
+    libraries(sandbox, fizzleContext)
 
     log("[fzzl] Fizzle initialized!")
 end
@@ -431,5 +430,3 @@ return {
     triggerFizzleEvent = triggerFizzleEvent,
     renew = renew
 }
-
-
