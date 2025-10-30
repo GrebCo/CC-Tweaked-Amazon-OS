@@ -6,6 +6,11 @@ local fizzleEvents = {}
 
 local cacheFilePath = "/cache/"
 
+-- Fizzle Libraries
+local fizzleLibraryGenerator = dofile("OSUtil/fizzleLibraries/libraries.lua")
+local fizzleNetworkLibrary = nil
+
+
 -- Import events module
 local events = dofile("OSUtil/events.lua")
 
@@ -25,6 +30,8 @@ local function createSandbox()
         print = log,
         error = error,
         assert = assert,
+        net = fizzleNetworkLibrary, -- sanitized network library
+
         -- Add other safe functions as needed
 
         -- Fizzle-specific functions can be added here
@@ -408,6 +415,10 @@ local function init(contextTable)
     fizzleContext.scripts = fizzleContext.scripts or {}
     fizzleContext.triggerEvent = triggerFizzleEvent
     log = (fizzleContext.functions and fizzleContext.functions.log) or function() end
+
+    -- setup network handler library
+    fizzleNetworkLibrary = fizzleLibraryGenerator.generateNetworkLibrary(fizzleContext)
+
     log("[fzzl] Fizzle initialized!")
 end
 

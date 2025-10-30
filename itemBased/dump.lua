@@ -1,4 +1,4 @@
-local config = require("itemDump/config.lua")
+local config = require("config")
 
 local imEfraim = peripheral.wrap(config.efraimIMDirection)
 local imEasease = peripheral.wrap(config.easeaseIMDirection)
@@ -11,7 +11,7 @@ easeaseID = 235
 -- Open any wireless modem
 local modem = peripheral.find("modem")
 if modem == nil then error("no modem found") end
-rednet.open(peripheral.getName(modem))
+rednet.open("front")
 
 local PROTOCOL = "EEdump"
 
@@ -44,7 +44,7 @@ while true do
         end
         print("Detected",count,"slots to be dumped")
         print("Dumping Items to ME System")
-        shell.run("itemDump/meDump.lua")
+        shell.run("meDump.lua")
         rednet.send(sender, {status = "done"}, PROTOCOL)
     end
 
@@ -57,7 +57,11 @@ while true do
         elseif sender == config.easeaseID then
             imDirection = config.easeaseIMDirection
         end
-        shell.run("itemDump/meGet.lua", msg.itemName, tostring(msg.count), imDirection)
+        
+        -- Use shell.run with a properly constructed command string
+        local command = string.format("meGet.lua %q %s %q", msg.itemName, tostring(msg.count), imDirection)
+        shell.run(command)
+        
         rednet.send(sender, {status = "done"}, PROTOCOL)
     end
 end

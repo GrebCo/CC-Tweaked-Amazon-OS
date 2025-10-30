@@ -33,6 +33,7 @@ if remoteVersion ~= version then
     shell.run("mkdir OSUtil")
     shell.run("mkdir EEBrowser")
     shell.run("mkdir Config")
+    shell.run("mkdir EEBrowser/fizzleLibraries")
     
     print("Downloading new files...")
     shell.run("wget https://raw.githubusercontent.com/GrebCo/CC-Tweaked-Amazon-OS/refs/heads/dev/Elliot/Client/OSUtil/UI.lua OSUtil/UI.lua")
@@ -47,6 +48,8 @@ if remoteVersion ~= version then
     shell.run("wget https://raw.githubusercontent.com/GrebCo/CC-Tweaked-Amazon-OS/refs/heads/dev/Elliot/Client/Applications/EEBrowser/browser.lua EEBrowser/browser.lua")
     shell.run("wget https://raw.githubusercontent.com/GrebCo/CC-Tweaked-Amazon-OS/refs/heads/dev/Elliot/Client/Applications/EEBrowser/Default.txt EEBrowser/Default.txt")
     shell.run("wget https://raw.githubusercontent.com/GrebCo/CC-Tweaked-Amazon-OS/refs/heads/dev/Elliot/Client/Applications/EEBrowser/fizzle.lua EEBrowser/fizzle.lua")
+    shell.run("wget https://raw.githubusercontent.com/GrebCo/CC-Tweaked-Amazon-OS/refs/heads/dev/Elliot/Client/Applications/EEBrowser/fizzleLibraries/libraries.lua EEBrowser/fizzleLibraries/libraries.lua")
+    shell.run("wget https://raw.githubusercontent.com/GrebCo/CC-Tweaked-Amazon-OS/refs/heads/dev/Elliot/Client/Applications/EEBrowser/fizzleLibraries/fizzleNetwork.lua EEBrowser/fizzleLibraries/fizzleNetwork.lua")
 
     -- get Network Config
     shell.run("wget https://raw.githubusercontent.com/GrebCo/CC-Tweaked-Amazon-OS/refs/heads/dev/Elliot/Client/Config/network_config.lua Config/network_config.lua")
