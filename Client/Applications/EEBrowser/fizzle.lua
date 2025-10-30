@@ -6,39 +6,41 @@ local fizzleEvents = {}
 
 local cacheFilePath = "/cache/"
 
+-- sandbox
+local sandbox = {
+    -- Safe built-ins
+    pairs = pairs,
+    ipairs = ipairs,
+    next = next,
+    type = type,
+    tostring = tostring,
+    tonumber = tonumber,
+    string = string,
+    table = table,
+    math = math,
+    print = log,
+    error = error,
+    assert = assert,
+    -- Add other safe functions as needed
+
+    -- Fizzle-specific functions can be added here
+    -- triggerEvent = function(eventName, params)
+    --     events.triggerEvent(eventName, params)
+    -- end
+}
+
 -- Fizzle Libraries
 local fizzleLibraryGenerator = dofile("EEBrowser/fizzleLibraries/libraries.lua")
 local fizzleNetworkLibrary = nil
+local fizzleDocumentLibrary = nil
 
 
 -- Import events module
 local events = dofile("OSUtil/events.lua")
 
+
 -- Create a safe sandbox environment
 local function createSandbox()
-    local sandbox = {
-        -- Safe built-ins
-        pairs = pairs,
-        ipairs = ipairs,
-        next = next,
-        type = type,
-        tostring = tostring,
-        tonumber = tonumber,
-        string = string,
-        table = table,
-        math = math,
-        print = log,
-        error = error,
-        assert = assert,
-        net = fizzleNetworkLibrary, -- sanitized network library
-
-        -- Add other safe functions as needed
-
-        -- Fizzle-specific functions can be added here
-        -- triggerEvent = function(eventName, params)
-        --     events.triggerEvent(eventName, params)
-        -- end
-    }
 
     -- Set up metatable to prevent access to global environment
     setmetatable(sandbox, {
@@ -416,8 +418,8 @@ local function init(contextTable)
     fizzleContext.triggerEvent = triggerFizzleEvent
     log = (fizzleContext.functions and fizzleContext.functions.log) or function() end
 
-    -- setup network handler library
-    fizzleNetworkLibrary = fizzleLibraryGenerator.generateNetworkLibrary(fizzleContext)
+    -- setup libraries
+    libraries.augmentSandbox(fizzleContext, sandbox)
 
     log("[fzzl] Fizzle initialized!")
 end
