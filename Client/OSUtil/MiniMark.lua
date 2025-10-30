@@ -748,8 +748,22 @@ local function createRenderer(opts, ui)
         -- Stage 1: Parse file -> logical lines (expensive: 50-100ms)
         self._cachedTokens = parsePageToLogicalLines(self.path)
 
+        -- Debug: Dump cached tokens to file
+        local dumpFile = fs.open("minimark_logic_tokens_dump.txt", "w")
+        if dumpFile then
+          dumpFile.write(textutils.serialize(self._cachedTokens))
+          dumpFile.close()
+        end
+
         -- Stage 2: Layout logical -> physical lines (expensive: 2-5ms)
         self._cachedPhysicalLines = layoutFromTokens(self._cachedTokens, self.width)
+
+        -- Debug: Dump physical lines to file
+        local dumpFile = fs.open("minimark_phys_tokens_dump.txt", "w")
+        if dumpFile then
+          dumpFile.write(textutils.serialize(self._cachedPhysicalLines))
+          dumpFile.close()
+        end
 
         self._cachedPath = self.path
         self._needsTokenize = false
@@ -859,6 +873,78 @@ local function createRenderer(opts, ui)
 
       -- Return false to allow click passthrough to UI overlays
       return false
+    end,
+
+    -- Find all logical elements with matching ID from cached tokens
+    -- Returns array of {tokenIdx, elemIdx, element}
+    findElementsByID = function(self, id)
+      if not self._cachedTokens then return {} end
+
+      local results = {}
+
+      for tokenIdx, token in ipairs(self._cachedTokens) do
+        if token.type == "line" and token.elements then
+          for elemIdx, elem in ipairs(token.elements) do
+            -- Check both meta.id and direct id field
+            local elemId = (elem.meta and elem.meta.id) or elem.id
+            if elemId == id then
+              table.insert(results, {
+                tokenIdx = tokenIdx,
+                elemIdx = elemIdx,
+                element = elem,
+                logicalLine = token
+              })
+            end
+          end
+        end
+      end
+
+      return results
+    end,
+
+    -- Modify all logical elements with matching ID
+    -- modifyFunc receives element and should return modified properties table
+    -- Example: modifyElementsByID("myBtn", function(elem) return {label = "New Text"} end)
+    -- NOTE: After modification, physical lines are re-laid out automatically
+    modifyElementsByID = function(self, id, modifyFunc)
+      if not self._cachedTokens then return 0 end
+
+      local count = 0
+
+      for tokenIdx, token in ipairs(self._cachedTokens) do
+        if token.type == "line" and token.elements then
+          for elemIdx, elem in ipairs(token.elements) do
+            local elemId = (elem.meta and elem.meta.id) or elem.id
+            if elemId == id then
+              -- Call modify function to get new properties
+              local newProps = modifyFunc(elem)
+              if newProps and type(newProps) == "table" then
+                -- Apply new properties to element
+                for key, value in pairs(newProps) do
+                  elem[key] = value
+                end
+                count = count + 1
+              end
+            end
+          end
+        end
+      end
+
+      -- Re-layout physical lines if we modified anything
+      if count > 0 then
+        self._cachedPhysicalLines = layoutFromTokens(self._cachedTokens, self.width)
+
+        -- Recreate UI elements since physical lines changed
+        if ui and self.childScene then
+          ui.clearScene(self.childScene)
+          self._uiElements = {}
+          self:createUIElementsFromPhysicalLines()
+        end
+
+        if ui then ui.markDirty() end
+      end
+
+      return count
     end
   }
 

@@ -32,8 +32,8 @@ local contextTable = {
     scripts = {}, -- script-defined functions or handlers
     eventTrigger = nil, -- fizzle Events import is introduced in fizzle.lua init()
     events = {},
-
     net = net, -- In Use to pass to fizzle to create a sanitized version
+    fizzleLibFunctions = {},
 }
 
 fs.makeDir(cacheDir)
@@ -189,6 +189,10 @@ local mmRenderer = ui.addElement(nil, minimark.createRenderer({
     end
 }, ui))
 
+fizzleLibFunctions.findElementByID = mmRenderer.findElementByID
+fizzleLibFunctions.modifyElementsByID = mmRenderer.modifyElementsByID
+
+
 --ui.createExitButton(function()
 --print("Exiting browser...")
 --os.reboot()
@@ -217,6 +221,26 @@ local settings = ui.button({
     xOffset = -4,
     onclick = function()
         ui.setChild("ConfirmSettingsPopup", 0, 0, "center")
+    end
+})
+
+-- Test button for modifyElementsByID
+local testModify = ui.button({
+    text = "test",
+    fg = colors.lime,
+    bg = colors.gray,
+    position = "bottomRight",
+    onclick = function()
+        local count = mmRenderer:modifyElementsByID("persistTest", function(elem)
+            -- Change the label/text of the element
+            if elem.label then
+                return { label = "Modified at " .. os.clock() }
+            elseif elem.text then
+                return { text = "Modified at " .. os.clock() }
+            end
+        end)
+        log("[Browser] Modified " .. count .. " elements with id='persistTest'")
+        statusLabel.text = "Modified " .. count .. " elements"
     end
 })
 
