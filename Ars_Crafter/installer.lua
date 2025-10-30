@@ -9,7 +9,9 @@ local files = {
   "recipes.lua",
   "actions.lua",
   "imbue.lua",
-  "enchant.lua"
+  "enchant.lua",
+  "imbuements.json",
+  "enchantments.json"
 }
 
 for _, file in ipairs(files) do
