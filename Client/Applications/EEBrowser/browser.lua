@@ -32,8 +32,8 @@ local contextTable = {
     scripts = {}, -- script-defined functions or handlers
     eventTrigger = nil, -- fizzle Events import is introduced in fizzle.lua init()
     events = {},
-    net = net, -- In Use to pass to fizzle to create a sanitized version
     fizzleLibFunctions = {},
+    net = net
 }
 
 fs.makeDir(cacheDir)
