@@ -1,5 +1,16 @@
 # <text:cyan>MiniMark v0.91 Feature Test Page
 
+<button label:"SendWebRequest" fg:black bg:orange pressBg:red id:"webID" onClick:endPointEvent>
+
+<script>
+  @endPointEvent
+  function sendMessage()
+    local element = document.getElementById("confirm")
+    net.send("myEndPoint", element.text, "EENet")
+    document.setElementBodyById("confirm", "Hell Yeah")
+  end
+</script>
+
 <text:green>This page tests all supported tags, attributes, persistence, and Fizzle-ready interactivity.
 <hr:"=-">
 
@@ -18,7 +29,7 @@ until reset or newline.<reset> Now ID cleared.
 
 ##4. Links (three forms)
 <link "Home","Return Home">
-<link "Help">
+<link "Demo">
 <link target:"About" label:"About Page" fg:yellow bg:blue>
 
 ## 5. Buttons
@@ -30,8 +41,7 @@ until reset or newline.<reset> Now ID cleared.
 <checkbox label:"Hard Mode" id:"hardMode">
 
 ## 7. Textboxes
-<textbox width:"12" id:"nameField">
-<textbox width:"8" fg:yellow bg:gray blinkChar:"_" onEnter:NameEntered>
+<textbox width:"8" fg:yellow bg:gray blinkChar:"_" onEnter:NameEntered id:"fuckyouelliot" text:"filler">
 
 ## 8. HR + BR
 <hr:"--+">
@@ -70,3 +80,4 @@ Do I even need to escape these " or perhaps > or <
 <script event:"secondShorthand">
   print("secondShorthand triggered! from the file!")
 </script>
+

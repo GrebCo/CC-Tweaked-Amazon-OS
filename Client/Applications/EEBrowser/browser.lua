@@ -26,11 +26,11 @@ end
 -- Context table
 local contextTable = {
 
-    mmElements = {}, -- all active UI / MiniMark elements live here
-    scenes = {}, -- All UI scenes live here
+    mmElements = {},                                                   -- all active UI / MiniMark elements live here
+    scenes = {},                                                       -- All UI scenes live here
     functions = { log = log, logQueue = logQueue, logPush = logPush }, -- shared callable functions
-    scripts = {}, -- script-defined functions or handlers
-    eventTrigger = nil, -- fizzle Events import is introduced in fizzle.lua init()
+    scripts = {},                                                      -- script-defined functions or handlers
+    eventTrigger = nil,                                                -- fizzle Events import is introduced in fizzle.lua init()
     events = {},
     fizzleLibFunctions = {},
     net = net
@@ -178,7 +178,7 @@ local mmRenderer = ui.addElement(nil, minimark.createRenderer({
     y = 2,
     height = screenHeight - 2,
     width = 45,
-    scene = "Browser",  -- Specify which scene to add interactive elements to
+    scene = "Browser", -- Specify which scene to add interactive elements to
     onPageLoaded = function(pagePath)
         -- Extract and load scripts into Fizzle when page is loaded
         local scripts = minimark.getScripts(pagePath)
@@ -189,8 +189,9 @@ local mmRenderer = ui.addElement(nil, minimark.createRenderer({
     end
 }, ui))
 
-fizzleLibFunctions.findElementByID = mmRenderer.findElementByID
-fizzleLibFunctions.modifyElementsByID = mmRenderer.modifyElementsByID
+contextTable.fizzleLibFunctions.findElementByID = mmRenderer.findElementsByID
+contextTable.fizzleLibFunctions.modifyElementsByID = mmRenderer.modifyElementsByID
+contextTable.fizzleLibFunctions.mmRenderer = mmRenderer
 
 
 --ui.createExitButton(function()
@@ -241,6 +242,7 @@ local testModify = ui.button({
         end)
         log("[Browser] Modified " .. count .. " elements with id='persistTest'")
         statusLabel.text = "Modified " .. count .. " elements"
+        log(mmRenderer:findElementsByID("persistTest")[1].element.text)
     end
 })
 
@@ -367,8 +369,8 @@ function checkIfnewLink()
         local ok, result = getWebsite(url, protocol)
         if ok then
             mmRenderer.path = result
-            mmRenderer:prepareRender()  -- Pre-tokenize BEFORE marking dirty
-            ui.markDirty()  -- Triggers draw() which syncs UI elements
+            mmRenderer:prepareRender() -- Pre-tokenize BEFORE marking dirty
+            ui.markDirty()             -- Triggers draw() which syncs UI elements
         else
             statusLabel.text = "Error: " .. result
         end
@@ -379,11 +381,12 @@ end
 -- Start on Splash and run
 -------------------------------------------------
 
+
 ui.setScene("Splash")
 ui.run({
     fps = 30,
     onTick = function()
         checkIfnewLink()
-        logPush()  -- Push queued logs after each frame
+        logPush() -- Push queued logs after each frame
     end
 })
