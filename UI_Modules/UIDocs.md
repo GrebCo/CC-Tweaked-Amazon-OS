@@ -11,11 +11,12 @@
 1. [Quick Start](#quick-start)
 2. [Architecture Overview](#architecture-overview)
 3. [Core Concepts](#core-concepts)
-4. [API Reference](#api-reference)
-5. [Element Types](#element-types)
-6. [Advanced Usage](#advanced-usage)
-7. [Best Practices](#best-practices)
-8. [Examples](#examples)
+4. [Theme System](#theme-system)
+5. [API Reference](#api-reference)
+6. [Element Types](#element-types)
+7. [Advanced Usage](#advanced-usage)
+8. [Best Practices](#best-practices)
+9. [Examples](#examples)
 
 ---
 
@@ -230,7 +231,288 @@ ui.addElement("MyScene", asyncWorker)
 
 ---
 
+## Theme System
+
+The UI framework includes a comprehensive theme system for consistent styling across all elements.
+
+### Overview
+
+Themes provide:
+- **Semantic colors** (primary, success, danger, warning, info)
+- **Element-specific defaults** (button, label, textfield, etc.)
+- **Custom theme paths** (dashboard.cpu.bar, controls.volume, etc.)
+- **Color utilities** (lighten, darken)
+- **Easy theme switching** (change entire app appearance instantly)
+
+### Theme Structure
+
+A theme is a table with nested properties:
+
+```lua
+{
+    -- Semantic colors (top-level)
+    primary = colors.blue,
+    secondary = colors.cyan,
+    success = colors.green,
+    warning = colors.yellow,
+    danger = colors.red,
+    info = colors.lightBlue,
+
+    -- Base colors
+    background = colors.black,
+    surface = colors.gray,
+    text = colors.white,
+    textSecondary = colors.lightGray,
+    border = colors.gray,
+
+    -- Element-specific themes
+    button = {
+        bg = colors.blue,
+        fg = colors.white,
+        colorPressed = colors.lightBlue
+    },
+
+    label = {
+        fg = colors.white,
+        bg = colors.black
+    },
+
+    -- Custom nested paths
+    dashboard = {
+        cpu = {
+            bar = { fillColor = colors.red }
+        }
+    }
+}
+```
+
+### Using Themes
+
+#### Basic Setup
+
+```lua
+-- Themes are initialized automatically on ui.init()
+ui.init(context)
+
+-- Default theme is registered automatically
+-- Activate it:
+ui.setTheme("default")
+```
+
+#### Registering Custom Themes
+
+```lua
+ui.registerTheme("myTheme", {
+    primary = colors.orange,
+    success = colors.lime,
+    danger = colors.red,
+
+    background = colors.black,
+    text = colors.white,
+
+    button = {
+        bg = colors.orange,
+        fg = colors.white,
+        colorPressed = colors.yellow
+    },
+
+    label = {
+        fg = colors.orange,
+        bg = colors.black
+    }
+})
+
+-- Activate your theme
+ui.setTheme("myTheme")
+```
+
+#### Using Themes in Elements
+
+Elements can use themes in three ways:
+
+**1. Semantic colors (most common)**
+```lua
+ui.button({
+    text = "Success",
+    theme = "success",  -- Uses theme.success color
+    position = "center"
+})
+```
+
+**2. Element defaults**
+```lua
+ui.button({
+    text = "Default Button",
+    -- No theme specified = uses theme.button defaults
+    position = "center"
+})
+```
+
+**3. Custom theme paths**
+```lua
+ui.button({
+    text = "Custom",
+    theme = "dashboard.cpu.button",  -- Custom nested path
+    position = "center"
+})
+```
+
+**4. Manual override (highest priority)**
+```lua
+ui.button({
+    text = "Manual",
+    bg = colors.red,  -- Manual color overrides theme
+    position = "center"
+})
+```
+
+### Theme Resolution Priority
+
+When an element resolves its colors, it follows this cascade:
+
+1. **Manual colors** (highest) - `bg = colors.red`
+2. **Theme parameter** - `theme = "success"`
+3. **Element defaults** - `theme.button.bg`
+4. **Hardcoded fallbacks** (lowest)
+
+### Default Theme
+
+The framework includes a built-in default theme with:
+
+**Semantic Colors:**
+- `primary` - colors.blue
+- `secondary` - colors.cyan
+- `success` - colors.green
+- `warning` - colors.yellow
+- `danger` - colors.red
+- `info` - colors.lightBlue
+
+**Element Defaults:**
+- `button` - Blue background, white text, lightBlue pressed
+- `label` - White text, black background
+- `textfield` - Gray background, lightGray when active
+- `checkbox` - White text, lime when checked
+- `terminal` - Black background, white text, lime prompt
+- `rectangle` - Black background
+
+See themes.lua for additional pre-built themes (light, nordic, solarizedDark, gruvboxDark, highContrast).
+
+---
+
 ## API Reference
+
+### Theme System API
+
+#### `UI.registerTheme(name, theme)`
+
+Registers a new theme.
+
+**Parameters:**
+- `name` (string) - Unique theme name
+- `theme` (table) - Theme definition table
+
+**Example:**
+```lua
+ui.registerTheme("dark", {
+    primary = colors.cyan,
+    background = colors.black,
+    button = { bg = colors.cyan, fg = colors.black }
+})
+```
+
+#### `UI.setTheme(themeName)`
+
+Activates a registered theme and triggers a re-render.
+
+**Parameters:**
+- `themeName` (string) - Name of theme to activate
+
+**Example:**
+```lua
+ui.setTheme("dark")
+```
+
+**Throws:** Error if theme doesn't exist
+
+#### `UI.getCurrentTheme()`
+
+Returns the currently active theme object.
+
+**Returns:** Theme table or nil
+
+**Example:**
+```lua
+local theme = ui.getCurrentTheme()
+print("Primary color: " .. tostring(theme.primary))
+```
+
+#### `UI.resolveThemePath(path)`
+
+Resolves a dot-notation path to a theme value.
+
+**Parameters:**
+- `path` (string) - Dot-separated path (e.g., "dashboard.cpu.bar")
+
+**Returns:** Value at path or nil
+
+**Example:**
+```lua
+local barColor = ui.resolveThemePath("dashboard.cpu.bar.fillColor")
+```
+
+#### `UI.resolveTheme(opts, elementType, propertyMap)`
+
+Universal theme resolution helper used internally by elements.
+
+**Parameters:**
+- `opts` (table) - Element options (may contain `theme` parameter)
+- `elementType` (string) - Element type for default lookup (e.g., "button")
+- `propertyMap` (table) - Map of properties to fallback values
+
+**Returns:** Table of resolved properties
+
+**Example (internal use):**
+```lua
+local colors = UI.resolveTheme(opts, "button", {
+    bg = colors.gray,
+    fg = colors.white,
+    colorPressed = colors.lightGray
+})
+```
+
+#### `UI.theme.lighten(color)`
+
+Returns a lighter variant of a color.
+
+**Parameters:**
+- `color` (number) - CC:Tweaked color value
+
+**Returns:** Lighter color value
+
+**Example:**
+```lua
+local lightBlue = UI.theme.lighten(colors.blue)  -- returns colors.lightBlue
+local lightRed = UI.theme.lighten(colors.red)    -- returns colors.orange
+```
+
+#### `UI.theme.darken(color)`
+
+Returns a darker variant of a color.
+
+**Parameters:**
+- `color` (number) - CC:Tweaked color value
+
+**Returns:** Darker color value
+
+**Example:**
+```lua
+local darkGray = UI.theme.darken(colors.lightGray)  -- returns colors.gray
+local darkBlue = UI.theme.darken(colors.lightBlue)  -- returns colors.blue
+```
+
+---
+
+## API Reference (Elements)
 
 ### Initialization
 

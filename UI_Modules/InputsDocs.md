@@ -1,0 +1,859 @@
+# Inputs Module Documentation (Interactive Elements)
+
+Extension module for `UI.lua` that provides interactive input elements with full theme system integration.
+
+**Version:** 1.0
+**Last Updated:** November 4, 2025
+
+## Setup
+
+```lua
+local ui = dofile("UI.lua")
+local inputs = dofile("Inputs.lua")
+
+-- Initialize
+ui.init(context)
+inputs.init(ui)
+```
+
+## Table of Contents
+
+1. [Theme System Integration](#theme-system-integration)
+2. [Elements](#elements)
+   - [Slider](#slider)
+   - [Button Group (Radio Buttons)](#button-group-radio-buttons)
+   - [Dropdown Menu](#dropdown-menu)
+3. [Common Options](#common-options)
+4. [Theme Examples](#theme-examples)
+5. [Complete Examples](#complete-examples)
+
+---
+
+## Theme System Integration
+
+All input elements support the theme system with the `theme` parameter:
+
+```lua
+-- Use semantic theme colors
+local slider = inputs.slider({
+    value = 50,
+    min = 0,
+    max = 100,
+    theme = "primary",
+    position = "center"
+})
+
+-- Use element-specific theme defaults
+local radioGroup = inputs.buttonGroup({
+    options = {"Easy", "Medium", "Hard"},
+    theme = "buttonGroup",
+    position = "center"
+})
+
+-- Manual override still works
+local customSlider = inputs.slider({
+    value = 75,
+    fillColor = colors.lime,  -- Manual override
+    position = "center"
+})
+```
+
+### Color Resolution Priority
+
+All elements follow this priority cascade:
+
+1. **Manual colors** (highest priority) - `fillColor = colors.orange`
+2. **Theme parameter** - `theme = "primary"`
+3. **Default element theme** - `theme.slider.fillColor`
+4. **Hardcoded fallbacks** (lowest priority)
+
+---
+
+## Elements
+
+### Slider
+
+Interactive value selector with horizontal or vertical orientation, drag support, and optional step snapping.
+
+```lua
+local slider = inputs.slider({
+    value = 50,                   -- Current value (default: 0)
+    min = 0,                      -- Minimum value (default: 0)
+    max = 100,                    -- Maximum value (default: 100)
+    step = 5,                     -- Optional: snap to increments (default: nil)
+    orientation = "horizontal",   -- "horizontal" or "vertical" (default: "horizontal")
+    width = 20,                   -- Width in characters (default: 20 for horizontal, 3 for vertical)
+    height = 1,                   -- Height in rows (default: 1 for horizontal, 10 for vertical)
+    showValue = true,             -- Display numeric value (default: true)
+    valueFormat = "%.0f",         -- Printf format string (default: "%.0f")
+    label = "Volume",             -- Optional label text (default: "")
+    position = "center",          -- Anchor position
+
+    -- Theme options:
+    theme = "primary",            -- Use semantic color
+    -- OR manual colors:
+    fg = colors.white,            -- Text color
+    bg = colors.gray,             -- Background color
+    trackColor = colors.gray,     -- Empty track color
+    fillColor = colors.blue,      -- Filled track color
+    thumbColor = colors.white,    -- Thumb marker color
+
+    onChange = function(value)    -- Called when value changes
+        print("New value: " .. value)
+    end
+})
+
+-- Update value programmatically
+slider:setValue(75)
+```
+
+**Theme Properties:**
+- `fg` - Text color (label and value)
+- `bg` - Background color
+- `trackColor` - Unfilled portion of track
+- `fillColor` - Filled portion of track
+- `thumbColor` - Color of the thumb marker
+
+**Default Theme Values:**
+```lua
+theme.slider = {
+    fg = colors.white,
+    bg = colors.gray,
+    trackColor = colors.gray,
+    fillColor = colors.blue,
+    thumbColor = colors.white
+}
+```
+
+**Behavior:**
+- **Click** - Jump to clicked position
+- **Drag** - Drag thumb to adjust value continuously
+- **Step snapping** - When `step` is set, value snaps to nearest increment
+- **Orientation** - Horizontal sliders go left-to-right, vertical sliders go bottom-to-top (inverted Y)
+- **Label** - Displayed above horizontal sliders, above vertical sliders
+- **Value display** - Shows to the right of horizontal sliders, to the right of vertical thumb position
+
+**Visual Characters:**
+- `\7` - Bullet character used as thumb marker
+- Filled track uses `fillColor`, empty track uses `trackColor`
+
+---
+
+### Button Group (Radio Buttons)
+
+Mutually exclusive selection from multiple options, with horizontal or vertical layout.
+
+```lua
+local radioGroup = inputs.buttonGroup({
+    options = {"Easy", "Medium", "Hard"},     -- Array of option labels
+    selected = 2,                             -- Initially selected index (default: 1)
+    orientation = "horizontal",               -- "horizontal" or "vertical" (default: "horizontal")
+    spacing = 2,                              -- Space between buttons (default: 2)
+    position = "center",
+
+    -- Theme options:
+    theme = "primary",                        -- Use semantic color
+    -- OR manual colors:
+    fg = colors.white,                        -- Unselected text color
+    bg = colors.gray,                         -- Unselected background
+    selectedBg = colors.blue,                 -- Selected button background
+    selectedFg = colors.white,                -- Selected button text color
+
+    onChange = function(selected, index)     -- Called when selection changes
+        print(string.format("Selected: %s (index %d)", selected, index))
+    end
+})
+
+-- Update selection programmatically
+radioGroup:setSelected(3)
+
+-- Alias: radioGroup() is identical to buttonGroup()
+local radios = inputs.radioGroup({...})
+```
+
+**Theme Properties:**
+- `fg` - Unselected button text color
+- `bg` - Unselected button background
+- `selectedBg` - Selected button background
+- `selectedFg` - Selected button text color
+
+**Default Theme Values:**
+```lua
+theme.buttonGroup = {
+    fg = colors.white,
+    bg = colors.gray,
+    selectedBg = colors.blue,
+    selectedFg = colors.white
+}
+```
+
+**Behavior:**
+- **Single selection** - Only one option can be selected at a time
+- **Auto-layout** - Buttons are automatically positioned based on orientation and spacing
+- **Width calculation** - Horizontal groups calculate total width, vertical groups use max button width
+- **Visual indicator** - Selected button shows bullet (`\7`), unselected shows space
+
+**Format:**
+- Horizontal: `( ) Option1   ( ) Option2   (●) Option3`
+- Vertical: Each option on its own line
+
+**Alias:** `inputs.radioGroup()` is an alias for `inputs.buttonGroup()` for semantic clarity.
+
+---
+
+### Dropdown Menu
+
+Expandable selection list with optional search/filter, scrolling for long lists, and click-outside-to-close behavior.
+
+```lua
+local dropdown = inputs.dropdown({
+    options = {"Apple", "Banana", "Cherry", "Date", "Elderberry"},
+    selected = 1,                             -- Initially selected index (default: nil)
+    width = 20,                               -- Width of dropdown (default: 20)
+    maxHeight = 8,                            -- Max visible options when expanded (default: 8)
+    placeholder = "Select fruit...",          -- Text when nothing selected (default: "Select...")
+    searchable = true,                        -- Enable search/filter (default: false)
+    position = "center",
+
+    -- Theme options:
+    theme = "primary",                        -- Use semantic color
+    -- OR manual colors:
+    fg = colors.white,                        -- Text color
+    bg = colors.gray,                         -- Background color
+    selectedBg = colors.blue,                 -- Selected item highlight
+    selectedFg = colors.white,                -- Selected item text
+    border = colors.lightGray,                -- Border color
+    scrollbar = colors.lightGray,             -- Scrollbar indicator color
+
+    onChange = function(selected, index)     -- Called when selection changes
+        print(string.format("Selected: %s (index %d)", selected, index))
+    end
+})
+
+-- Update selection programmatically
+dropdown:setSelected(3)
+
+-- Toggle expanded/collapsed state
+dropdown:toggle()
+```
+
+**Theme Properties:**
+- `fg` - Text color
+- `bg` - Background color
+- `selectedBg` - Highlighted item background
+- `selectedFg` - Highlighted item text color
+- `border` - Border character color
+- `scrollbar` - Scrollbar indicator color
+
+**Default Theme Values:**
+```lua
+theme.dropdown = {
+    fg = colors.white,
+    bg = colors.gray,
+    selectedBg = colors.blue,
+    selectedFg = colors.white,
+    border = colors.lightGray,
+    scrollbar = colors.lightGray
+}
+```
+
+**Behavior:**
+- **Click header** - Toggles expanded/collapsed state
+- **Click option** - Selects option and collapses menu
+- **Click outside** - Collapses menu without changing selection
+- **Search** - Type to filter options (when `searchable = true`)
+- **Scroll** - Mouse wheel scrolls through long lists
+- **Visual indicators**:
+  - Arrow: `\31` (down) when collapsed, `\30` (up) when expanded
+  - Checkmark: `\4` next to currently selected item
+  - Border: `\9` characters on left and right edges
+
+**Search Functionality:**
+When `searchable = true`:
+- Search box appears below header when expanded
+- Type to filter options (case-insensitive substring match)
+- Backspace to delete search characters
+- Filtered results update in real-time
+- Search text shows with cursor: `Search: text_`
+
+**Scrolling:**
+- Scrollbar appears on right side when options exceed `maxHeight`
+- Scrollbar position indicates current scroll offset
+- Mouse wheel scrolls up/down through list
+
+**Height Calculation:**
+- **Collapsed**: 1 row (header only)
+- **Expanded (no search)**: 1 + min(#options, maxHeight)
+- **Expanded (with search)**: 1 + 1 + min(#filtered, maxHeight)
+
+---
+
+## Common Options
+
+All elements support:
+
+### Positioning
+- `position` - Anchor position (center, topLeft, etc.)
+- `xOffset`, `yOffset` - Offset from anchor point
+- `x`, `y` - Absolute position (overrides position/offset)
+
+### Theming
+- `theme` - Theme path (e.g., "primary", "slider", "success")
+- `fg`, `bg` - Manual color overrides (highest priority)
+- Element-specific colors (vary by element type)
+
+### Scene Management
+- `scene` - Scene to add element to (default: active scene)
+
+---
+
+## Theme Examples
+
+### Using Semantic Colors
+
+```lua
+-- Success-themed slider
+local successSlider = inputs.slider({
+    value = 90,
+    theme = "success",  -- Green from theme
+    position = "center"
+})
+
+-- Primary-themed button group
+local primaryGroup = inputs.buttonGroup({
+    options = {"Low", "Medium", "High"},
+    theme = "primary",  -- Primary color from theme
+    position = "center"
+})
+
+-- Danger-themed dropdown
+local dangerDropdown = inputs.dropdown({
+    options = {"Delete", "Cancel"},
+    theme = "danger",  -- Red from theme
+    position = "center"
+})
+```
+
+### Using Element Defaults
+
+```lua
+-- Uses theme.slider defaults
+local slider1 = inputs.slider({
+    value = 50,
+    position = "center"
+})
+
+-- Uses theme.buttonGroup defaults
+local group1 = inputs.buttonGroup({
+    options = {"A", "B", "C"},
+    position = "center"
+})
+
+-- Uses theme.dropdown defaults
+local dropdown1 = inputs.dropdown({
+    options = {"Option 1", "Option 2"},
+    position = "center"
+})
+```
+
+### Custom Theme Properties
+
+```lua
+-- In theme definition:
+ui.registerTheme("myTheme", {
+    primary = colors.blue,
+
+    -- Custom input properties
+    controls = {
+        volume = {
+            fillColor = colors.lime,
+            trackColor = colors.gray
+        },
+        difficulty = {
+            selectedBg = colors.orange,
+            bg = colors.brown
+        }
+    }
+})
+
+ui.setTheme("myTheme")
+
+-- Use custom theme paths:
+local volumeSlider = inputs.slider({
+    value = 70,
+    theme = "controls.volume",
+    position = "topLeft"
+})
+
+local difficultyRadios = inputs.buttonGroup({
+    options = {"Easy", "Normal", "Hard"},
+    theme = "controls.difficulty",
+    position = "center"
+})
+```
+
+---
+
+## Complete Examples
+
+### Settings Panel with All Input Types
+
+```lua
+local ui = dofile("UI.lua")
+local inputs = dofile("Inputs.lua")
+
+local context = { scenes = {}, elements = {}, functions = {} }
+ui.init(context)
+inputs.init(ui)
+
+ui.newScene("Settings")
+ui.setScene("Settings")
+
+-- Title
+ui.label({
+    text = "=== Game Settings ===",
+    position = "topCenter",
+    yOffset = 1,
+    fg = colors.yellow
+})
+
+-- Volume slider
+ui.label({
+    text = "Volume:",
+    position = "left",
+    xOffset = 2,
+    yOffset = 4
+})
+
+local volumeSlider = inputs.slider({
+    value = 70,
+    min = 0,
+    max = 100,
+    step = 5,
+    width = 20,
+    label = "",
+    showValue = true,
+    valueFormat = "%.0f%%",
+    position = "left",
+    xOffset = 12,
+    yOffset = 4,
+    theme = "success",
+    onChange = function(val)
+        print("Volume: " .. val)
+    end
+})
+
+-- Difficulty radio buttons
+ui.label({
+    text = "Difficulty:",
+    position = "left",
+    xOffset = 2,
+    yOffset = 7
+})
+
+local difficulty = inputs.buttonGroup({
+    options = {"Easy", "Normal", "Hard"},
+    selected = 2,
+    orientation = "horizontal",
+    spacing = 2,
+    position = "left",
+    xOffset = 15,
+    yOffset = 7,
+    theme = "primary",
+    onChange = function(selected, index)
+        print("Difficulty: " .. selected)
+    end
+})
+
+-- Graphics quality dropdown
+ui.label({
+    text = "Graphics:",
+    position = "left",
+    xOffset = 2,
+    yOffset = 10
+})
+
+local graphics = inputs.dropdown({
+    options = {"Low", "Medium", "High", "Ultra"},
+    selected = 2,
+    width = 15,
+    maxHeight = 4,
+    position = "left",
+    xOffset = 14,
+    yOffset = 10,
+    theme = "primary",
+    onChange = function(selected, index)
+        print("Graphics: " .. selected)
+    end
+})
+
+-- Character selection with search
+ui.label({
+    text = "Character:",
+    position = "left",
+    xOffset = 2,
+    yOffset = 13
+})
+
+local character = inputs.dropdown({
+    options = {
+        "Warrior", "Mage", "Rogue", "Paladin",
+        "Ranger", "Druid", "Bard", "Monk"
+    },
+    selected = 1,
+    width = 20,
+    maxHeight = 5,
+    searchable = true,
+    placeholder = "Choose character...",
+    position = "left",
+    xOffset = 14,
+    yOffset = 13,
+    theme = "success",
+    onChange = function(selected, index)
+        print("Character: " .. selected)
+    end
+})
+
+-- Back button
+ui.button({
+    text = "Save & Exit",
+    width = 15,
+    bg = colors.green,
+    colorPressed = colors.lime,
+    position = "bottomCenter",
+    yOffset = -2,
+    onclick = function()
+        print("Settings saved!")
+        print(string.format(
+            "Volume: %d, Difficulty: %s, Graphics: %s, Character: %s",
+            volumeSlider.value,
+            difficulty.options[difficulty.selected],
+            graphics.options[graphics.selected],
+            character.options[character.selected]
+        ))
+    end
+})
+
+ui.run({fps = 30})
+```
+
+---
+
+### Audio Mixer with Vertical Sliders
+
+```lua
+local ui = dofile("UI.lua")
+local inputs = dofile("Inputs.lua")
+
+ui.init(context)
+inputs.init(ui)
+
+ui.newScene("Mixer")
+ui.setScene("Mixer")
+
+-- Title
+ui.label({
+    text = "Audio Mixer",
+    position = "topCenter",
+    yOffset = 1,
+    fg = colors.cyan
+})
+
+-- Create vertical sliders for different channels
+local channels = {
+    {name = "Master", value = 80, color = colors.lime},
+    {name = "Music", value = 60, color = colors.blue},
+    {name = "SFX", value = 70, color = colors.yellow},
+    {name = "Voice", value = 90, color = colors.orange}
+}
+
+local sliders = {}
+for i, channel in ipairs(channels) do
+    -- Channel label
+    ui.label({
+        text = channel.name,
+        position = "topLeft",
+        xOffset = 10 + (i - 1) * 10,
+        yOffset = 3,
+        fg = colors.white
+    })
+
+    -- Vertical slider
+    sliders[i] = inputs.slider({
+        value = channel.value,
+        min = 0,
+        max = 100,
+        orientation = "vertical",
+        width = 3,
+        height = 12,
+        showValue = true,
+        valueFormat = "%.0f",
+        fillColor = channel.color,
+        trackColor = colors.gray,
+        position = "topLeft",
+        xOffset = 9 + (i - 1) * 10,
+        yOffset = 5,
+        onChange = function(val)
+            print(channel.name .. ": " .. val)
+        end
+    })
+end
+
+-- Preset dropdown
+ui.label({
+    text = "Preset:",
+    position = "bottomLeft",
+    xOffset = 2,
+    yOffset = -4
+})
+
+local preset = inputs.dropdown({
+    options = {"Balanced", "Music Focus", "Game Focus", "Quiet"},
+    width = 15,
+    maxHeight = 4,
+    placeholder = "Load preset...",
+    position = "bottomLeft",
+    xOffset = 11,
+    yOffset = -4,
+    onChange = function(selected, index)
+        -- Apply preset values
+        if index == 1 then  -- Balanced
+            sliders[1]:setValue(80)
+            sliders[2]:setValue(60)
+            sliders[3]:setValue(60)
+            sliders[4]:setValue(80)
+        elseif index == 2 then  -- Music Focus
+            sliders[1]:setValue(90)
+            sliders[2]:setValue(100)
+            sliders[3]:setValue(30)
+            sliders[4]:setValue(50)
+        elseif index == 3 then  -- Game Focus
+            sliders[1]:setValue(80)
+            sliders[2]:setValue(40)
+            sliders[3]:setValue(90)
+            sliders[4]:setValue(100)
+        elseif index == 4 then  -- Quiet
+            sliders[1]:setValue(30)
+            sliders[2]:setValue(20)
+            sliders[3]:setValue(20)
+            sliders[4]:setValue(40)
+        end
+    end
+})
+
+ui.run({fps = 30})
+```
+
+---
+
+### Form with Validation
+
+```lua
+local ui = dofile("UI.lua")
+local inputs = dofile("Inputs.lua")
+
+ui.init(context)
+inputs.init(ui)
+
+ui.newScene("Form")
+ui.setScene("Form")
+
+-- Title
+ui.label({
+    text = "New Account",
+    position = "topCenter",
+    yOffset = 2,
+    fg = colors.lime
+})
+
+-- Age slider
+ui.label({
+    text = "Age:",
+    position = "left",
+    xOffset = 5,
+    yOffset = 5
+})
+
+local ageSlider = inputs.slider({
+    value = 18,
+    min = 13,
+    max = 100,
+    step = 1,
+    width = 25,
+    showValue = true,
+    valueFormat = "%.0f years",
+    position = "left",
+    xOffset = 11,
+    yOffset = 5,
+    theme = "primary"
+})
+
+-- Account type
+ui.label({
+    text = "Type:",
+    position = "left",
+    xOffset = 5,
+    yOffset = 8
+})
+
+local accountType = inputs.buttonGroup({
+    options = {"Free", "Premium", "Enterprise"},
+    selected = 1,
+    orientation = "horizontal",
+    position = "left",
+    xOffset = 12,
+    yOffset = 8,
+    theme = "success"
+})
+
+-- Country dropdown with search
+ui.label({
+    text = "Country:",
+    position = "left",
+    xOffset = 5,
+    yOffset = 11
+})
+
+local country = inputs.dropdown({
+    options = {
+        "USA", "Canada", "Mexico", "UK", "Germany",
+        "France", "Spain", "Italy", "Japan", "China",
+        "Australia", "Brazil", "India", "Russia"
+    },
+    width = 25,
+    maxHeight = 6,
+    searchable = true,
+    placeholder = "Select country...",
+    position = "left",
+    xOffset = 15,
+    yOffset = 11,
+    theme = "primary"
+})
+
+-- Status label
+local statusLabel = ui.label({
+    text = "",
+    position = "center",
+    yOffset = 7,
+    fg = colors.yellow
+})
+
+-- Submit button with validation
+ui.button({
+    text = "Create Account",
+    width = 18,
+    bg = colors.green,
+    colorPressed = colors.lime,
+    position = "bottomCenter",
+    yOffset = -2,
+    onclick = function()
+        -- Validation
+        if ageSlider.value < 18 then
+            statusLabel.text = "Must be 18 or older!"
+            statusLabel.fg = colors.red
+        elseif not country.selected then
+            statusLabel.text = "Please select a country"
+            statusLabel.fg = colors.red
+        else
+            statusLabel.text = string.format(
+                "Account created! Age: %d, Type: %s, Country: %s",
+                ageSlider.value,
+                accountType.options[accountType.selected],
+                country.options[country.selected]
+            )
+            statusLabel.fg = colors.lime
+        end
+    end
+})
+
+ui.run({fps = 30})
+```
+
+---
+
+## Migration from Non-Interactive Elements
+
+These new input elements complement the basic UI elements:
+
+```lua
+-- Old: Basic checkbox for boolean toggle
+ui.checkbox({
+    text = "Enable feature",
+    initial = false,
+    onclick = function(self, checked)
+        print("Checked: " .. tostring(checked))
+    end
+})
+
+-- New: Button group for multiple choices
+inputs.buttonGroup({
+    options = {"Off", "Low", "High"},
+    selected = 1,
+    onChange = function(selected, index)
+        print("Setting: " .. selected)
+    end
+})
+
+-- New: Slider for numeric values
+inputs.slider({
+    value = 50,
+    min = 0,
+    max = 100,
+    onChange = function(value)
+        print("Value: " .. value)
+    end
+})
+
+-- New: Dropdown for many options
+inputs.dropdown({
+    options = {"Option 1", "Option 2", "Option 3", "Option 4"},
+    onChange = function(selected, index)
+        print("Selected: " .. selected)
+    end
+})
+```
+
+---
+
+## Notes
+
+- Theme system is fully backward compatible
+- Manual colors always override theme colors
+- All elements use `UI.resolveTheme()` internally for color resolution
+- Slider drag events use `onDrag()` method for smooth interaction
+- Dropdown click-outside-to-close uses onClick return values
+- Button group auto-calculates dimensions for positioning system
+- All elements automatically call `UI.markDirty()` when state changes
+
+---
+
+## Troubleshooting
+
+### Slider not responding to drag
+- Make sure `UI.handleDrag()` is implemented in your UI.lua version
+- Check that the slider is in the active scene
+- Verify mouse events are being captured
+
+### Button group buttons overlapping
+- Increase `spacing` parameter
+- Check that options aren't too long for available width
+- Use vertical orientation for long option labels
+
+### Dropdown not closing on click outside
+- Ensure onClick returns false when clicking outside dropdown area
+- Check that the dropdown is topmost element (added last to scene)
+- Verify event handling order (reverse iteration)
+
+### Search not working in dropdown
+- Set `searchable = true`
+- Make sure keyboard events are being captured
+- Check that `onChar` and `onKey` handlers are called
+
+---
+
+## License
+
+MIT License - Feel free to use in your CC:Tweaked projects!
+
+**Version:** 1.0
+**Last Updated:** November 4, 2025
