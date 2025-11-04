@@ -768,8 +768,8 @@ local function createRenderer(opts, ui)
         self._cachedPath = self.path
         self._needsTokenize = false
 
-        -- Page changed: clear old UI elements from child scene
-        if pathChanged and ui and self.childScene then
+        -- Clear old UI elements from child scene before creating new ones
+        if ui and self.childScene then
           ui.clearScene(self.childScene)
           self._uiElements = {}
         end
