@@ -813,25 +813,468 @@ ui.checkbox({
 
 ### Text Field
 
-Single-line text input.
+Single-line text input with horizontal scrolling and placeholder support.
 
 **Options:**
 ```lua
-ui.textfield({
-    text = "",                 -- Initial text
-    width = 20,
+local field = ui.textfield({
+    text = "",                      -- Initial text (default: "")
+    width = 20,                     -- Width in characters (default: 20)
+    placeholder = "Type here...",   -- Placeholder text when empty (default: "")
     position = "center",
-    fg = colors.white,
-    bg = colors.gray,
-    bgActive = colors.lightGray  -- Color when focused
+    fg = colors.white,              -- Text color
+    bg = colors.gray,               -- Background color
+    bgActive = colors.lightGray,    -- Background when focused (default: colors.lightGray)
+    cursorColor = colors.white,     -- Blinking cursor color (default: colors.white)
+    placeholderColor = colors.lightGray,  -- Placeholder text color (default: colors.lightGray)
+
+    onChange = function(text)       -- Called when text changes
+        print("Text: " .. text)
+    end
 })
+
+-- Programmatically set text
+field.text = "New text"
+field.cursorPos = #field.text
+```
+
+**Features:**
+- **Horizontal Scrolling**: Long text scrolls automatically as you type
+  - Shows `<` indicator when text extends to the left
+  - Shows `>` indicator when text extends to the right
+  - Keeps cursor visible as you navigate
+- **Placeholder Text**: Shows gray text when field is empty
+- **Custom Blinking Cursor**: Visual `_` character that blinks every 0.5 seconds
+- **Full Keyboard Support**:
+  - Type to add characters at cursor position
+  - Backspace to delete character before cursor
+  - Left/Right arrows to move cursor
+  - Home key to jump to start
+  - End key to jump to end
+- **Mouse Support**: Click to focus and position cursor
+- **onChange Callback**: Notified when text changes
+
+**Visual Format:**
+```
+Empty field:        [Type here...        ]  (placeholder)
+With short text:    [Hello_              ]  (cursor visible)
+Long text (left):   [<long text here_    ]  (scrolled right, more to left)
+Long text (right):  [This is a very lo>  ]  (scrolled left, more to right)
+Long text (both):   [<is a very long t>  ]  (scrolled middle, more on both sides)
 ```
 
 **Behavior:**
-- Click to focus
-- Type to add text
-- Backspace to delete
-- Auto-focused when clicked
+- Click to focus (bgActive background, cursor starts blinking)
+- Type adds characters at cursor position
+- Backspace deletes character before cursor
+- Arrow keys move cursor (view scrolls to keep cursor visible)
+- Click elsewhere to unfocus (returns to normal bg, cursor hides)
+- Placeholder only visible when empty and unfocused
+
+**Scroll Indicators:**
+- `<` - Appears on left edge when text extends beyond left boundary
+- `>` - Appears on right edge when text extends beyond right boundary
+- Both indicators can appear simultaneously for very long text
+
+**Example: Form with Multiple Fields**
+
+```lua
+ui.label({
+    text = "Name:",
+    position = "left",
+    xOffset = 2,
+    yOffset = 4
+})
+
+local nameField = ui.textfield({
+    width = 25,
+    placeholder = "Enter your name...",
+    position = "left",
+    xOffset = 10,
+    yOffset = 4,
+    onChange = function(text)
+        print("Name: " .. text)
+    end
+})
+
+ui.label({
+    text = "Email:",
+    position = "left",
+    xOffset = 2,
+    yOffset = 6
+})
+
+local emailField = ui.textfield({
+    width = 30,
+    placeholder = "user@example.com",
+    position = "left",
+    xOffset = 10,
+    yOffset = 6,
+    onChange = function(text)
+        print("Email: " .. text)
+    end
+})
+
+ui.button({
+    text = "Submit",
+    bg = colors.green,
+    position = "left",
+    xOffset = 10,
+    yOffset = 8,
+    onclick = function()
+        if #nameField.text > 0 and #emailField.text > 0 then
+            print("Submitted: " .. nameField.text .. ", " .. emailField.text)
+        else
+            print("Please fill all fields!")
+        end
+    end
+})
+```
+
+**Notes:**
+- For password fields or autocomplete, use `inputs.advancedTextField()` from Inputs.lua
+- For multi-line text editing, use `ui.textarea()`
+- Text scrolling is automatic - no user action required
+- Cursor always stays visible by adjusting viewOffset as needed
+- Custom cursor replaces CraftOS cursor for this element type
+
+---
+
+### Text Area
+
+Multi-line text editor with vertical scrolling, line numbers, and full navigation support. Uses CraftOS cursor for authentic editing experience.
+
+**Options:**
+```lua
+local editor = ui.textarea({
+    text = "Line 1\nLine 2\nLine 3",  -- Initial text (default: "")
+    width = 40,                       -- Width in characters (default: 30)
+    height = 10,                      -- Height in rows (default: 10)
+    lineNumbers = true,               -- Show line numbers (default: false)
+    position = "center",
+    fg = colors.white,                -- Text color
+    bg = colors.black,                -- Background color
+    lineNumberFg = colors.gray,       -- Line number color (default: colors.gray)
+    scrollbarColor = colors.lightGray, -- Scrollbar indicator color (default: colors.lightGray)
+
+    onChange = function(text)         -- Called when text changes
+        print("Content changed: " .. #text .. " characters")
+    end
+})
+
+-- Get/set content
+local content = editor:getText()      -- Returns full text with \n separators
+editor:setText("New\nContent\nHere")  -- Sets text from string
+
+-- Direct line access
+editor.lines = {"Line 1", "Line 2"}   -- Array of strings
+editor.cursorRow = 1                  -- Current row (1-indexed)
+editor.cursorCol = 0                  -- Current column (0-indexed)
+```
+
+**Features:**
+- **Multi-line Editing**: Full support for line creation, deletion, and joining
+  - Enter key splits line at cursor
+  - Backspace at line start joins with previous line
+- **Vertical Scrolling**: Automatically scrolls to keep cursor visible
+  - Scrollbar shows current position when content exceeds height
+  - Mouse wheel support for scrolling
+  - PageUp/PageDown for quick navigation
+- **Line Numbers**: Optional line number gutter on left side
+- **CraftOS Cursor**: Native cursor positioning for authentic feel
+- **Full Keyboard Navigation**:
+  - Arrow keys move cursor (up/down/left/right)
+  - Home/End jump to line start/end
+  - PageUp/PageDown scroll by page
+  - Enter creates new line
+  - Backspace deletes character or joins lines
+- **Mouse Support**:
+  - Click to position cursor
+  - Mouse wheel to scroll
+  - Click line numbers (if enabled)
+
+**Visual Format:**
+```
+Without line numbers:
+┌────────────────────────────┐
+│This is line one_           │
+│This is line two            │
+│This is line three          │
+│                            │
+└────────────────────────────┘
+
+With line numbers:
+┌────────────────────────────┐
+│  1 This is line one_       │
+│  2 This is line two        │
+│  3 This is line three      │
+│  4                         │
+└────────────────────────────┘
+
+With scrollbar (more content than visible):
+┌────────────────────────────┐
+│  1 This is line one        │█
+│  2 This is line two        │░
+│  3 This is line three      │░
+└────────────────────────────┘
+```
+
+**Line Storage:**
+- Text stored as array of strings: `textarea.lines = {"line1", "line2"}`
+- Cursor position: `cursorRow` (1-indexed), `cursorCol` (0-indexed)
+- No trailing newline in array (join with "\n" to get full text)
+
+**Scrolling Behavior:**
+- `scrollOffset` tracks first visible line (0-indexed)
+- Automatically adjusts when cursor moves out of view
+- PageUp/PageDown moves by (height - 1) lines
+- Mouse wheel moves by 3 lines per scroll
+- Scrollbar shows proportional position (character `\127`)
+
+**Keyboard Controls:**
+- **Type** - Insert character at cursor
+- **Enter** - Split line at cursor (create new line below)
+- **Backspace** - Delete character before cursor, or join with previous line
+- **Left/Right Arrow** - Move cursor horizontally (wraps to prev/next line)
+- **Up/Down Arrow** - Move cursor vertically (maintains column when possible)
+- **Home** - Move to start of current line
+- **End** - Move to end of current line
+- **PageUp** - Scroll up one page
+- **PageDown** - Scroll down one page
+
+**Mouse Controls:**
+- **Click** - Focus and position cursor at click location
+- **Mouse Wheel Up** - Scroll up 3 lines
+- **Mouse Wheel Down** - Scroll down 3 lines
+
+**Example: Simple Text Editor**
+
+```lua
+local ui = dofile("UI.lua")
+
+local context = { scenes = {}, elements = {}, functions = {} }
+ui.init(context)
+
+ui.newScene("Editor")
+ui.setScene("Editor")
+
+-- Title bar
+ui.label({
+    text = "Text Editor - Press Ctrl+S to save",
+    position = "topCenter",
+    yOffset = 1,
+    fg = colors.yellow
+})
+
+-- Main editor area
+local editor = ui.textarea({
+    width = 48,
+    height = 16,
+    lineNumbers = true,
+    text = "-- Welcome to the editor!\n-- Type your code here\n\nfunction hello()\n    print(\"Hello, world!\")\nend",
+    position = "center",
+    yOffset = 1,
+    fg = colors.white,
+    bg = colors.black,
+    onChange = function(text)
+        -- Could track unsaved changes here
+        print("Document modified")
+    end
+})
+
+-- Status bar
+local statusLabel = ui.label({
+    text = "Ready",
+    position = "bottomLeft",
+    xOffset = 2,
+    yOffset = -1,
+    fg = colors.lime
+})
+
+-- Save button
+ui.button({
+    text = "Save",
+    width = 10,
+    bg = colors.green,
+    position = "bottomRight",
+    xOffset = -12,
+    yOffset = -1,
+    onclick = function()
+        local content = editor:getText()
+        -- Save to file here
+        statusLabel.text = "Saved! (" .. #content .. " bytes)"
+        print("File saved")
+    end
+})
+
+-- Clear button
+ui.button({
+    text = "Clear",
+    width = 10,
+    bg = colors.red,
+    position = "bottomRight",
+    xOffset = -24,
+    yOffset = -1,
+    onclick = function()
+        editor:setText("")
+        statusLabel.text = "Cleared"
+    end
+})
+
+ui.run({fps = 30})
+```
+
+**Example: Code Viewer with Syntax Highlighting (Basic)**
+
+```lua
+local ui = dofile("UI.lua")
+
+ui.init(context)
+ui.newScene("Viewer")
+ui.setScene("Viewer")
+
+-- Title
+ui.label({
+    text = "=== Code Viewer ===",
+    position = "topCenter",
+    yOffset = 1,
+    fg = colors.cyan
+})
+
+-- Load code from file
+local file = fs.open("program.lua", "r")
+local code = file.readAll()
+file.close()
+
+-- Read-only viewer (would need to add read-only flag to make truly immutable)
+local viewer = ui.textarea({
+    text = code,
+    width = 50,
+    height = 18,
+    lineNumbers = true,
+    position = "center",
+    fg = colors.white,
+    bg = colors.black,
+    lineNumberFg = colors.gray
+})
+
+-- File info
+ui.label({
+    text = "Lines: " .. #viewer.lines .. " | Chars: " .. #code,
+    position = "bottomCenter",
+    yOffset = -1,
+    fg = colors.yellow
+})
+
+ui.run({fps = 30})
+```
+
+**Example: Multi-panel Layout with TextArea**
+
+```lua
+local ui = dofile("UI.lua")
+
+ui.init(context)
+ui.newScene("IDE")
+ui.setScene("IDE")
+
+-- Left panel: File list (simulated with labels)
+ui.rectangle({
+    width = 15,
+    height = 18,
+    position = "left",
+    xOffset = 1,
+    yOffset = 2,
+    bg = colors.gray
+})
+
+ui.label({
+    text = "Files:",
+    position = "topLeft",
+    xOffset = 2,
+    yOffset = 2,
+    fg = colors.yellow
+})
+
+ui.label({
+    text = "> main.lua",
+    position = "topLeft",
+    xOffset = 2,
+    yOffset = 4,
+    fg = colors.white
+})
+
+ui.label({
+    text = "  config.lua",
+    position = "topLeft",
+    xOffset = 2,
+    yOffset = 5,
+    fg = colors.lightGray
+})
+
+-- Right panel: Editor
+local editor = ui.textarea({
+    width = 35,
+    height = 15,
+    lineNumbers = true,
+    text = "-- main.lua\nprint(\"Hello!\")",
+    position = "topLeft",
+    xOffset = 18,
+    yOffset = 2,
+    fg = colors.white,
+    bg = colors.black
+})
+
+-- Bottom panel: Output
+ui.label({
+    text = "Output:",
+    position = "bottomLeft",
+    xOffset = 2,
+    yOffset = -3,
+    fg = colors.lime
+})
+
+ui.rectangle({
+    width = 50,
+    height = 2,
+    position = "bottomLeft",
+    xOffset = 1,
+    yOffset = -2,
+    bg = colors.black
+})
+
+ui.run({fps = 30})
+```
+
+**Performance Notes:**
+- Efficiently handles hundreds of lines
+- Only visible lines are rendered each frame
+- Scrolling updates only visible region
+- CraftOS cursor updates are batched
+
+**Differences from TextField:**
+
+| Feature | TextField | TextArea |
+|---------|-----------|----------|
+| Lines | Single line | Multiple lines |
+| Scrolling | Horizontal | Vertical |
+| Line Numbers | No | Optional |
+| Cursor | Custom drawn `_` | CraftOS cursor |
+| Enter Key | No effect | Creates new line |
+| Arrow Keys | Left/Right only | All directions |
+| Use Case | Forms, input fields | Editors, large text |
+
+**When to Use:**
+- **textarea**: Multi-line content, code editors, document viewers, large text input
+- **textfield**: Single-line input, forms, search boxes, simple text entry
+- **advancedTextField**: Password fields, autocomplete inputs (see InputsDocs.md)
+
+**Notes:**
+- Line numbers add 4 characters to effective width (format: "  1 ")
+- Scrollbar adds 1 character to right edge when active
+- Empty textarea starts with one empty line
+- CraftOS cursor blinks at system rate (not customizable)
+- Mouse wheel scrolling requires event support in UI framework
 
 ---
 

@@ -23,6 +23,7 @@ inputs.init(ui)
    - [Slider](#slider)
    - [Button Group (Radio Buttons)](#button-group-radio-buttons)
    - [Dropdown Menu](#dropdown-menu)
+   - [Advanced Text Field](#advanced-text-field)
 3. [Common Options](#common-options)
 4. [Theme Examples](#theme-examples)
 5. [Complete Examples](#complete-examples)
@@ -285,6 +286,327 @@ When `searchable = true`:
 - **Collapsed**: 1 row (header only)
 - **Expanded (no search)**: 1 + min(#options, maxHeight)
 - **Expanded (with search)**: 1 + 1 + min(#filtered, maxHeight)
+
+---
+
+### Advanced Text Field
+
+Enhanced text input field with optional password masking or CraftOS-style autocomplete suggestions. Uses native CraftOS cursor for authentic feel.
+
+```lua
+-- Password field (masked input)
+local passwordField = inputs.advancedTextField({
+    width = 25,                              -- Width in characters (default: 20)
+    placeholder = "Enter password...",       -- Placeholder text when empty (default: "")
+    masked = true,                           -- Enable password masking (default: false)
+    maskChar = "*",                          -- Character to display instead of text (default: "*")
+    position = "center",
+
+    -- Theme options:
+    theme = "primary",                       -- Use semantic color
+    -- OR manual colors:
+    fg = colors.white,                       -- Text color
+    bg = colors.gray,                        -- Background color
+    placeholderColor = colors.lightGray,     -- Placeholder text color
+    borderColor = colors.lightGray,          -- Border color
+
+    onChange = function(text)                -- Called when text changes
+        print("Text changed: " .. #text .. " characters")
+    end,
+
+    onSubmit = function(text)                -- Called when Enter is pressed
+        print("Submitted: " .. text)
+    end
+})
+
+-- Autocomplete field
+local commandField = inputs.advancedTextField({
+    width = 30,
+    placeholder = "Type a command...",
+    autocomplete = {                         -- Array of suggestion strings
+        "help", "list", "edit", "delete",
+        "copy", "move", "mkdir"
+    },
+    suggestionColor = colors.gray,           -- Color of gray suggestion text (default: colors.gray)
+    position = "center",
+
+    onChange = function(text)
+        print("Command: " .. text)
+    end,
+
+    onAutocomplete = function(text)          -- Called when Tab accepts suggestion
+        print("Autocompleted: " .. text)
+    end,
+
+    onSubmit = function(text)
+        print("Execute: " .. text)
+    end
+})
+
+-- Basic text field (no special features)
+local basicField = inputs.advancedTextField({
+    width = 20,
+    placeholder = "Enter text...",
+    position = "center",
+    onChange = function(text)
+        print("Text: " .. text)
+    end
+})
+```
+
+**Options:**
+- `width` - Width in characters (default: 20)
+- `placeholder` - Placeholder text when field is empty (default: "")
+- `text` - Initial text value (default: "")
+- `masked` - Enable password masking (default: false)
+- `maskChar` - Character to show instead of actual text (default: "*")
+- `autocomplete` - Array of suggestion strings (default: nil)
+- `suggestionColor` - Color of autocomplete suggestion text (default: colors.gray)
+
+**Callbacks:**
+- `onChange(text)` - Called when text changes (any character added/removed)
+- `onSubmit(text)` - Called when Enter key is pressed
+- `onAutocomplete(text)` - Called when Tab key accepts a suggestion
+
+**Theme Properties:**
+- `fg` - Text color
+- `bg` - Background color
+- `placeholderColor` - Placeholder text color
+- `borderColor` - Border character color (`[` and `]`)
+
+**Default Theme Values:**
+```lua
+theme.advancedTextField = {
+    fg = colors.white,
+    bg = colors.gray,
+    placeholderColor = colors.lightGray,
+    borderColor = colors.lightGray
+}
+```
+
+**Important Constraints:**
+- **Mutually Exclusive**: `masked` and `autocomplete` cannot both be enabled
+  - If both are set, `masked` takes priority and `autocomplete` is ignored
+  - Masked fields cannot show suggestions (security concern)
+
+**CraftOS Cursor Behavior:**
+- Uses native CraftOS cursor (`term.setCursorPos()` and `term.setCursorBlink()`)
+- Cursor appears at text insertion point when field is focused
+- Cursor automatically hides when field loses focus
+- Blinking rate controlled by CraftOS (not customizable)
+
+**Autocomplete Features:**
+When `autocomplete` array is provided:
+- **Suggestion Display**: Gray text appears to the right of cursor showing completion
+- **Matching**: Finds first suggestion that starts with current text (case-insensitive)
+- **Tab to Accept**: Press Tab key to fill in the suggested completion
+- **Visual Style**: CraftOS-style gray suggestion text (like native shell autocomplete)
+- **Real-time Updates**: Suggestion updates as you type
+- **Exact Match Hiding**: If text exactly matches a suggestion, no gray text shown
+
+**Format:**
+```
+Basic field:        [text here_           ]
+Masked field:       [*********_           ]
+With autocomplete:  [hel_p                ]
+                         ^^^ gray suggestion
+With placeholder:   [Enter text...        ]  (when empty)
+```
+
+**Visual Indicators:**
+- Border: `[` and `]` characters on left and right edges
+- Cursor: Native blinking CraftOS cursor at insertion point
+- Suggestion: Gray text extending to the right from cursor
+- Placeholder: Light gray text when field is empty and unfocused
+
+**Keyboard Controls:**
+- **Type** - Add characters at cursor position
+- **Backspace** - Delete character before cursor
+- **Delete** - Delete character at cursor (not implemented in basic version)
+- **Left/Right Arrow** - Move cursor
+- **Home** - Move cursor to start
+- **End** - Move cursor to end
+- **Tab** - Accept autocomplete suggestion (when available)
+- **Enter** - Submit text (calls `onSubmit` callback)
+
+**Mouse Controls:**
+- **Click** - Focus field and position cursor near click location
+
+**Example: Login Form**
+
+```lua
+local ui = dofile("UI.lua")
+local inputs = dofile("Inputs.lua")
+
+ui.init(context)
+inputs.init(ui)
+
+ui.newScene("Login")
+ui.setScene("Login")
+
+-- Username field with autocomplete (remembered usernames)
+ui.label({
+    text = "Username:",
+    position = "center",
+    yOffset = -4
+})
+
+local usernameField = inputs.advancedTextField({
+    width = 25,
+    placeholder = "Enter username...",
+    autocomplete = {"admin", "user", "guest", "developer"},
+    position = "center",
+    yOffset = -3,
+    theme = "primary",
+    onAutocomplete = function(text)
+        print("Selected username: " .. text)
+    end
+})
+
+-- Password field with masking
+ui.label({
+    text = "Password:",
+    position = "center",
+    yOffset = 0
+})
+
+local passwordField = inputs.advancedTextField({
+    width = 25,
+    placeholder = "Enter password...",
+    masked = true,
+    maskChar = "*",
+    position = "center",
+    yOffset = 1,
+    theme = "primary",
+    onChange = function(text)
+        -- Could check password strength here
+        print("Password length: " .. #text)
+    end
+})
+
+-- Login button
+ui.button({
+    text = "Login",
+    width = 12,
+    bg = colors.green,
+    position = "center",
+    yOffset = 4,
+    onclick = function()
+        local username = usernameField.text
+        local password = passwordField.text
+
+        if #username == 0 or #password == 0 then
+            print("Please fill all fields!")
+        else
+            print("Logging in as: " .. username)
+            -- Password stays masked, never printed
+        end
+    end
+})
+
+ui.run({fps = 30})
+```
+
+**Example: Command Shell with Autocomplete**
+
+```lua
+local ui = dofile("UI.lua")
+local inputs = dofile("Inputs.lua")
+
+ui.init(context)
+inputs.init(ui)
+
+ui.newScene("Shell")
+ui.setScene("Shell")
+
+-- Title
+ui.label({
+    text = "Command Shell",
+    position = "topCenter",
+    yOffset = 1,
+    fg = colors.lime
+})
+
+-- Command input with CraftOS-style autocomplete
+ui.label({
+    text = ">",
+    position = "left",
+    xOffset = 1,
+    yOffset = 3,
+    fg = colors.white
+})
+
+local commandHistory = {}
+
+local commandField = inputs.advancedTextField({
+    width = 48,
+    placeholder = "Type a command (Tab to complete)...",
+    autocomplete = {
+        "help", "list", "cd", "edit", "delete", "copy", "move",
+        "mkdir", "rm", "cat", "download", "reboot", "shutdown"
+    },
+    position = "left",
+    xOffset = 3,
+    yOffset = 3,
+    suggestionColor = colors.gray,
+    theme = "primary",
+
+    onAutocomplete = function(text)
+        print("Completed: " .. text)
+    end,
+
+    onSubmit = function(text)
+        if #text > 0 then
+            -- Add to history
+            table.insert(commandHistory, text)
+            print("> " .. text)
+
+            -- Execute command (placeholder)
+            print("Executing: " .. text)
+
+            -- Clear field for next command
+            commandField.text = ""
+            commandField.cursorPos = 0
+        end
+    end
+})
+
+-- Output area
+ui.label({
+    text = "Press Tab to accept suggestions",
+    position = "left",
+    xOffset = 3,
+    yOffset = 5,
+    fg = colors.yellow
+})
+
+ui.label({
+    text = "Press Enter to execute",
+    position = "left",
+    xOffset = 3,
+    yOffset = 6,
+    fg = colors.yellow
+})
+
+ui.run({fps = 30})
+```
+
+**Differences from Basic TextField:**
+
+| Feature | Basic TextField | Advanced TextField |
+|---------|----------------|-------------------|
+| Cursor Style | Custom drawn character | Native CraftOS cursor |
+| Password Masking | Not available | Optional with `masked` |
+| Autocomplete | Not available | Optional with `autocomplete` |
+| Suggestion Display | N/A | Gray text to right of cursor |
+| Tab Key | Cycles through elements | Accepts autocomplete |
+| Enter Key | No special behavior | Triggers `onSubmit` |
+| Visual | Custom blinking cursor | System cursor blink |
+
+**When to Use:**
+- **advancedTextField**: For password fields, command inputs, search boxes with autocomplete
+- **Basic textfield**: For simple text input without special features
+- **textarea**: For multi-line text editing (see UIDocs.md)
 
 ---
 
