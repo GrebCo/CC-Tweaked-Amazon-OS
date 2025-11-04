@@ -1107,18 +1107,20 @@ end
 
 function UI.textfield(opts)
     opts = opts or {}
-    
+
     -- Resolve theme colors
     local resolvedColors = UI.resolveTheme(opts, "textfield", {
         fg = colors.white,
         bg = colors.gray,
-        bgActive = colors.lightGray
+        bgActive = colors.lightGray,
+        placeholderColor = colors.lightGray
     })
-    
+
     local e = {
         type = "textfield",
         text = opts.text or "",
         width = opts.width or 10,
+        height = opts.height or 1,
         fg = resolvedColors.fg,
         bg = resolvedColors.bg,
         bgActive = resolvedColors.bgActive,
@@ -1129,22 +1131,41 @@ function UI.textfield(opts)
         y = opts.y or 1,
         _visible = opts.visible ~= nil and opts.visible or true,
 
+        -- Features
+        placeholder = opts.placeholder or "",
+        placeholderColor = resolvedColors.placeholderColor,
+        onChange = opts.onChange or nil,
+
         -- Cursor position and animation
-        cursorPos = #(opts.text or ""),  -- Cursor position in text (0 = before first char)
+        cursorPos = #(opts.text or ""),
         cursorVisible = true,
         cursorTimer = 0,
         cursorBlinkPeriod = 0.5,
+        viewOffset = 0,
+
+        -- Calculate view offset to ensure cursor is visible
+        updateViewOffset = function(self)
+            local visibleWidth = self.width - 1
+            if self.cursorPos < self.viewOffset then
+                self.viewOffset = self.cursorPos
+            end
+            if self.cursorPos >= self.viewOffset + visibleWidth then
+                self.viewOffset = self.cursorPos - visibleWidth + 1
+            end
+            self.viewOffset = math.max(0, self.viewOffset)
+        end,
 
         -- Event handlers
         onChar = function(self, ch)
             debugLog("TEXTFIELD:onChar() called with ch:", ch, "cursorPos:", self.cursorPos)
-            -- Insert character at cursor position
             local before = self.text:sub(1, self.cursorPos)
             local after = self.text:sub(self.cursorPos + 1)
             self.text = before .. ch .. after
             self.cursorPos = self.cursorPos + 1
-            self.cursorVisible = true  -- Reset cursor visibility on input
+            self.cursorVisible = true
             self.cursorTimer = 0
+            self:updateViewOffset()
+            if self.onChange then self.onChange(self.text) end
             UI.markDirty()
         end,
 
@@ -1154,52 +1175,53 @@ function UI.textfield(opts)
 
             if name == "backspace" then
                 if self.cursorPos > 0 then
-                    -- Delete character before cursor
                     local before = self.text:sub(1, self.cursorPos - 1)
                     local after = self.text:sub(self.cursorPos + 1)
                     self.text = before .. after
                     self.cursorPos = self.cursorPos - 1
                     self.cursorVisible = true
                     self.cursorTimer = 0
+                    self:updateViewOffset()
+                    if self.onChange then self.onChange(self.text) end
                     UI.markDirty()
                 end
             elseif name == "delete" then
                 if self.cursorPos < #self.text then
-                    -- Delete character after cursor
                     local before = self.text:sub(1, self.cursorPos)
                     local after = self.text:sub(self.cursorPos + 2)
                     self.text = before .. after
                     self.cursorVisible = true
                     self.cursorTimer = 0
+                    if self.onChange then self.onChange(self.text) end
                     UI.markDirty()
                 end
             elseif name == "left" then
-                -- Move cursor left
                 if self.cursorPos > 0 then
                     self.cursorPos = self.cursorPos - 1
                     self.cursorVisible = true
                     self.cursorTimer = 0
+                    self:updateViewOffset()
                     UI.markDirty()
                 end
             elseif name == "right" then
-                -- Move cursor right
                 if self.cursorPos < #self.text then
                     self.cursorPos = self.cursorPos + 1
                     self.cursorVisible = true
                     self.cursorTimer = 0
+                    self:updateViewOffset()
                     UI.markDirty()
                 end
             elseif name == "home" then
-                -- Move to start
                 self.cursorPos = 0
                 self.cursorVisible = true
                 self.cursorTimer = 0
+                self:updateViewOffset()
                 UI.markDirty()
             elseif name == "end" then
-                -- Move to end
                 self.cursorPos = #self.text
                 self.cursorVisible = true
                 self.cursorTimer = 0
+                self:updateViewOffset()
                 UI.markDirty()
             end
         end,
@@ -1207,25 +1229,23 @@ function UI.textfield(opts)
         onClick = function(self)
             debugLog("TEXTFIELD:onClick() setting focus")
             UI.focused = self
-            -- Reset cursor to end when clicking
             self.cursorPos = #self.text
             self.cursorVisible = true
             self.cursorTimer = 0
+            self:updateViewOffset()
             UI.markDirty()
-            return true  -- Mark as handled
+            return true
         end,
 
-        -- Animation update for cursor blink
         update = function(self, dt)
             if UI.focused ~= self then return false end
-
             self.cursorTimer = self.cursorTimer + dt
             if self.cursorTimer >= self.cursorBlinkPeriod then
                 self.cursorVisible = not self.cursorVisible
                 self.cursorTimer = 0
-                return true  -- Cursor blinked
+                return true
             end
-            return false  -- Still waiting for blink
+            return false
         end,
 
         draw = function(self)
@@ -1233,28 +1253,44 @@ function UI.textfield(opts)
 
             local bg = (UI.focused == self) and self.bgActive or self.bg
             UI.term.setBackgroundColor(bg)
-            UI.term.setTextColor(self.fg)
             UI.term.setCursorPos(self.x, self.y)
 
-            -- Build display text with cursor at position
+            -- Determine what to display
             local displayText
-            if UI.focused == self and self.cursorVisible then
-                -- Insert cursor at cursorPos
-                local before = self.text:sub(1, self.cursorPos)
-                local after = self.text:sub(self.cursorPos + 1)
-                displayText = before .. "_" .. after
+            local textColor = self.fg
+
+            if #self.text == 0 and self.placeholder ~= "" and UI.focused ~= self then
+                displayText = self.placeholder
+                textColor = self.placeholderColor
             else
                 displayText = self.text
+                if UI.focused == self and self.cursorVisible then
+                    local before = displayText:sub(1, self.cursorPos)
+                    local after = displayText:sub(self.cursorPos + 1)
+                    displayText = before .. "_" .. after
+                end
             end
 
-            -- Pad or truncate to width
-            if #displayText < self.width then
-                displayText = displayText .. string.rep(" ", self.width - #displayText)
+            -- Apply view offset for scrolling
+            local visibleText
+            if #displayText > self.width then
+                visibleText = displayText:sub(self.viewOffset + 1, self.viewOffset + self.width)
+                if self.viewOffset > 0 then
+                    visibleText = "<" .. visibleText:sub(2)
+                end
+                if #displayText > self.viewOffset + self.width then
+                    visibleText = visibleText:sub(1, -2) .. ">"
+                end
             else
-                displayText = displayText:sub(1, self.width)
+                visibleText = displayText
             end
 
-            UI.term.write(displayText)
+            if #visibleText < self.width then
+                visibleText = visibleText .. string.rep(" ", self.width - #visibleText)
+            end
+
+            UI.term.setTextColor(textColor)
+            UI.term.write(visibleText)
         end
     }
     return UI.addElement(defaultScene(opts), e)
