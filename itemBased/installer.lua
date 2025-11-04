@@ -1,0 +1,5 @@
+shell.run("wget https://raw.githubusercontent.com/GrebCo/CC-Tweaked-Amazon-OS/refs/heads/dev/Elliot/itemBased/dump.lua itemBased/dump.lua")
+shell.run("wget https://raw.githubusercontent.com/GrebCo/CC-Tweaked-Amazon-OS/refs/heads/dev/Elliot/itemBased/config.lua itemBased/config.lua")
+shell.run("wget https://raw.githubusercontent.com/GrebCo/CC-Tweaked-Amazon-OS/refs/heads/dev/Elliot/itemBased/meGet.lua itemBased/meGet.lua")
+shell.run("wget https://raw.githubusercontent.com/GrebCo/CC-Tweaked-Amazon-OS/refs/heads/dev/Elliot/itemBased/meDump.lua itemBased/meDump.lua")
+print("Item-based ME installer complete.")

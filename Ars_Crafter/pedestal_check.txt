@@ -1,0 +1,21 @@
+=== Ars Nouveau Peripheral Check ===
+Time: 7:06
+
+ars_nouveau:arcane_pedestal_10 | ars_nouveau:arcane_pedestal              | true
+ars_nouveau:arcane_pedestal_11 | ars_nouveau:arcane_pedestal              | true
+ars_nouveau:arcane_pedestal_12 | ars_nouveau:arcane_pedestal              | true
+ars_nouveau:arcane_pedestal_13 | ars_nouveau:arcane_pedestal              | true
+ars_nouveau:arcane_pedestal_14 | ars_nouveau:arcane_pedestal              | true
+ars_nouveau:arcane_pedestal_15 | ars_nouveau:arcane_pedestal              | true
+ars_nouveau:arcane_pedestal_5  | ars_nouveau:arcane_pedestal              | true
+ars_nouveau:arcane_pedestal_6  | ars_nouveau:arcane_pedestal              | true
+ars_nouveau:arcane_pedestal_7  | ars_nouveau:arcane_pedestal              | true
+ars_nouveau:arcane_pedestal_8  | ars_nouveau:arcane_pedestal              | true
+ars_nouveau:arcane_pedestal_9  | ars_nouveau:arcane_pedestal              | true
+ars_nouveau:enchanting_apparatus_0 | ars_nouveau:enchanting_apparatus         | true
+ars_nouveau:imbuement_chamber_1 | ars_nouveau:imbuement_chamber            | true
+back                           | modem                                    | true
+me_bridge_2                    | me_bridge                                | true
+
+=== Pedestal Map File ===
+Failed to parse /pedestal_map.json

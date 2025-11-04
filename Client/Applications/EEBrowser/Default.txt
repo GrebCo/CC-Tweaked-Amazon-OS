@@ -1,0 +1,83 @@
+# <text:cyan>MiniMark v0.91 Feature Test Page
+
+<button label:"SendWebRequest" fg:black bg:orange pressBg:red id:"webID" onClick:endPointEvent>
+
+<script>
+  @endPointEvent
+  function sendMessage()
+    local element = document.getElementById("confirm")
+    net.send("myEndPoint", element.text, "EENet")
+    document.setElementBodyById("confirm", "Hell Yeah")
+  end
+</script>
+
+<text:green>This page tests all supported tags, attributes, persistence, and Fizzle-ready interactivity.
+<hr:"=-">
+
+## <text:yellow>1. Color + Reset System
+<fg:lime>This text should be lime<bg:gray> on gray background.<text:reset> Now fg is white again.<background:reset>
+<text:red>This text is red.<reset> Back to default white/black.
+
+## 2. Persistent ID
+<id:"persistTest"><text:lightBlue>This block is tagged as "persistTest" and stays that way
+until reset or newline.<reset> Now ID cleared.
+
+## 3. Alignment
+#Left-aligned line
+##Center-aligned line
+###Right-aligned line
+
+##4. Links (three forms)
+<link "Home","Return Home">
+<link "Demo">
+<link target:"About" label:"About Page" fg:yellow bg:blue>
+
+## 5. Buttons
+<button label:"Confirm" fg:white bg:gray pressBg:lime id:"confirm" onClick:ConfirmEvent>
+<button label:"Cancel" fg:black bg:orange pressBg:red id:"cancel" onClick:CancelEvent>
+
+## 6. Checkboxes
+<checkbox label:"Enable Sound" boxChecked:"[X]" boxUnchecked:"[ ]" fg:green bg:black id:"soundBox" onClick:ToggleSound>
+<checkbox label:"Hard Mode" id:"hardMode">
+
+## 7. Textboxes
+<textbox width:"8" fg:yellow bg:gray blinkChar:"_" onEnter:NameEntered id:"fuckyouelliot" text:"filler">
+
+## 8. HR + BR
+<hr:"--+">
+Line above should be a repeating pattern of --+
+<br>
+This line is separated by a blank line above.
+
+## 9. Escape Sequences
+This should show: \<escaped tag\> and a quote: \"cool\" and a backslash: \\
+Do I even need to escape these " or perhaps > or <
+
+## 10. Script Tags
+<script event:"ConfirmEvent">
+  print("ConfirmEvent triggered! from the file!")
+</script>
+
+
+
+<script>
+  @ToggleSound
+  function toggle()
+    print("Sound toggledfrom the file!")
+  end
+</script>
+
+<script>
+  @NameEntered
+  function onEnter()
+    print("Textbox submitted!from the file!")
+  end
+</script>
+
+<hr:"=">
+<text:gray>End of test page.
+
+<script event:"secondShorthand">
+  print("secondShorthand triggered! from the file!")
+</script>
+

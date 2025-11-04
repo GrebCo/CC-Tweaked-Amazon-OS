@@ -6,40 +6,33 @@ local CACHE_FILE = "dns_cache.txt"
 
 -- Logging and output configuration flags
 local ENABLE_LOG = true         -- If true, logs will be written to a file
-local ENABLE_PRINT = true       -- If true, logs will be printed to the terminal
-local LOG_FILE = "dns_client.log"  -- The file to which logs are written
+local ENABLE_PRINT = false       -- If true, logs will be printed to the terminal
+local LOG_FILE = "logs/dns_client.log"  -- The file to which logs are written
 
+local log = function() end  -- default no-op
 ---------------------------------------------------------------------
 -- Initializes the module with custom configuration
 -- Allows user to override default settings by providing a config table
 ---------------------------------------------------------------------
 local function init(config)
-    DNS_PROTOCOL     = config.DNS_PROTOCOL or DNS_PROTOCOL         -- Use custom protocol or default
-    CACHE_FILE   = config.CACHE_FILE or CACHE_FILE     -- Use custom cache file or default
-    ENABLE_LOG   = config.ENABLE_LOG or ENABLE_LOG     -- Override log-to-file flag
-    ENABLE_PRINT = config.ENABLE_PRINT or ENABLE_PRINT -- Override terminal print flag
+    local DNS_PROTOCOL     = config.DNS_PROTOCOL or DNS_PROTOCOL         -- Use custom protocol or default
+    local CACHE_FILE   = config.CACHE_FILE or CACHE_FILE     -- Use custom cache file or default
+    local ENABLE_LOG   = config.ENABLE_LOG or ENABLE_LOG     -- Override log-to-file flag
+    local ENABLE_PRINT = config.ENABLE_PRINT or ENABLE_PRINT -- Override terminal print flag
     LOG_FILE     = config.LOG_FILE or LOG_FILE         -- Use custom log file or default
+    if ENABLE_LOG then
+        logger = require("OSUtil/Logger")
+        log = logger.log
+    else
+        log = function() end
+    end
 end
 
 ---------------------------------------------------------------------
 -- Logs a message to a file and/or to the terminal depending on config
 -- Automatically timestamps logs when writing to file
 ---------------------------------------------------------------------
-local function log(msg)
-    -- Write to log file if enabled
-    if ENABLE_LOG then
-        local file = fs.open(LOG_FILE, "a") -- Open file in append mode
-        if file then
-            file.writeLine("[" .. os.time() .. "] " .. msg) -- Timestamped log line
-            file.close()
-        end
-    end
 
-    -- Print to screen if enabled
-    if ENABLE_PRINT then
-        print(msg)
-    end
-end
 
 ---------------------------------------------------------------------
 -- Opens rednet networking on the first modem it finds
@@ -47,7 +40,7 @@ end
 ---------------------------------------------------------------------
 function openRednet()
     if not peripheral.find("modem", rednet.open) then
-        log("[ERROR] ModemNotFound, initiating crash!")
+        log("[ERROR] ModemNotFound")
         --error("No Modem Found")  
     else
         log("Rednet opened.")
@@ -247,6 +240,13 @@ function query(target, message, protocol)
     end
 end
 
+local function getSanitized()
+    return {
+        send = send,
+        query = query
+    }
+end
+
 ---------------------------------------------------------------------
 -- Return all publicly available functions in this module
 -- So other scripts can use them via `require`
@@ -260,3 +260,5 @@ return {
     send = send,
     query = query
 }
+
+

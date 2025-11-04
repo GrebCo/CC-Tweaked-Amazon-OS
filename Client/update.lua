@@ -1,4 +1,4 @@
-local localVersionFile = fs.open("version.txt", "w")
+local localVersionFile = fs.open("Version.txt", "w")
 localVersionFile.write("0")
 localVersionFile.close()
-os.reboot()
+shell.run("Installer.lua")

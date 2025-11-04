@@ -1,0 +1,219 @@
+[
+  {
+    "input": {
+      "tag": "c:gems/source"
+    },
+    "output": "ars_nouveau:abjuration_essence",
+    "count": 1,
+    "pedestal_items": [
+      {
+        "item": "minecraft:fermented_spider_eye"
+      },
+      {
+        "item": "minecraft:sugar"
+      },
+      {
+        "item": "minecraft:milk_bucket"
+      }
+    ],
+    "source": 2000
+  },
+  {
+    "input": {
+      "tag": "c:gems/source"
+    },
+    "output": "ars_nouveau:air_essence",
+    "count": 1,
+    "pedestal_items": [
+      {
+        "item": "minecraft:feather"
+      },
+      {
+        "item": "ars_nouveau:wilden_wing"
+      },
+      {
+        "tag": "minecraft:arrows"
+      }
+    ],
+    "source": 2000
+  },
+  {
+    "input": {
+      "item": "minecraft:amethyst_shard"
+    },
+    "output": "ars_nouveau:source_gem",
+    "count": 1,
+    "pedestal_items": [],
+    "source": 500
+  },
+  {
+    "input": {
+      "item": "minecraft:amethyst_block"
+    },
+    "output": "ars_nouveau:source_gem_block",
+    "count": 1,
+    "pedestal_items": [],
+    "source": 2000
+  },
+  {
+    "input": {
+      "tag": "minecraft:arrows"
+    },
+    "output": "ars_nouveau:amplify_arrow",
+    "count": 1,
+    "pedestal_items": [
+      {
+        "item": "ars_nouveau:source_gem"
+      },
+      {
+        "item": "ars_nouveau:air_essence"
+      },
+      {
+        "tag": "c:gems/diamond"
+      }
+    ],
+    "source": 100
+  },
+  {
+    "input": {
+      "tag": "c:gems/source"
+    },
+    "output": "ars_nouveau:conjuration_essence",
+    "count": 1,
+    "pedestal_items": [
+      {
+        "item": "ars_nouveau:wilden_horn"
+      },
+      {
+        "item": "ars_nouveau:starbuncle_shards"
+      },
+      {
+        "item": "minecraft:book"
+      }
+    ],
+    "source": 2000
+  },
+  {
+    "input": {
+      "tag": "c:gems/source"
+    },
+    "output": "ars_nouveau:earth_essence",
+    "count": 1,
+    "pedestal_items": [
+      {
+        "tag": "c:ingots/iron"
+      },
+      {
+        "tag": "c:seeds"
+      },
+      {
+        "tag": "minecraft:dirt"
+      }
+    ],
+    "source": 2000
+  },
+  {
+    "input": {
+      "tag": "c:gems/source"
+    },
+    "output": "ars_nouveau:fire_essence",
+    "count": 1,
+    "pedestal_items": [
+      {
+        "item": "minecraft:flint_and_steel"
+      },
+      {
+        "item": "minecraft:torch"
+      },
+      {
+        "item": "minecraft:gunpowder"
+      }
+    ],
+    "source": 2000
+  },
+  {
+    "input": {
+      "tag": "c:gems/lapis"
+    },
+    "output": "ars_nouveau:source_gem",
+    "count": 1,
+    "pedestal_items": [],
+    "source": 500
+  },
+  {
+    "input": {
+      "tag": "c:gems/source"
+    },
+    "output": "ars_nouveau:manipulation_essence",
+    "count": 1,
+    "pedestal_items": [
+      {
+        "item": "minecraft:stone_button"
+      },
+      {
+        "item": "minecraft:redstone"
+      },
+      {
+        "item": "minecraft:clock"
+      }
+    ],
+    "source": 2000
+  },
+  {
+    "input": {
+      "tag": "minecraft:arrows"
+    },
+    "output": "ars_nouveau:pierce_arrow",
+    "count": 1,
+    "pedestal_items": [
+      {
+        "item": "ars_nouveau:source_gem"
+      },
+      {
+        "item": "ars_nouveau:air_essence"
+      },
+      {
+        "item": "ars_nouveau:wilden_spike"
+      }
+    ],
+    "source": 100
+  },
+  {
+    "input": {
+      "tag": "minecraft:arrows"
+    },
+    "output": "ars_nouveau:split_arrow",
+    "count": 1,
+    "pedestal_items": [
+      {
+        "item": "ars_nouveau:source_gem"
+      },
+      {
+        "item": "ars_nouveau:air_essence"
+      },
+      {
+        "item": "ars_nouveau:wilden_horn"
+      }
+    ],
+    "source": 100
+  },
+  {
+    "input": {
+      "tag": "c:gems/source"
+    },
+    "output": "ars_nouveau:water_essence",
+    "count": 1,
+    "pedestal_items": [
+      {
+        "item": "minecraft:water_bucket"
+      },
+      {
+        "item": "minecraft:snow_block"
+      },
+      {
+        "item": "minecraft:kelp"
+      }
+    ],
+    "source": 2000
+  }
+]
