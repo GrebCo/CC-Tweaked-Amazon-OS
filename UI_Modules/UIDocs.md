@@ -14,9 +14,10 @@
 4. [Theme System](#theme-system)
 5. [API Reference](#api-reference)
 6. [Element Types](#element-types)
-7. [Advanced Usage](#advanced-usage)
-8. [Best Practices](#best-practices)
-9. [Examples](#examples)
+7. [Layout System](#layout-system)
+8. [Advanced Usage](#advanced-usage)
+9. [Best Practices](#best-practices)
+10. [Examples](#examples)
 
 ---
 
@@ -913,6 +914,366 @@ console:stopSpinner("[Done]")
 - Auto-scrolling
 
 **Animation:** The terminal uses `update(dt)` to animate both cursor and spinner, ensuring smooth frame-rate independent animations.
+
+---
+
+## Layout System
+
+The layout system provides automatic positioning and sizing of child elements using container-based layouts.
+
+### Overview
+
+Layouts solve the problem of manually positioning related elements by automatically calculating positions based on layout rules:
+
+- **VStack** - Vertical stack (children arranged top-to-bottom)
+- **HStack** - Horizontal stack (children arranged left-to-right)
+- **Grid** - Grid layout (children arranged in rows/columns)
+
+**Key Features:**
+- Auto-sizing (containers calculate their dimensions from children)
+- Alignment options (left/center/right, top/center/bottom)
+- Padding and spacing
+- Dynamic child management (`addChild`, `removeChild`)
+- Nested layouts supported
+- Builder pattern for declarative UI construction
+
+---
+
+### VStack (Vertical Stack)
+
+Arranges children vertically from top to bottom.
+
+```lua
+local stack = ui.vstack({
+    position = "center",
+    spacing = 1,              -- Space between children (default: 0)
+    align = "left",           -- "left", "center", "right" (default: "left")
+    padding = 1,              -- Padding around all children (default: 0)
+    width = 20,               -- Fixed width (optional, auto-calculated if omitted)
+    height = 10,              -- Fixed height (optional, auto-calculated if omitted)
+
+    builder = function(container)
+        container:addChild(ui.label({ text = "Title", fg = colors.yellow }))
+        container:addChild(ui.label({ text = "Subtitle", fg = colors.gray }))
+        container:addChild(ui.button({
+            text = "Click Me",
+            bg = colors.blue,
+            onclick = function() print("Clicked!") end
+        }))
+    end
+})
+```
+
+**Options:**
+- `spacing` - Vertical space between children (default: 0)
+- `align` - Horizontal alignment: "left", "center", "right" (default: "left")
+- `padding` - Padding around container edges (default: 0)
+- `width`, `height` - Fixed dimensions (auto-calculated if omitted)
+- `position`, `xOffset`, `yOffset` - Standard positioning
+- `builder` - Function to add children declaratively
+
+**Methods:**
+- `stack:addChild(element)` - Add child and re-layout
+- `stack:removeChild(element)` - Remove child and re-layout
+- `stack:layout()` - Manually trigger layout recalculation
+
+---
+
+### HStack (Horizontal Stack)
+
+Arranges children horizontally from left to right.
+
+```lua
+local hstack = ui.hstack({
+    position = "center",
+    spacing = 2,              -- Space between children (default: 1)
+    align = "center",         -- "top", "center", "bottom" (default: "top")
+    padding = 1,
+
+    builder = function(container)
+        container:addChild(ui.button({ text = "Save", bg = colors.green }))
+        container:addChild(ui.button({ text = "Cancel", bg = colors.red }))
+        container:addChild(ui.button({ text = "Help", bg = colors.blue }))
+    end
+})
+```
+
+**Options:**
+- `spacing` - Horizontal space between children (default: 1)
+- `align` - Vertical alignment: "top", "center", "bottom" (default: "top")
+- `padding` - Padding around container edges (default: 0)
+- `width`, `height` - Fixed dimensions (auto-calculated if omitted)
+- `builder` - Function to add children declaratively
+
+**Methods:**
+- `hstack:addChild(element)` - Add child and re-layout
+- `hstack:removeChild(element)` - Remove child and re-layout
+
+---
+
+### Grid
+
+Arranges children in a grid with specified number of columns.
+
+```lua
+local grid = ui.grid({
+    position = "center",
+    columns = 3,              -- Number of columns (default: 2)
+    spacing = 1,              -- Space between all cells (default: 1)
+    rowSpacing = 1,           -- Vertical space (overrides spacing)
+    columnSpacing = 2,        -- Horizontal space (overrides spacing)
+    padding = 1,
+
+    builder = function(container)
+        for i = 1, 9 do
+            container:addChild(ui.label({
+                text = tostring(i),
+                fg = colors.white,
+                bg = colors.gray
+            }))
+        end
+    end
+})
+```
+
+**Options:**
+- `columns` - Number of columns (default: 2)
+- `spacing` - Space between rows and columns (default: 1)
+- `rowSpacing` - Vertical space (overrides `spacing`)
+- `columnSpacing` - Horizontal space (overrides `spacing`)
+- `padding` - Padding around grid edges (default: 0)
+- `builder` - Function to add children declaratively
+
+**Methods:**
+- `grid:addChild(element)` - Add child and re-layout
+- `grid:removeChild(element)` - Remove child and re-layout
+
+**Layout Algorithm:**
+- Children fill columns left-to-right
+- New row starts after reaching `columns` limit
+- All columns in a row use the width of the widest element in that column
+- All cells in a row use the height of the tallest element in that row
+
+---
+
+### Layout Patterns
+
+#### Builder Pattern (Recommended)
+
+Use the `builder` function for declarative UI construction:
+
+```lua
+ui.vstack({
+    position = "center",
+    spacing = 1,
+    builder = function(container)
+        container:addChild(ui.label({ text = "Item 1" }))
+        container:addChild(ui.label({ text = "Item 2" }))
+        container:addChild(ui.button({ text = "OK" }))
+    end
+})
+```
+
+**Benefits:**
+- Cleaner, more readable code
+- All children added before layout calculation
+- Single render (no flicker)
+
+#### Manual Child Management
+
+Add children after creation:
+
+```lua
+local stack = ui.vstack({ position = "center", spacing = 1 })
+stack:addChild(ui.label({ text = "Item 1" }))
+stack:addChild(ui.label({ text = "Item 2" }))
+
+-- Later: dynamically add/remove
+stack:addChild(ui.label({ text = "Item 3" }))
+stack:removeChild(someElement)
+```
+
+**Benefits:**
+- Dynamic UI updates
+- Programmatic child management
+- Good for reactive/data-driven UIs
+
+---
+
+### Nested Layouts
+
+Layouts can be nested to create complex UI structures:
+
+```lua
+ui.vstack({
+    position = "center",
+    spacing = 2,
+    builder = function(mainContainer)
+        -- Header
+        mainContainer:addChild(ui.label({
+            text = "Settings",
+            fg = colors.yellow
+        }))
+
+        -- Form with grid layout
+        local formGrid = ui.grid({
+            columns = 2,
+            spacing = 1,
+            builder = function(gridContainer)
+                gridContainer:addChild(ui.label({ text = "Name:" }))
+                gridContainer:addChild(ui.textfield({ width = 15 }))
+
+                gridContainer:addChild(ui.label({ text = "Email:" }))
+                gridContainer:addChild(ui.textfield({ width = 15 }))
+            end
+        })
+        mainContainer:addChild(formGrid)
+
+        -- Buttons
+        local buttonRow = ui.hstack({
+            spacing = 2,
+            builder = function(hContainer)
+                hContainer:addChild(ui.button({ text = "Save", bg = colors.green }))
+                hContainer:addChild(ui.button({ text = "Cancel", bg = colors.red }))
+            end
+        })
+        mainContainer:addChild(buttonRow)
+    end
+})
+```
+
+---
+
+### Auto-Sizing
+
+Layouts automatically calculate their dimensions from children:
+
+```lua
+-- This vstack will auto-size to fit all children
+local stack = ui.vstack({
+    spacing = 1,
+    padding = 1,
+    builder = function(container)
+        container:addChild(ui.label({ text = "Short" }))
+        container:addChild(ui.label({ text = "Much longer text here" }))
+        container:addChild(ui.button({ text = "OK", width = 10 }))
+    end
+})
+
+-- stack.width automatically becomes: 22 (longest child + padding*2)
+-- stack.height automatically becomes: 5 (3 children + 2 spacing + padding*2)
+```
+
+**Fixed Sizing:**
+You can override auto-sizing by specifying `width` and/or `height`:
+
+```lua
+local stack = ui.vstack({
+    width = 30,      -- Fixed width
+    height = 10,     -- Fixed height
+    spacing = 1,
+    align = "center", -- Children centered in fixed width
+    builder = function(container)
+        container:addChild(ui.label({ text = "Centered" }))
+    end
+})
+```
+
+---
+
+### Dynamic Updates
+
+Layouts support dynamic child management:
+
+```lua
+local list = ui.vstack({ position = "center", spacing = 1 })
+
+-- Add items dynamically
+local items = {"Apple", "Banana", "Cherry"}
+for _, item in ipairs(items) do
+    list:addChild(ui.label({ text = item }))
+end
+
+-- Remove items
+list:removeChild(list.children[2])  -- Remove "Banana"
+
+-- Clear all children
+for i = #list.children, 1, -1 do
+    list:removeChild(list.children[i])
+end
+```
+
+---
+
+### Complete Layout Example
+
+```lua
+local ui = dofile("UI.lua")
+ui.init(context)
+ui.newScene("Dashboard")
+ui.setScene("Dashboard")
+
+-- Create a dashboard layout
+ui.vstack({
+    position = "center",
+    spacing = 2,
+    padding = 1,
+    builder = function(main)
+        -- Title
+        main:addChild(ui.label({
+            text = "Dashboard",
+            fg = colors.yellow
+        }))
+
+        -- Stats grid
+        local stats = ui.grid({
+            columns = 2,
+            spacing = 1,
+            builder = function(grid)
+                grid:addChild(ui.label({ text = "CPU: 45%", fg = colors.lime }))
+                grid:addChild(ui.label({ text = "RAM: 2.1GB", fg = colors.cyan }))
+                grid:addChild(ui.label({ text = "Disk: 15GB", fg = colors.orange }))
+                grid:addChild(ui.label({ text = "Net: 5MB/s", fg = colors.lightBlue }))
+            end
+        })
+        main:addChild(stats)
+
+        -- Action buttons
+        local actions = ui.hstack({
+            spacing = 2,
+            align = "center",
+            builder = function(buttons)
+                buttons:addChild(ui.button({
+                    text = "Refresh",
+                    bg = colors.blue,
+                    onclick = function() print("Refreshing...") end
+                }))
+                buttons:addChild(ui.button({
+                    text = "Settings",
+                    bg = colors.gray,
+                    onclick = function() print("Settings...") end
+                }))
+            end
+        })
+        main:addChild(actions)
+    end
+})
+
+ui.run({fps = 30})
+```
+
+---
+
+### Implementation Notes
+
+**Building Flag:**
+During layout construction with the `builder` pattern, `UI._buildingLayout` is set to `true` to prevent auto-refresh on each `addChild` call. The layout calculates positions once after all children are added.
+
+**Element Removal:**
+Use `UI.removeElement(element)` to remove standalone elements, or `layout:removeChild(element)` to remove from a layout container.
+
+**Performance:**
+Layouts call `layout()` automatically when children are added/removed. For batch operations, consider using the builder pattern to avoid multiple layout calculations.
 
 ---
 

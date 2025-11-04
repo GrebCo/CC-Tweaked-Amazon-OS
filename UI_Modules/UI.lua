@@ -445,13 +445,39 @@ function UI.addElement(sceneName, element)
     if not scene then error("UI.addElement: Scene '" .. sceneName .. "' not found") end
 
     table.insert(scene.elements, element)
-    
+
     -- Auto-refresh: If adding to the active scene, refresh the flattened elements list
-    if sceneName == UI.activeScene then
+    -- BUT: don't refresh if we're inside a layout builder (let layout handle refresh)
+    if sceneName == UI.activeScene and not UI._buildingLayout then
         UI.setScene(UI.activeScene)
     end
-    
+
     return element
+end
+
+--- Remove an element from a scene
+function UI.removeElement(element, sceneName)
+    if not sceneName then sceneName = UI.activeScene end
+    if not sceneName then error("UI.removeElement: No active scene or target scene") end
+
+    local scene = UI.contextTable.scenes[sceneName]
+    if not scene then error("UI.removeElement: Scene '" .. sceneName .. "' not found") end
+
+    -- Find and remove the element
+    for i, e in ipairs(scene.elements) do
+        if e == element then
+            table.remove(scene.elements, i)
+
+            -- Auto-refresh if removing from active scene
+            if sceneName == UI.activeScene then
+                UI.setScene(UI.activeScene)
+            end
+
+            return true
+        end
+    end
+
+    return false  -- Element not found
 end
 
 -------------------------------------------------
@@ -584,6 +610,321 @@ end
 
 function UI.handleScroll(dir, x, y)
     for _, e in ipairs(UI.contextTable.elements) do if e.onScroll then e:onScroll(dir, x, y) end end
+end
+
+-------------------------------------------------
+-- Layout System
+-------------------------------------------------
+
+-- Layout building flag (prevents auto-refresh during layout construction)
+UI._buildingLayout = false
+
+--- Vertical Stack Layout
+-- Stacks children vertically with optional spacing and alignment
+function UI.vstack(opts)
+    opts = opts or {}
+
+    local container = {
+        type = "vstack",
+        children = {},
+        spacing = opts.spacing or 0,
+        align = opts.align or "left",  -- "left", "center", "right"
+        padding = opts.padding or 0,
+        position = opts.position,
+        xOffset = opts.xOffset or 0,
+        yOffset = opts.yOffset or 0,
+        x = opts.x or 1,
+        y = opts.y or 1,
+        width = opts.width,
+        height = opts.height,
+
+        -- Methods
+        addChild = function(self, element)
+            table.insert(self.children, element)
+            self:layout()
+            UI.markDirty()
+            return element
+        end,
+
+        removeChild = function(self, element)
+            for i, child in ipairs(self.children) do
+                if child == element then
+                    table.remove(self.children, i)
+                    self:layout()
+                    UI.markDirty()
+                    return true
+                end
+            end
+            return false
+        end,
+
+        layout = function(self)
+            local currentY = self.y + self.padding
+            local maxWidth = 0
+
+            for _, child in ipairs(self.children) do
+                -- Apply positioning to get dimensions
+                UI.applyPositioning(child)
+                local childWidth = child.width or (child.text and #child.text) or 1
+                local childHeight = child.height or 1
+
+                -- Calculate X position based on alignment
+                if self.align == "center" and self.width then
+                    child.x = self.x + math.floor((self.width - childWidth) / 2)
+                elseif self.align == "right" and self.width then
+                    child.x = self.x + self.width - childWidth
+                else  -- left
+                    child.x = self.x + self.padding
+                end
+
+                child.y = currentY
+                currentY = currentY + childHeight + self.spacing
+
+                if childWidth > maxWidth then
+                    maxWidth = childWidth
+                end
+            end
+
+            -- Auto-calculate container dimensions if not specified
+            if not self.width then
+                self.width = maxWidth + (self.padding * 2)
+            end
+            if not self.height then
+                self.height = (currentY - self.y) + self.padding - self.spacing
+            end
+        end,
+
+        draw = function(self)
+            -- Layout is done, just draw children
+            for _, child in ipairs(self.children) do
+                if child.draw then
+                    child:draw()
+                end
+            end
+        end
+    }
+
+    -- If a builder function is provided, use it to add children
+    if opts.builder then
+        UI._buildingLayout = true
+        opts.builder(container)
+        UI._buildingLayout = false
+        container:layout()
+    end
+
+    return UI.addElement(opts.scene or UI.activeScene, container)
+end
+
+--- Horizontal Stack Layout
+-- Stacks children horizontally with optional spacing and alignment
+function UI.hstack(opts)
+    opts = opts or {}
+
+    local container = {
+        type = "hstack",
+        children = {},
+        spacing = opts.spacing or 1,
+        align = opts.align or "top",  -- "top", "center", "bottom"
+        padding = opts.padding or 0,
+        position = opts.position,
+        xOffset = opts.xOffset or 0,
+        yOffset = opts.yOffset or 0,
+        x = opts.x or 1,
+        y = opts.y or 1,
+        width = opts.width,
+        height = opts.height,
+
+        -- Methods
+        addChild = function(self, element)
+            table.insert(self.children, element)
+            self:layout()
+            UI.markDirty()
+            return element
+        end,
+
+        removeChild = function(self, element)
+            for i, child in ipairs(self.children) do
+                if child == element then
+                    table.remove(self.children, i)
+                    self:layout()
+                    UI.markDirty()
+                    return true
+                end
+            end
+            return false
+        end,
+
+        layout = function(self)
+            local currentX = self.x + self.padding
+            local maxHeight = 0
+
+            for _, child in ipairs(self.children) do
+                -- Apply positioning to get dimensions
+                UI.applyPositioning(child)
+                local childWidth = child.width or (child.text and #child.text) or 1
+                local childHeight = child.height or 1
+
+                -- Calculate Y position based on alignment
+                if self.align == "center" and self.height then
+                    child.y = self.y + math.floor((self.height - childHeight) / 2)
+                elseif self.align == "bottom" and self.height then
+                    child.y = self.y + self.height - childHeight
+                else  -- top
+                    child.y = self.y + self.padding
+                end
+
+                child.x = currentX
+                currentX = currentX + childWidth + self.spacing
+
+                if childHeight > maxHeight then
+                    maxHeight = childHeight
+                end
+            end
+
+            -- Auto-calculate container dimensions if not specified
+            if not self.width then
+                self.width = (currentX - self.x) + self.padding - self.spacing
+            end
+            if not self.height then
+                self.height = maxHeight + (self.padding * 2)
+            end
+        end,
+
+        draw = function(self)
+            -- Layout is done, just draw children
+            for _, child in ipairs(self.children) do
+                if child.draw then
+                    child:draw()
+                end
+            end
+        end
+    }
+
+    -- If a builder function is provided, use it to add children
+    if opts.builder then
+        UI._buildingLayout = true
+        opts.builder(container)
+        UI._buildingLayout = false
+        container:layout()
+    end
+
+    return UI.addElement(opts.scene or UI.activeScene, container)
+end
+
+--- Grid Layout
+-- Arranges children in a grid with specified columns
+function UI.grid(opts)
+    opts = opts or {}
+
+    local container = {
+        type = "grid",
+        children = {},
+        columns = opts.columns or 2,
+        spacing = opts.spacing or 1,
+        rowSpacing = opts.rowSpacing or opts.spacing or 1,
+        columnSpacing = opts.columnSpacing or opts.spacing or 1,
+        padding = opts.padding or 0,
+        position = opts.position,
+        xOffset = opts.xOffset or 0,
+        yOffset = opts.yOffset or 0,
+        x = opts.x or 1,
+        y = opts.y or 1,
+        width = opts.width,
+        height = opts.height,
+
+        -- Methods
+        addChild = function(self, element)
+            table.insert(self.children, element)
+            self:layout()
+            UI.markDirty()
+            return element
+        end,
+
+        removeChild = function(self, element)
+            for i, child in ipairs(self.children) do
+                if child == element then
+                    table.remove(self.children, i)
+                    self:layout()
+                    UI.markDirty()
+                    return true
+                end
+            end
+            return false
+        end,
+
+        layout = function(self)
+            local currentX = self.x + self.padding
+            local currentY = self.y + self.padding
+            local column = 0
+            local rowMaxHeight = 0
+            local columnWidths = {}
+
+            -- First pass: calculate column widths
+            for i, child in ipairs(self.children) do
+                UI.applyPositioning(child)
+                local childWidth = child.width or (child.text and #child.text) or 1
+                local col = (i - 1) % self.columns + 1
+                columnWidths[col] = math.max(columnWidths[col] or 0, childWidth)
+            end
+
+            -- Second pass: position children
+            for i, child in ipairs(self.children) do
+                UI.applyPositioning(child)
+                local childWidth = child.width or (child.text and #child.text) or 1
+                local childHeight = child.height or 1
+
+                child.x = currentX
+                child.y = currentY
+
+                column = column + 1
+                local col = (i - 1) % self.columns + 1
+                currentX = currentX + columnWidths[col] + self.columnSpacing
+
+                if childHeight > rowMaxHeight then
+                    rowMaxHeight = childHeight
+                end
+
+                -- Move to next row
+                if column >= self.columns then
+                    column = 0
+                    currentX = self.x + self.padding
+                    currentY = currentY + rowMaxHeight + self.rowSpacing
+                    rowMaxHeight = 0
+                end
+            end
+
+            -- Auto-calculate container dimensions if not specified
+            if not self.width then
+                local totalWidth = self.padding
+                for _, w in ipairs(columnWidths) do
+                    totalWidth = totalWidth + w + self.columnSpacing
+                end
+                self.width = totalWidth - self.columnSpacing + self.padding
+            end
+            if not self.height then
+                self.height = (currentY - self.y) + rowMaxHeight + self.padding
+            end
+        end,
+
+        draw = function(self)
+            -- Layout is done, just draw children
+            for _, child in ipairs(self.children) do
+                if child.draw then
+                    child:draw()
+                end
+            end
+        end
+    }
+
+    -- If a builder function is provided, use it to add children
+    if opts.builder then
+        UI._buildingLayout = true
+        opts.builder(container)
+        UI._buildingLayout = false
+        container:layout()
+    end
+
+    return UI.addElement(opts.scene or UI.activeScene, container)
 end
 
 -------------------------------------------------
