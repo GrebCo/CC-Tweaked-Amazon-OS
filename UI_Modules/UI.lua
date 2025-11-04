@@ -1296,6 +1296,266 @@ function UI.textfield(opts)
     return UI.addElement(defaultScene(opts), e)
 end
 
+function UI.textarea(opts)
+    opts = opts or {}
+
+    -- Resolve theme colors
+    local resolvedColors = UI.resolveTheme(opts, "textarea", {
+        fg = colors.white,
+        bg = colors.gray,
+        bgActive = colors.lightGray,
+        lineNumberColor = colors.lightGray
+    })
+
+    local e = {
+        type = "textarea",
+        lines = opts.text and {} or {""}, -- Will split text below if provided
+        width = opts.width or 30,
+        height = opts.height or 10,
+        fg = resolvedColors.fg,
+        bg = resolvedColors.bg,
+        bgActive = resolvedColors.bgActive,
+        lineNumberColor = resolvedColors.lineNumberColor,
+        position = opts.position,
+        xOffset = opts.xOffset,
+        yOffset = opts.yOffset,
+        x = opts.x or 1,
+        y = opts.y or 1,
+
+        -- Features
+        lineNumbers = opts.lineNumbers or false,
+        wrap = opts.wrap or false,
+        onChange = opts.onChange,
+
+        -- State
+        cursorRow = 1,
+        cursorCol = 0,
+        scrollOffset = 0,
+
+        -- Initialize from text
+        setText = function(self, text)
+            if text then
+                self.lines = {}
+                for line in (text .. "\n"):gmatch("([^\n]*)\n") do
+                    table.insert(self.lines, line)
+                end
+                if #self.lines == 0 then
+                    self.lines = {""}
+                end
+            end
+            self.cursorRow = 1
+            self.cursorCol = 0
+            self.scrollOffset = 0
+        end,
+
+        -- Get all text as single string
+        getText = function(self)
+            return table.concat(self.lines, "\n")
+        end,
+
+        -- Ensure cursor is on screen
+        updateScroll = function(self)
+            if self.cursorRow < self.scrollOffset + 1 then
+                self.scrollOffset = self.cursorRow - 1
+            end
+            if self.cursorRow > self.scrollOffset + self.height then
+                self.scrollOffset = self.cursorRow - self.height
+            end
+            self.scrollOffset = math.max(0, self.scrollOffset)
+        end,
+
+        onClick = function(self, mx, my)
+            UI.focused = self
+            local lineNumWidth = self.lineNumbers and 4 or 0
+            local relY = my - self.y
+            local relX = mx - self.x - lineNumWidth
+
+            self.cursorRow = math.min(#self.lines, math.max(1, relY + self.scrollOffset + 1))
+            self.cursorCol = math.max(0, math.min(#self.lines[self.cursorRow], relX))
+            self:updateScroll()
+            UI.markDirty()
+            return true
+        end,
+
+        onChar = function(self, ch)
+            local line = self.lines[self.cursorRow]
+            local before = line:sub(1, self.cursorCol)
+            local after = line:sub(self.cursorCol + 1)
+            self.lines[self.cursorRow] = before .. ch .. after
+            self.cursorCol = self.cursorCol + 1
+            if self.onChange then self.onChange(self:getText()) end
+            UI.markDirty()
+        end,
+
+        onKey = function(self, key)
+            local name = keys.getName(key)
+            local line = self.lines[self.cursorRow]
+
+            if name == "backspace" then
+                if self.cursorCol > 0 then
+                    local before = line:sub(1, self.cursorCol - 1)
+                    local after = line:sub(self.cursorCol + 1)
+                    self.lines[self.cursorRow] = before .. after
+                    self.cursorCol = self.cursorCol - 1
+                    if self.onChange then self.onChange(self:getText()) end
+                    UI.markDirty()
+                elseif self.cursorRow > 1 then
+                    -- Join with previous line
+                    local prevLine = self.lines[self.cursorRow - 1]
+                    self.cursorCol = #prevLine
+                    self.lines[self.cursorRow - 1] = prevLine .. line
+                    table.remove(self.lines, self.cursorRow)
+                    self.cursorRow = self.cursorRow - 1
+                    self:updateScroll()
+                    if self.onChange then self.onChange(self:getText()) end
+                    UI.markDirty()
+                end
+            elseif name == "delete" then
+                if self.cursorCol < #line then
+                    local before = line:sub(1, self.cursorCol)
+                    local after = line:sub(self.cursorCol + 2)
+                    self.lines[self.cursorRow] = before .. after
+                    if self.onChange then self.onChange(self:getText()) end
+                    UI.markDirty()
+                elseif self.cursorRow < #self.lines then
+                    -- Join with next line
+                    self.lines[self.cursorRow] = line .. self.lines[self.cursorRow + 1]
+                    table.remove(self.lines, self.cursorRow + 1)
+                    if self.onChange then self.onChange(self:getText()) end
+                    UI.markDirty()
+                end
+            elseif name == "enter" then
+                local before = line:sub(1, self.cursorCol)
+                local after = line:sub(self.cursorCol + 1)
+                self.lines[self.cursorRow] = before
+                table.insert(self.lines, self.cursorRow + 1, after)
+                self.cursorRow = self.cursorRow + 1
+                self.cursorCol = 0
+                self:updateScroll()
+                if self.onChange then self.onChange(self:getText()) end
+                UI.markDirty()
+            elseif name == "left" then
+                if self.cursorCol > 0 then
+                    self.cursorCol = self.cursorCol - 1
+                elseif self.cursorRow > 1 then
+                    self.cursorRow = self.cursorRow - 1
+                    self.cursorCol = #self.lines[self.cursorRow]
+                    self:updateScroll()
+                end
+                UI.markDirty()
+            elseif name == "right" then
+                if self.cursorCol < #line then
+                    self.cursorCol = self.cursorCol + 1
+                elseif self.cursorRow < #self.lines then
+                    self.cursorRow = self.cursorRow + 1
+                    self.cursorCol = 0
+                    self:updateScroll()
+                end
+                UI.markDirty()
+            elseif name == "up" then
+                if self.cursorRow > 1 then
+                    self.cursorRow = self.cursorRow - 1
+                    self.cursorCol = math.min(self.cursorCol, #self.lines[self.cursorRow])
+                    self:updateScroll()
+                    UI.markDirty()
+                end
+            elseif name == "down" then
+                if self.cursorRow < #self.lines then
+                    self.cursorRow = self.cursorRow + 1
+                    self.cursorCol = math.min(self.cursorCol, #self.lines[self.cursorRow])
+                    self:updateScroll()
+                    UI.markDirty()
+                end
+            elseif name == "home" then
+                self.cursorCol = 0
+                UI.markDirty()
+            elseif name == "end" then
+                self.cursorCol = #line
+                UI.markDirty()
+            elseif name == "pageUp" then
+                self.cursorRow = math.max(1, self.cursorRow - self.height)
+                self.cursorCol = math.min(self.cursorCol, #self.lines[self.cursorRow])
+                self:updateScroll()
+                UI.markDirty()
+            elseif name == "pageDown" then
+                self.cursorRow = math.min(#self.lines, self.cursorRow + self.height)
+                self.cursorCol = math.min(self.cursorCol, #self.lines[self.cursorRow])
+                self:updateScroll()
+                UI.markDirty()
+            end
+        end,
+
+        onScroll = function(self, direction, mx, my)
+            self.scrollOffset = math.max(0, math.min(#self.lines - self.height, self.scrollOffset + direction))
+            UI.markDirty()
+            return true
+        end,
+
+        draw = function(self)
+            local isFocused = (UI.focused == self)
+            local bg = isFocused and self.bgActive or self.bg
+            local lineNumWidth = self.lineNumbers and 4 or 0
+
+            -- Draw each visible line
+            for i = 1, self.height do
+                local lineIdx = i + self.scrollOffset
+                UI.term.setCursorPos(self.x, self.y + i - 1)
+                UI.term.setBackgroundColor(bg)
+
+                -- Draw line numbers
+                if self.lineNumbers then
+                    if lineIdx <= #self.lines then
+                        UI.term.setTextColor(self.lineNumberColor)
+                        local numStr = tostring(lineIdx)
+                        UI.term.write(string.rep(" ", 3 - #numStr) .. numStr .. " ")
+                    else
+                        UI.term.write("    ")
+                    end
+                end
+
+                -- Draw line text
+                if lineIdx <= #self.lines then
+                    local line = self.lines[lineIdx]
+                    local displayWidth = self.width - lineNumWidth
+                    local displayText = line:sub(1, displayWidth)
+                    displayText = displayText .. string.rep(" ", displayWidth - #displayText)
+                    UI.term.setTextColor(self.fg)
+                    UI.term.write(displayText)
+                else
+                    -- Empty line below content
+                    UI.term.write(string.rep(" ", self.width - lineNumWidth))
+                end
+            end
+
+            -- Set cursor position
+            if isFocused then
+                local screenRow = self.cursorRow - self.scrollOffset
+                if screenRow >= 1 and screenRow <= self.height then
+                    local cursorX = self.x + lineNumWidth + self.cursorCol
+                    local cursorY = self.y + screenRow - 1
+                    if cursorX < self.x + self.width then
+                        UI.term.setCursorPos(cursorX, cursorY)
+                        UI.term.setCursorBlink(true)
+                    else
+                        UI.term.setCursorBlink(false)
+                    end
+                else
+                    UI.term.setCursorBlink(false)
+                end
+            else
+                UI.term.setCursorBlink(false)
+            end
+        end
+    }
+
+    -- Initialize text if provided
+    if opts.text then
+        e:setText(opts.text)
+    end
+
+    return UI.addElement(defaultScene(opts), e)
+end
+
 function UI.rectangle(opts)
     opts = opts or {}
     

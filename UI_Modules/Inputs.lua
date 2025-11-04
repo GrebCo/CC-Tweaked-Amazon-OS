@@ -592,6 +592,247 @@ function dataDisplay.dropdown(opts)
 end
 
 -------------------------------------------------
+-- ADVANCED TEXTFIELD ELEMENT
+-- Supports masked input OR autocomplete (mutually exclusive)
+-- Uses CraftOS cursor for better autocomplete UX
+-------------------------------------------------
+function dataDisplay.advancedTextField(opts)
+    opts = opts or {}
+
+    -- Resolve theme colors
+    local themeColors = UI.resolveTheme(opts, "textfield", {
+        fg = colors.white,
+        bg = colors.gray,
+        bgActive = colors.lightGray,
+        placeholderColor = colors.lightGray,
+        suggestionColor = colors.lightGray
+    })
+
+    local e = {
+        type = "advancedTextField",
+        text = opts.text or "",
+        width = opts.width or 20,
+        height = 1,
+        fg = themeColors.fg,
+        bg = themeColors.bg,
+        bgActive = themeColors.bgActive,
+        placeholderColor = themeColors.placeholderColor,
+        suggestionColor = themeColors.suggestionColor,
+        position = opts.position,
+        xOffset = opts.xOffset,
+        yOffset = opts.yOffset,
+        x = opts.x or 1,
+        y = opts.y or 1,
+
+        -- Features (mutually exclusive)
+        masked = opts.masked or false,
+        maskChar = opts.maskChar or "*",
+        autocomplete = opts.autocomplete or nil,  -- Array of strings
+        placeholder = opts.placeholder or "",
+
+        -- State
+        cursorPos = #(opts.text or ""),
+        viewOffset = 0,
+        currentSuggestion = nil,
+
+        -- Callbacks
+        onChange = opts.onChange,
+        onSubmit = opts.onSubmit,
+        onAutocomplete = opts.onAutocomplete,
+
+        -- Update view offset for scrolling
+        updateViewOffset = function(self)
+            local visibleWidth = self.width - 1
+            if self.cursorPos < self.viewOffset then
+                self.viewOffset = self.cursorPos
+            end
+            if self.cursorPos >= self.viewOffset + visibleWidth then
+                self.viewOffset = self.cursorPos - visibleWidth + 1
+            end
+            self.viewOffset = math.max(0, self.viewOffset)
+        end,
+
+        -- Find best autocomplete match
+        updateSuggestion = function(self)
+            self.currentSuggestion = nil
+            if not self.autocomplete or #self.text == 0 then
+                return
+            end
+
+            -- Find first match that starts with current text
+            local searchText = self.text:lower()
+            for _, suggestion in ipairs(self.autocomplete) do
+                if suggestion:lower():sub(1, #searchText) == searchText and suggestion ~= self.text then
+                    self.currentSuggestion = suggestion
+                    return
+                end
+            end
+        end,
+
+        onClick = function(self, mx, my)
+            UI.focused = self
+            -- Position cursor based on click
+            local relX = mx - self.x
+            self.cursorPos = math.min(#self.text, math.max(0, relX + self.viewOffset))
+            self:updateViewOffset()
+            self:updateSuggestion()
+            UI.markDirty()
+            return true
+        end,
+
+        onChar = function(self, ch)
+            -- Insert character at cursor
+            local before = self.text:sub(1, self.cursorPos)
+            local after = self.text:sub(self.cursorPos + 1)
+            self.text = before .. ch .. after
+            self.cursorPos = self.cursorPos + 1
+            self:updateViewOffset()
+            self:updateSuggestion()
+            if self.onChange then self.onChange(self.text) end
+            UI.markDirty()
+        end,
+
+        onKey = function(self, key)
+            local name = keys.getName(key)
+
+            if name == "backspace" then
+                if self.cursorPos > 0 then
+                    local before = self.text:sub(1, self.cursorPos - 1)
+                    local after = self.text:sub(self.cursorPos + 1)
+                    self.text = before .. after
+                    self.cursorPos = self.cursorPos - 1
+                    self:updateViewOffset()
+                    self:updateSuggestion()
+                    if self.onChange then self.onChange(self.text) end
+                    UI.markDirty()
+                end
+            elseif name == "delete" then
+                if self.cursorPos < #self.text then
+                    local before = self.text:sub(1, self.cursorPos)
+                    local after = self.text:sub(self.cursorPos + 2)
+                    self.text = before .. after
+                    self:updateSuggestion()
+                    if self.onChange then self.onChange(self.text) end
+                    UI.markDirty()
+                end
+            elseif name == "left" then
+                if self.cursorPos > 0 then
+                    self.cursorPos = self.cursorPos - 1
+                    self:updateViewOffset()
+                    UI.markDirty()
+                end
+            elseif name == "right" then
+                if self.cursorPos < #self.text then
+                    self.cursorPos = self.cursorPos + 1
+                    self:updateViewOffset()
+                    UI.markDirty()
+                end
+            elseif name == "home" then
+                self.cursorPos = 0
+                self:updateViewOffset()
+                UI.markDirty()
+            elseif name == "end" then
+                self.cursorPos = #self.text
+                self:updateViewOffset()
+                UI.markDirty()
+            elseif name == "tab" and self.currentSuggestion then
+                -- Accept autocomplete suggestion
+                self.text = self.currentSuggestion
+                self.cursorPos = #self.text
+                self.currentSuggestion = nil
+                self:updateViewOffset()
+                if self.onAutocomplete then self.onAutocomplete(self.text) end
+                if self.onChange then self.onChange(self.text) end
+                UI.markDirty()
+            elseif name == "enter" then
+                if self.onSubmit then
+                    self.onSubmit(self.text)
+                end
+            end
+        end,
+
+        draw = function(self)
+            local isFocused = (UI.focused == self)
+            local bg = isFocused and self.bgActive or self.bg
+
+            UI.term.setBackgroundColor(bg)
+            UI.term.setCursorPos(self.x, self.y)
+
+            -- Determine display text
+            local displayText
+            local showPlaceholder = (#self.text == 0 and self.placeholder ~= "" and not isFocused)
+
+            if showPlaceholder then
+                displayText = self.placeholder
+                UI.term.setTextColor(self.placeholderColor)
+            else
+                -- Show masked or regular text
+                if self.masked then
+                    displayText = string.rep(self.maskChar, #self.text)
+                else
+                    displayText = self.text
+                end
+                UI.term.setTextColor(self.fg)
+            end
+
+            -- Apply view offset for scrolling
+            local visibleText
+            if #displayText > self.width then
+                visibleText = displayText:sub(self.viewOffset + 1, self.viewOffset + self.width)
+                if self.viewOffset > 0 then
+                    visibleText = "<" .. visibleText:sub(2)
+                end
+                if #displayText > self.viewOffset + self.width then
+                    visibleText = visibleText:sub(1, -2) .. ">"
+                end
+            else
+                visibleText = displayText
+            end
+
+            -- Draw main text
+            local textToDraw = visibleText
+            if #textToDraw < self.width then
+                textToDraw = textToDraw .. string.rep(" ", self.width - #textToDraw)
+            end
+            UI.term.write(textToDraw)
+
+            -- Draw autocomplete suggestion (only if focused, not masked, and has suggestion)
+            if isFocused and not self.masked and self.currentSuggestion and not showPlaceholder then
+                local suggestionPart = self.currentSuggestion:sub(#self.text + 1)
+                if #suggestionPart > 0 then
+                    -- Calculate position for suggestion
+                    local suggestionX = self.x + (self.cursorPos - self.viewOffset)
+                    if suggestionX < self.x + self.width then
+                        local remainingWidth = self.x + self.width - suggestionX
+                        local suggestionDisplay = suggestionPart:sub(1, remainingWidth)
+
+                        UI.term.setCursorPos(suggestionX, self.y)
+                        UI.term.setBackgroundColor(bg)
+                        UI.term.setTextColor(self.suggestionColor)
+                        UI.term.write(suggestionDisplay)
+                    end
+                end
+            end
+
+            -- Set CraftOS cursor
+            if isFocused then
+                local cursorX = self.x + (self.cursorPos - self.viewOffset)
+                if cursorX >= self.x and cursorX < self.x + self.width then
+                    UI.term.setCursorPos(cursorX, self.y)
+                    UI.term.setCursorBlink(true)
+                else
+                    UI.term.setCursorBlink(false)
+                end
+            else
+                UI.term.setCursorBlink(false)
+            end
+        end
+    }
+
+    return UI.addElement(opts.scene or UI.activeScene, e)
+end
+
+-------------------------------------------------
 -- Return the module
 -------------------------------------------------
 return dataDisplay
