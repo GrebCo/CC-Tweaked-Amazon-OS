@@ -3,7 +3,7 @@
 -- This demonstrates all the features and use cases
 
 local ui = dofile("UI.lua")
-local dataDisplay = dofile("dataDisplay_enhanced.lua")
+local dataDisplay = dofile("inputs.lua") -- renamed from dataDisplay_enhanced.lua
 local registerThemes = dofile("themes.lua")
 
 -- Initialize
