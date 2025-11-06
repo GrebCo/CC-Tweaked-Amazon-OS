@@ -2,8 +2,8 @@
 
 Extension module for `UI.lua` that provides interactive input elements with full theme system integration.
 
-**Version:** 1.0
-**Last Updated:** November 4, 2025
+**Version:** 1.1
+**Last Updated:** November 6, 2025
 
 ## Setup
 
@@ -24,6 +24,7 @@ inputs.init(ui)
    - [Button Group (Radio Buttons)](#button-group-radio-buttons)
    - [Dropdown Menu](#dropdown-menu)
    - [Advanced Text Field](#advanced-text-field)
+   - [Text Area](#text-area) **NEW**
 3. [Common Options](#common-options)
 4. [Theme Examples](#theme-examples)
 5. [Complete Examples](#complete-examples)
@@ -606,7 +607,206 @@ ui.run({fps = 30})
 **When to Use:**
 - **advancedTextField**: For password fields, command inputs, search boxes with autocomplete
 - **Basic textfield**: For simple text input without special features
-- **textarea**: For multi-line text editing (see UIDocs.md)
+- **textArea**: For multi-line text editing (see below)
+
+---
+
+### Text Area
+
+Multi-line text editor with support for line numbers, scrolling, cursor navigation, and full text editing capabilities.
+
+```lua
+local editor = inputs.textArea({
+    text = "Line 1\nLine 2\nLine 3",  -- Initial text (default: "")
+    width = 40,                        -- Width in characters (default: 40)
+    height = 10,                       -- Height in rows (default: 10)
+    lineNumbers = true,                -- Show line numbers (default: false)
+    wrap = false,                      -- Line wrapping (default: false, NOT YET IMPLEMENTED)
+    readOnly = false,                  -- Prevent editing (default: false)
+    position = "center",               -- Anchor position
+
+    -- Theme options:
+    theme = "textArea",                -- Use theme colors
+    -- OR manual colors:
+    fg = colors.white,                 -- Text color
+    bg = colors.gray,                  -- Background color
+    bgActive = colors.lightGray,       -- Background when focused
+    lineNumberFg = colors.lightGray,   -- Line number text color
+    lineNumberBg = colors.gray,        -- Line number background
+    selectionBg = colors.blue,         -- Selection highlight (NOT YET IMPLEMENTED)
+    cursorColor = colors.white,        -- Cursor color
+
+    -- Callbacks:
+    onChange = function(text)
+        print("Text changed: " .. #text .. " characters")
+    end,
+    onSubmit = function(text)
+        print("Submitted (Ctrl+Enter): " .. text)
+    end
+})
+```
+
+**Key Features:**
+- **Multi-line editing**: Full text editor with line-based storage
+- **Line numbers**: Optional, dynamically sized based on line count
+- **Cursor navigation**: Arrow keys, Home, End, PageUp, PageDown
+- **Text operations**: Insert, delete, backspace, enter for new lines
+- **Mouse support**: Click to position cursor, scroll wheel for scrolling
+- **Auto-scroll**: Cursor stays visible when navigating
+- **Read-only mode**: Display text without allowing edits
+- **Callbacks**: onChange fires on every edit, onSubmit on Ctrl+Enter
+
+**API Methods:**
+
+```lua
+-- Get text as string (with newlines)
+local text = editor:getText()
+
+-- Set text (replaces all content)
+editor:setText("New text\nWith multiple lines")
+
+-- Get content width (accounting for line numbers)
+local width = editor:getContentWidth()
+
+-- Get line number width
+local lnWidth = editor:getLineNumberWidth()
+```
+
+**Keyboard Controls:**
+
+| Key | Action |
+|-----|--------|
+| Arrow Keys | Move cursor |
+| Home | Move to start of line |
+| End | Move to end of line |
+| PageUp/PageDown | Scroll by page |
+| Enter | Insert new line |
+| Backspace | Delete character before cursor |
+| Delete | Delete character at cursor |
+| Ctrl+Enter | Submit (calls onSubmit) |
+| Type | Insert character at cursor |
+
+**Mouse Controls:**
+
+| Action | Effect |
+|--------|--------|
+| Click | Position cursor at click location |
+| Scroll Wheel | Scroll view up/down |
+| Click Line Numbers | No action (ignored) |
+
+**Internal Structure:**
+
+```lua
+{
+    type = "textArea",
+    lines = {"Line 1", "Line 2", "Line 3"},  -- Array of strings
+    cursorLine = 1,                           -- Current line (1-indexed)
+    cursorCol = 0,                            -- Column in line (0-indexed)
+    scrollLine = 0,                           -- First visible line (0-indexed)
+    width = 40,
+    height = 10,
+    lineNumbers = true,
+    readOnly = false
+}
+```
+
+**Example: Code Editor**
+
+```lua
+local codeEditor = inputs.textArea({
+    text = "function greet(name)\n    print(\"Hello, \" .. name .. \"!\")\nend",
+    width = 50,
+    height = 15,
+    lineNumbers = true,
+    position = "center",
+    theme = "textArea",
+    onChange = function(text)
+        statusLabel.text = "Lines: " .. select(2, text:gsub("\n", "\n")) + 1
+    end,
+    onSubmit = function(text)
+        -- Execute or save code
+        local func, err = load(text)
+        if func then
+            func()
+        else
+            print("Error: " .. err)
+        end
+    end
+})
+```
+
+**Example: Read-only Log Viewer**
+
+```lua
+local logViewer = inputs.textArea({
+    text = "System started\nLoading modules...\nReady",
+    width = 40,
+    height = 10,
+    lineNumbers = false,
+    readOnly = true,
+    theme = "info",
+    position = "center"
+})
+
+-- Add new log entries
+local function addLog(message)
+    local currentText = logViewer:getText()
+    logViewer:setText(currentText .. "\n" .. message)
+end
+```
+
+**Example: Note Taking App**
+
+```lua
+local noteArea = inputs.textArea({
+    text = "",
+    width = 45,
+    height = 12,
+    lineNumbers = false,
+    position = "center",
+    onChange = function(text)
+        characterCount.text = "Characters: " .. #text
+        wordCount.text = "Words: " .. select(2, text:gsub("%S+", ""))
+    end
+})
+
+ui.button({
+    text = "Save Note",
+    position = "bottomCenter",
+    onclick = function()
+        local file = fs.open("note.txt", "w")
+        file.write(noteArea:getText())
+        file.close()
+        print("Note saved!")
+    end
+})
+```
+
+**Limitations (Current Version):**
+- Line wrapping is not yet implemented (lines truncate at width)
+- Text selection is not yet implemented
+- Copy/paste is not yet implemented
+- Syntax highlighting is not yet implemented
+- Undo/redo is not yet implemented
+- Find/replace is not yet implemented
+
+**Performance Notes:**
+- Efficient for typical use (100s of lines)
+- Very long lines (>1000 chars) may cause slowdown
+- Scrolling is optimized (only draws visible lines)
+- Cursor blinking uses system cursor (no custom animation)
+
+**Comparison with advancedTextField:**
+
+| Feature | advancedTextField | textArea |
+|---------|-------------------|----------|
+| Lines | Single line | Multiple lines |
+| Scrolling | Horizontal (auto) | Vertical (mouse wheel) |
+| Line Numbers | No | Optional |
+| Height | 1 row | Configurable |
+| Masking | Yes (password) | No |
+| Autocomplete | Yes | No |
+| Best For | Single-line inputs | Multi-line documents |
 
 ---
 
@@ -1177,5 +1377,9 @@ inputs.dropdown({
 
 MIT License - Feel free to use in your CC:Tweaked projects!
 
-**Version:** 1.0
-**Last Updated:** November 4, 2025
+**Version:** 1.1
+**Last Updated:** November 6, 2025
+
+**Changelog:**
+- v1.1 (Nov 6, 2025): Added TextArea element with multi-line editing, line numbers, and scrolling
+- v1.0 (Nov 4, 2025): Initial release with Slider, ButtonGroup, Dropdown, and AdvancedTextField
