@@ -35,9 +35,9 @@ return {
 
   -- Tier thresholds for roast intensity
   tiers = {
-    praise = { min = 0.00, max = 0.50 },
-    medium = { min = 0.50, max = 1.00 },
-    spicy  = { min = 1.00, max = 1.50 },
+    praise = { min = 0.00, max = 0.65 },
+    medium = { min = 0.65, max = 1.25 },
+    spicy  = { min = 1.25, max = 1.50 },
     ultra  = { min = 1.50, max = 99.0 }
   },
 
