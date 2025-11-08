@@ -23,7 +23,6 @@ local joinTimes = {}
 local mutedPlayers = {}
 local availablePersonas = {"demon", "god", "auditor"}
 local playerCommandTokens = {}  -- Rate limiting: {username = {tokens = 3, lastRefill = timestamp}}
-local lastHelpTime = 0  -- Global cooldown for help command (10 minutes)
 
 -- Peripherals
 local chatbox = nil
@@ -310,7 +309,7 @@ function roastPlayer(playerName, bypassGates)
     print("[ROAST] Roasted " .. playerName .. " (" .. tier .. " tier)")
 end
 
--- Parse and handle !lag commands
+-- Parse and handle $lag commands (received as "lag ..." in chat)
 function parseCommand(username, message)
     local args = {}
     for word in message:gmatch("%S+") do
@@ -323,7 +322,7 @@ function parseCommand(username, message)
 
     local command = args[2]:lower()
 
-    -- Rate limit check (help has its own cooldown, info/worst/tps are read-only)
+    -- Rate limit check (help/info/worst/tps are read-only and exempt)
     local exemptCommands = {help = true, info = true, worst = true, tps = true}
     if not exemptCommands[command] then
         if not checkCommandRateLimit(username) then
@@ -332,28 +331,14 @@ function parseCommand(username, message)
     end
 
     if command == "help" then
-        -- Global cooldown: only show help once per 10 minutes in public chat
-        local currentTime = os.epoch("utc") / 1000
-        local helpCooldown = 10 * 60  -- 10 minutes in seconds
-
-        if currentTime - lastHelpTime >= helpCooldown then
-            chatbox.sendMessage("--- Lag Roaster Commands ---", "LagBot")
-            chatbox.sendMessage("!lag tps - Show current server TPS", "LagBot")
-            chatbox.sendMessage("!lag score <name> - Show player's lag score", "LagBot")
-            chatbox.sendMessage("!lag info - Explain how lag scores work", "LagBot")
-            chatbox.sendMessage("!lag worst - Show top 5 laggiest players", "LagBot")
-            chatbox.sendMessage("!lag roastme - Roast yourself (bypasses gates)", "LagBot")
-            chatbox.sendMessage("!lag help - Show this help", "LagBot")
-            chatbox.sendMessage("\1677Note: score/roastme are rate limited (3 max, refills 1 per 2min)\167r", "LagBot")
-            lastHelpTime = currentTime
-        else
-            local timeRemaining = math.ceil((helpCooldown - (currentTime - lastHelpTime)) / 60)
-            chatbox.sendMessageToPlayer(string.format(
-                "Help was recently shown in chat. Wait %d more minute%s.",
-                timeRemaining,
-                timeRemaining == 1 and "" or "s"
-            ), username, "LagBot")
-        end
+        chatbox.sendMessageToPlayer("--- Lag Roaster Commands ---", username, "LagBot")
+        chatbox.sendMessageToPlayer("$lag tps - Show current server TPS", username, "LagBot")
+        chatbox.sendMessageToPlayer("$lag score <name> - Show player's lag score", username, "LagBot")
+        chatbox.sendMessageToPlayer("$lag info - Explain how lag scores work", username, "LagBot")
+        chatbox.sendMessageToPlayer("$lag worst - Show top 5 laggiest players", username, "LagBot")
+        chatbox.sendMessageToPlayer("$lag roastme - Roast yourself (bypasses gates)", username, "LagBot")
+        chatbox.sendMessageToPlayer("$lag help - Show this help", username, "LagBot")
+        chatbox.sendMessageToPlayer("\1677Note: score/roastme are rate limited (3 max, refills 1 per 2min)\167r", username, "LagBot")
 
     elseif command == "info" then
         chatbox.sendMessageToPlayer("\1676Lag Score\167r is a coefficient measuring your correlation with TPS drops. Higher = more lag.", username, "LagBot")
@@ -472,10 +457,12 @@ function parseCommand(username, message)
         
     elseif command == "roastme" then
         print(username .. " requested self-roast")
+        -- Send forewarning to chat
+        chatbox.sendMessage(username .. " has requested judgement. Use $lag for more info.", "LagBot")
         roastPlayer(username, true)  -- Bypass all gates
 
     else
-        chatbox.sendMessageToPlayer("Unknown command. Use !lag help for help.", username, "LagBot")
+        chatbox.sendMessageToPlayer("Unknown command. Use $lag help for help.", username, "LagBot")
     end
 end
 
@@ -527,8 +514,8 @@ local function main()
 
             print("[CHAT] " .. username .. ": " .. message)
 
-            if message:match("^!lag") then
-                print("[CMD] Processing !lag command from " .. username)
+            if message:match("^lag") then
+                print("[CMD] Processing lag command from " .. username)
                 parseCommand(username, message)
             end
             
