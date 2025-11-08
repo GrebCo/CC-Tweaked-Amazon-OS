@@ -23,6 +23,7 @@ local joinTimes = {}
 local mutedPlayers = {}
 local availablePersonas = {"demon", "god", "auditor"}
 local playerCommandTokens = {}  -- Rate limiting: {username = {tokens = 3, lastRefill = timestamp}}
+local lastWorstBroadcast = 0  -- Track last time we broadcasted top 5 worst players
 
 -- Peripherals
 local chatbox = nil
@@ -309,6 +310,42 @@ function roastPlayer(playerName, bypassGates)
     print("[ROAST] Roasted " .. playerName .. " (" .. tier .. " tier)")
 end
 
+-- Broadcast top 5 worst players to public chat
+local function broadcastWorstPlayers()
+    -- Build sorted list of players by lag score (descending)
+    local playerList = {}
+    for name, data in pairs(lagStats) do
+        table.insert(playerList, {name = name, coef = data.coef, samples = data.samples})
+    end
+
+    -- Sort by coefficient (highest first)
+    table.sort(playerList, function(a, b) return a.coef > b.coef end)
+
+    chatbox.sendMessage("\167c\167lTop 5 Laggiest Players:\167r", "LagBot")
+    for i = 1, math.min(5, #playerList) do
+        local player = playerList[i]
+        local tier = getTier(player.coef)
+
+        -- Color code score based on tier
+        local scoreColor = "\167c"  -- Default red for worst list
+        if tier == "spicy" then scoreColor = "\1676"
+        elseif tier == "medium" then scoreColor = "\167e"
+        elseif tier == "praise" then scoreColor = "\167a"
+        end
+
+        chatbox.sendMessage(string.format(
+            "%d. %s - %s%.2f\167r (%d samples)",
+            i,
+            player.name,
+            scoreColor,
+            player.coef,
+            player.samples
+        ), "LagBot")
+    end
+
+    print("[BROADCAST] Top 5 worst players sent to chat")
+end
+
 -- Parse and handle $lag commands (received as "lag ..." in chat)
 function parseCommand(username, message)
     local args = {}
@@ -533,6 +570,14 @@ local function main()
                     print(string.format("TPS updated: %.2f", currentTPS))
                 end
             end
+        end
+
+        -- Check if we should broadcast top 5 worst players (every 2 hours)
+        local currentTime = os.epoch("utc") / 1000
+        local broadcastInterval = 2 * 60 * 60  -- 2 hours in seconds
+        if currentTime - lastWorstBroadcast >= broadcastInterval then
+            broadcastWorstPlayers()
+            lastWorstBroadcast = currentTime
         end
     end
 end
