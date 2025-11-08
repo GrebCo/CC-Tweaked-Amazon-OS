@@ -445,13 +445,39 @@ function UI.addElement(sceneName, element)
     if not scene then error("UI.addElement: Scene '" .. sceneName .. "' not found") end
 
     table.insert(scene.elements, element)
-    
+
     -- Auto-refresh: If adding to the active scene, refresh the flattened elements list
-    if sceneName == UI.activeScene then
+    -- BUT: don't refresh if we're inside a layout builder (let layout handle refresh)
+    if sceneName == UI.activeScene and not UI._buildingLayout then
         UI.setScene(UI.activeScene)
     end
-    
+
     return element
+end
+
+--- Remove an element from a scene
+function UI.removeElement(element, sceneName)
+    if not sceneName then sceneName = UI.activeScene end
+    if not sceneName then error("UI.removeElement: No active scene or target scene") end
+
+    local scene = UI.contextTable.scenes[sceneName]
+    if not scene then error("UI.removeElement: Scene '" .. sceneName .. "' not found") end
+
+    -- Find and remove the element
+    for i, e in ipairs(scene.elements) do
+        if e == element then
+            table.remove(scene.elements, i)
+
+            -- Auto-refresh if removing from active scene
+            if sceneName == UI.activeScene then
+                UI.setScene(UI.activeScene)
+            end
+
+            return true
+        end
+    end
+
+    return false  -- Element not found
 end
 
 -------------------------------------------------
@@ -584,6 +610,321 @@ end
 
 function UI.handleScroll(dir, x, y)
     for _, e in ipairs(UI.contextTable.elements) do if e.onScroll then e:onScroll(dir, x, y) end end
+end
+
+-------------------------------------------------
+-- Layout System
+-------------------------------------------------
+
+-- Layout building flag (prevents auto-refresh during layout construction)
+UI._buildingLayout = false
+
+--- Vertical Stack Layout
+-- Stacks children vertically with optional spacing and alignment
+function UI.vstack(opts)
+    opts = opts or {}
+
+    local container = {
+        type = "vstack",
+        children = {},
+        spacing = opts.spacing or 0,
+        align = opts.align or "left",  -- "left", "center", "right"
+        padding = opts.padding or 0,
+        position = opts.position,
+        xOffset = opts.xOffset or 0,
+        yOffset = opts.yOffset or 0,
+        x = opts.x or 1,
+        y = opts.y or 1,
+        width = opts.width,
+        height = opts.height,
+
+        -- Methods
+        addChild = function(self, element)
+            table.insert(self.children, element)
+            self:layout()
+            UI.markDirty()
+            return element
+        end,
+
+        removeChild = function(self, element)
+            for i, child in ipairs(self.children) do
+                if child == element then
+                    table.remove(self.children, i)
+                    self:layout()
+                    UI.markDirty()
+                    return true
+                end
+            end
+            return false
+        end,
+
+        layout = function(self)
+            local currentY = self.y + self.padding
+            local maxWidth = 0
+
+            for _, child in ipairs(self.children) do
+                -- Apply positioning to get dimensions
+                UI.applyPositioning(child)
+                local childWidth = child.width or (child.text and #child.text) or 1
+                local childHeight = child.height or 1
+
+                -- Calculate X position based on alignment
+                if self.align == "center" and self.width then
+                    child.x = self.x + math.floor((self.width - childWidth) / 2)
+                elseif self.align == "right" and self.width then
+                    child.x = self.x + self.width - childWidth
+                else  -- left
+                    child.x = self.x + self.padding
+                end
+
+                child.y = currentY
+                currentY = currentY + childHeight + self.spacing
+
+                if childWidth > maxWidth then
+                    maxWidth = childWidth
+                end
+            end
+
+            -- Auto-calculate container dimensions if not specified
+            if not self.width then
+                self.width = maxWidth + (self.padding * 2)
+            end
+            if not self.height then
+                self.height = (currentY - self.y) + self.padding - self.spacing
+            end
+        end,
+
+        draw = function(self)
+            -- Layout is done, just draw children
+            for _, child in ipairs(self.children) do
+                if child.draw then
+                    child:draw()
+                end
+            end
+        end
+    }
+
+    -- If a builder function is provided, use it to add children
+    if opts.builder then
+        UI._buildingLayout = true
+        opts.builder(container)
+        UI._buildingLayout = false
+        container:layout()
+    end
+
+    return UI.addElement(opts.scene or UI.activeScene, container)
+end
+
+--- Horizontal Stack Layout
+-- Stacks children horizontally with optional spacing and alignment
+function UI.hstack(opts)
+    opts = opts or {}
+
+    local container = {
+        type = "hstack",
+        children = {},
+        spacing = opts.spacing or 1,
+        align = opts.align or "top",  -- "top", "center", "bottom"
+        padding = opts.padding or 0,
+        position = opts.position,
+        xOffset = opts.xOffset or 0,
+        yOffset = opts.yOffset or 0,
+        x = opts.x or 1,
+        y = opts.y or 1,
+        width = opts.width,
+        height = opts.height,
+
+        -- Methods
+        addChild = function(self, element)
+            table.insert(self.children, element)
+            self:layout()
+            UI.markDirty()
+            return element
+        end,
+
+        removeChild = function(self, element)
+            for i, child in ipairs(self.children) do
+                if child == element then
+                    table.remove(self.children, i)
+                    self:layout()
+                    UI.markDirty()
+                    return true
+                end
+            end
+            return false
+        end,
+
+        layout = function(self)
+            local currentX = self.x + self.padding
+            local maxHeight = 0
+
+            for _, child in ipairs(self.children) do
+                -- Apply positioning to get dimensions
+                UI.applyPositioning(child)
+                local childWidth = child.width or (child.text and #child.text) or 1
+                local childHeight = child.height or 1
+
+                -- Calculate Y position based on alignment
+                if self.align == "center" and self.height then
+                    child.y = self.y + math.floor((self.height - childHeight) / 2)
+                elseif self.align == "bottom" and self.height then
+                    child.y = self.y + self.height - childHeight
+                else  -- top
+                    child.y = self.y + self.padding
+                end
+
+                child.x = currentX
+                currentX = currentX + childWidth + self.spacing
+
+                if childHeight > maxHeight then
+                    maxHeight = childHeight
+                end
+            end
+
+            -- Auto-calculate container dimensions if not specified
+            if not self.width then
+                self.width = (currentX - self.x) + self.padding - self.spacing
+            end
+            if not self.height then
+                self.height = maxHeight + (self.padding * 2)
+            end
+        end,
+
+        draw = function(self)
+            -- Layout is done, just draw children
+            for _, child in ipairs(self.children) do
+                if child.draw then
+                    child:draw()
+                end
+            end
+        end
+    }
+
+    -- If a builder function is provided, use it to add children
+    if opts.builder then
+        UI._buildingLayout = true
+        opts.builder(container)
+        UI._buildingLayout = false
+        container:layout()
+    end
+
+    return UI.addElement(opts.scene or UI.activeScene, container)
+end
+
+--- Grid Layout
+-- Arranges children in a grid with specified columns
+function UI.grid(opts)
+    opts = opts or {}
+
+    local container = {
+        type = "grid",
+        children = {},
+        columns = opts.columns or 2,
+        spacing = opts.spacing or 1,
+        rowSpacing = opts.rowSpacing or opts.spacing or 1,
+        columnSpacing = opts.columnSpacing or opts.spacing or 1,
+        padding = opts.padding or 0,
+        position = opts.position,
+        xOffset = opts.xOffset or 0,
+        yOffset = opts.yOffset or 0,
+        x = opts.x or 1,
+        y = opts.y or 1,
+        width = opts.width,
+        height = opts.height,
+
+        -- Methods
+        addChild = function(self, element)
+            table.insert(self.children, element)
+            self:layout()
+            UI.markDirty()
+            return element
+        end,
+
+        removeChild = function(self, element)
+            for i, child in ipairs(self.children) do
+                if child == element then
+                    table.remove(self.children, i)
+                    self:layout()
+                    UI.markDirty()
+                    return true
+                end
+            end
+            return false
+        end,
+
+        layout = function(self)
+            local currentX = self.x + self.padding
+            local currentY = self.y + self.padding
+            local column = 0
+            local rowMaxHeight = 0
+            local columnWidths = {}
+
+            -- First pass: calculate column widths
+            for i, child in ipairs(self.children) do
+                UI.applyPositioning(child)
+                local childWidth = child.width or (child.text and #child.text) or 1
+                local col = (i - 1) % self.columns + 1
+                columnWidths[col] = math.max(columnWidths[col] or 0, childWidth)
+            end
+
+            -- Second pass: position children
+            for i, child in ipairs(self.children) do
+                UI.applyPositioning(child)
+                local childWidth = child.width or (child.text and #child.text) or 1
+                local childHeight = child.height or 1
+
+                child.x = currentX
+                child.y = currentY
+
+                column = column + 1
+                local col = (i - 1) % self.columns + 1
+                currentX = currentX + columnWidths[col] + self.columnSpacing
+
+                if childHeight > rowMaxHeight then
+                    rowMaxHeight = childHeight
+                end
+
+                -- Move to next row
+                if column >= self.columns then
+                    column = 0
+                    currentX = self.x + self.padding
+                    currentY = currentY + rowMaxHeight + self.rowSpacing
+                    rowMaxHeight = 0
+                end
+            end
+
+            -- Auto-calculate container dimensions if not specified
+            if not self.width then
+                local totalWidth = self.padding
+                for _, w in ipairs(columnWidths) do
+                    totalWidth = totalWidth + w + self.columnSpacing
+                end
+                self.width = totalWidth - self.columnSpacing + self.padding
+            end
+            if not self.height then
+                self.height = (currentY - self.y) + rowMaxHeight + self.padding
+            end
+        end,
+
+        draw = function(self)
+            -- Layout is done, just draw children
+            for _, child in ipairs(self.children) do
+                if child.draw then
+                    child:draw()
+                end
+            end
+        end
+    }
+
+    -- If a builder function is provided, use it to add children
+    if opts.builder then
+        UI._buildingLayout = true
+        opts.builder(container)
+        UI._buildingLayout = false
+        container:layout()
+    end
+
+    return UI.addElement(opts.scene or UI.activeScene, container)
 end
 
 -------------------------------------------------
@@ -766,18 +1107,20 @@ end
 
 function UI.textfield(opts)
     opts = opts or {}
-    
+
     -- Resolve theme colors
     local resolvedColors = UI.resolveTheme(opts, "textfield", {
         fg = colors.white,
         bg = colors.gray,
-        bgActive = colors.lightGray
+        bgActive = colors.lightGray,
+        placeholderColor = colors.lightGray
     })
-    
+
     local e = {
         type = "textfield",
         text = opts.text or "",
         width = opts.width or 10,
+        height = opts.height or 1,
         fg = resolvedColors.fg,
         bg = resolvedColors.bg,
         bgActive = resolvedColors.bgActive,
@@ -788,22 +1131,41 @@ function UI.textfield(opts)
         y = opts.y or 1,
         _visible = opts.visible ~= nil and opts.visible or true,
 
+        -- Features
+        placeholder = opts.placeholder or "",
+        placeholderColor = resolvedColors.placeholderColor,
+        onChange = opts.onChange or nil,
+
         -- Cursor position and animation
-        cursorPos = #(opts.text or ""),  -- Cursor position in text (0 = before first char)
+        cursorPos = #(opts.text or ""),
         cursorVisible = true,
         cursorTimer = 0,
         cursorBlinkPeriod = 0.5,
+        viewOffset = 0,
+
+        -- Calculate view offset to ensure cursor is visible
+        updateViewOffset = function(self)
+            local visibleWidth = self.width - 1
+            if self.cursorPos < self.viewOffset then
+                self.viewOffset = self.cursorPos
+            end
+            if self.cursorPos >= self.viewOffset + visibleWidth then
+                self.viewOffset = self.cursorPos - visibleWidth + 1
+            end
+            self.viewOffset = math.max(0, self.viewOffset)
+        end,
 
         -- Event handlers
         onChar = function(self, ch)
             debugLog("TEXTFIELD:onChar() called with ch:", ch, "cursorPos:", self.cursorPos)
-            -- Insert character at cursor position
             local before = self.text:sub(1, self.cursorPos)
             local after = self.text:sub(self.cursorPos + 1)
             self.text = before .. ch .. after
             self.cursorPos = self.cursorPos + 1
-            self.cursorVisible = true  -- Reset cursor visibility on input
+            self.cursorVisible = true
             self.cursorTimer = 0
+            self:updateViewOffset()
+            if self.onChange then self.onChange(self.text) end
             UI.markDirty()
         end,
 
@@ -813,52 +1175,53 @@ function UI.textfield(opts)
 
             if name == "backspace" then
                 if self.cursorPos > 0 then
-                    -- Delete character before cursor
                     local before = self.text:sub(1, self.cursorPos - 1)
                     local after = self.text:sub(self.cursorPos + 1)
                     self.text = before .. after
                     self.cursorPos = self.cursorPos - 1
                     self.cursorVisible = true
                     self.cursorTimer = 0
+                    self:updateViewOffset()
+                    if self.onChange then self.onChange(self.text) end
                     UI.markDirty()
                 end
             elseif name == "delete" then
                 if self.cursorPos < #self.text then
-                    -- Delete character after cursor
                     local before = self.text:sub(1, self.cursorPos)
                     local after = self.text:sub(self.cursorPos + 2)
                     self.text = before .. after
                     self.cursorVisible = true
                     self.cursorTimer = 0
+                    if self.onChange then self.onChange(self.text) end
                     UI.markDirty()
                 end
             elseif name == "left" then
-                -- Move cursor left
                 if self.cursorPos > 0 then
                     self.cursorPos = self.cursorPos - 1
                     self.cursorVisible = true
                     self.cursorTimer = 0
+                    self:updateViewOffset()
                     UI.markDirty()
                 end
             elseif name == "right" then
-                -- Move cursor right
                 if self.cursorPos < #self.text then
                     self.cursorPos = self.cursorPos + 1
                     self.cursorVisible = true
                     self.cursorTimer = 0
+                    self:updateViewOffset()
                     UI.markDirty()
                 end
             elseif name == "home" then
-                -- Move to start
                 self.cursorPos = 0
                 self.cursorVisible = true
                 self.cursorTimer = 0
+                self:updateViewOffset()
                 UI.markDirty()
             elseif name == "end" then
-                -- Move to end
                 self.cursorPos = #self.text
                 self.cursorVisible = true
                 self.cursorTimer = 0
+                self:updateViewOffset()
                 UI.markDirty()
             end
         end,
@@ -866,25 +1229,23 @@ function UI.textfield(opts)
         onClick = function(self)
             debugLog("TEXTFIELD:onClick() setting focus")
             UI.focused = self
-            -- Reset cursor to end when clicking
             self.cursorPos = #self.text
             self.cursorVisible = true
             self.cursorTimer = 0
+            self:updateViewOffset()
             UI.markDirty()
-            return true  -- Mark as handled
+            return true
         end,
 
-        -- Animation update for cursor blink
         update = function(self, dt)
             if UI.focused ~= self then return false end
-
             self.cursorTimer = self.cursorTimer + dt
             if self.cursorTimer >= self.cursorBlinkPeriod then
                 self.cursorVisible = not self.cursorVisible
                 self.cursorTimer = 0
-                return true  -- Cursor blinked
+                return true
             end
-            return false  -- Still waiting for blink
+            return false
         end,
 
         draw = function(self)
@@ -892,30 +1253,306 @@ function UI.textfield(opts)
 
             local bg = (UI.focused == self) and self.bgActive or self.bg
             UI.term.setBackgroundColor(bg)
-            UI.term.setTextColor(self.fg)
             UI.term.setCursorPos(self.x, self.y)
 
-            -- Build display text with cursor at position
+            -- Determine what to display
             local displayText
-            if UI.focused == self and self.cursorVisible then
-                -- Insert cursor at cursorPos
-                local before = self.text:sub(1, self.cursorPos)
-                local after = self.text:sub(self.cursorPos + 1)
-                displayText = before .. "_" .. after
+            local textColor = self.fg
+
+            if #self.text == 0 and self.placeholder ~= "" and UI.focused ~= self then
+                displayText = self.placeholder
+                textColor = self.placeholderColor
             else
                 displayText = self.text
+                if UI.focused == self and self.cursorVisible then
+                    local before = displayText:sub(1, self.cursorPos)
+                    local after = displayText:sub(self.cursorPos + 1)
+                    displayText = before .. "_" .. after
+                end
             end
 
-            -- Pad or truncate to width
-            if #displayText < self.width then
-                displayText = displayText .. string.rep(" ", self.width - #displayText)
+            -- Apply view offset for scrolling
+            local visibleText
+            if #displayText > self.width then
+                visibleText = displayText:sub(self.viewOffset + 1, self.viewOffset + self.width)
+                if self.viewOffset > 0 then
+                    visibleText = "<" .. visibleText:sub(2)
+                end
+                if #displayText > self.viewOffset + self.width then
+                    visibleText = visibleText:sub(1, -2) .. ">"
+                end
             else
-                displayText = displayText:sub(1, self.width)
+                visibleText = displayText
             end
 
-            UI.term.write(displayText)
+            if #visibleText < self.width then
+                visibleText = visibleText .. string.rep(" ", self.width - #visibleText)
+            end
+
+            UI.term.setTextColor(textColor)
+            UI.term.write(visibleText)
         end
     }
+    return UI.addElement(defaultScene(opts), e)
+end
+
+function UI.textarea(opts)
+    opts = opts or {}
+
+    -- Resolve theme colors
+    local resolvedColors = UI.resolveTheme(opts, "textarea", {
+        fg = colors.white,
+        bg = colors.gray,
+        bgActive = colors.lightGray,
+        lineNumberColor = colors.lightGray
+    })
+
+    local e = {
+        type = "textarea",
+        lines = opts.text and {} or {""}, -- Will split text below if provided
+        width = opts.width or 30,
+        height = opts.height or 10,
+        fg = resolvedColors.fg,
+        bg = resolvedColors.bg,
+        bgActive = resolvedColors.bgActive,
+        lineNumberColor = resolvedColors.lineNumberColor,
+        position = opts.position,
+        xOffset = opts.xOffset,
+        yOffset = opts.yOffset,
+        x = opts.x or 1,
+        y = opts.y or 1,
+
+        -- Features
+        lineNumbers = opts.lineNumbers or false,
+        wrap = opts.wrap or false,
+        onChange = opts.onChange,
+
+        -- State
+        cursorRow = 1,
+        cursorCol = 0,
+        scrollOffset = 0,
+
+        -- Initialize from text
+        setText = function(self, text)
+            if text then
+                self.lines = {}
+                for line in (text .. "\n"):gmatch("([^\n]*)\n") do
+                    table.insert(self.lines, line)
+                end
+                if #self.lines == 0 then
+                    self.lines = {""}
+                end
+            end
+            self.cursorRow = 1
+            self.cursorCol = 0
+            self.scrollOffset = 0
+        end,
+
+        -- Get all text as single string
+        getText = function(self)
+            return table.concat(self.lines, "\n")
+        end,
+
+        -- Ensure cursor is on screen
+        updateScroll = function(self)
+            if self.cursorRow < self.scrollOffset + 1 then
+                self.scrollOffset = self.cursorRow - 1
+            end
+            if self.cursorRow > self.scrollOffset + self.height then
+                self.scrollOffset = self.cursorRow - self.height
+            end
+            self.scrollOffset = math.max(0, self.scrollOffset)
+        end,
+
+        onClick = function(self, mx, my)
+            UI.focused = self
+            local lineNumWidth = self.lineNumbers and 4 or 0
+            local relY = my - self.y
+            local relX = mx - self.x - lineNumWidth
+
+            self.cursorRow = math.min(#self.lines, math.max(1, relY + self.scrollOffset + 1))
+            self.cursorCol = math.max(0, math.min(#self.lines[self.cursorRow], relX))
+            self:updateScroll()
+            UI.markDirty()
+            return true
+        end,
+
+        onChar = function(self, ch)
+            local line = self.lines[self.cursorRow]
+            local before = line:sub(1, self.cursorCol)
+            local after = line:sub(self.cursorCol + 1)
+            self.lines[self.cursorRow] = before .. ch .. after
+            self.cursorCol = self.cursorCol + 1
+            if self.onChange then self.onChange(self:getText()) end
+            UI.markDirty()
+        end,
+
+        onKey = function(self, key)
+            local name = keys.getName(key)
+            local line = self.lines[self.cursorRow]
+
+            if name == "backspace" then
+                if self.cursorCol > 0 then
+                    local before = line:sub(1, self.cursorCol - 1)
+                    local after = line:sub(self.cursorCol + 1)
+                    self.lines[self.cursorRow] = before .. after
+                    self.cursorCol = self.cursorCol - 1
+                    if self.onChange then self.onChange(self:getText()) end
+                    UI.markDirty()
+                elseif self.cursorRow > 1 then
+                    -- Join with previous line
+                    local prevLine = self.lines[self.cursorRow - 1]
+                    self.cursorCol = #prevLine
+                    self.lines[self.cursorRow - 1] = prevLine .. line
+                    table.remove(self.lines, self.cursorRow)
+                    self.cursorRow = self.cursorRow - 1
+                    self:updateScroll()
+                    if self.onChange then self.onChange(self:getText()) end
+                    UI.markDirty()
+                end
+            elseif name == "delete" then
+                if self.cursorCol < #line then
+                    local before = line:sub(1, self.cursorCol)
+                    local after = line:sub(self.cursorCol + 2)
+                    self.lines[self.cursorRow] = before .. after
+                    if self.onChange then self.onChange(self:getText()) end
+                    UI.markDirty()
+                elseif self.cursorRow < #self.lines then
+                    -- Join with next line
+                    self.lines[self.cursorRow] = line .. self.lines[self.cursorRow + 1]
+                    table.remove(self.lines, self.cursorRow + 1)
+                    if self.onChange then self.onChange(self:getText()) end
+                    UI.markDirty()
+                end
+            elseif name == "enter" then
+                local before = line:sub(1, self.cursorCol)
+                local after = line:sub(self.cursorCol + 1)
+                self.lines[self.cursorRow] = before
+                table.insert(self.lines, self.cursorRow + 1, after)
+                self.cursorRow = self.cursorRow + 1
+                self.cursorCol = 0
+                self:updateScroll()
+                if self.onChange then self.onChange(self:getText()) end
+                UI.markDirty()
+            elseif name == "left" then
+                if self.cursorCol > 0 then
+                    self.cursorCol = self.cursorCol - 1
+                elseif self.cursorRow > 1 then
+                    self.cursorRow = self.cursorRow - 1
+                    self.cursorCol = #self.lines[self.cursorRow]
+                    self:updateScroll()
+                end
+                UI.markDirty()
+            elseif name == "right" then
+                if self.cursorCol < #line then
+                    self.cursorCol = self.cursorCol + 1
+                elseif self.cursorRow < #self.lines then
+                    self.cursorRow = self.cursorRow + 1
+                    self.cursorCol = 0
+                    self:updateScroll()
+                end
+                UI.markDirty()
+            elseif name == "up" then
+                if self.cursorRow > 1 then
+                    self.cursorRow = self.cursorRow - 1
+                    self.cursorCol = math.min(self.cursorCol, #self.lines[self.cursorRow])
+                    self:updateScroll()
+                    UI.markDirty()
+                end
+            elseif name == "down" then
+                if self.cursorRow < #self.lines then
+                    self.cursorRow = self.cursorRow + 1
+                    self.cursorCol = math.min(self.cursorCol, #self.lines[self.cursorRow])
+                    self:updateScroll()
+                    UI.markDirty()
+                end
+            elseif name == "home" then
+                self.cursorCol = 0
+                UI.markDirty()
+            elseif name == "end" then
+                self.cursorCol = #line
+                UI.markDirty()
+            elseif name == "pageUp" then
+                self.cursorRow = math.max(1, self.cursorRow - self.height)
+                self.cursorCol = math.min(self.cursorCol, #self.lines[self.cursorRow])
+                self:updateScroll()
+                UI.markDirty()
+            elseif name == "pageDown" then
+                self.cursorRow = math.min(#self.lines, self.cursorRow + self.height)
+                self.cursorCol = math.min(self.cursorCol, #self.lines[self.cursorRow])
+                self:updateScroll()
+                UI.markDirty()
+            end
+        end,
+
+        onScroll = function(self, direction, mx, my)
+            self.scrollOffset = math.max(0, math.min(#self.lines - self.height, self.scrollOffset + direction))
+            UI.markDirty()
+            return true
+        end,
+
+        draw = function(self)
+            local isFocused = (UI.focused == self)
+            local bg = isFocused and self.bgActive or self.bg
+            local lineNumWidth = self.lineNumbers and 4 or 0
+
+            -- Draw each visible line
+            for i = 1, self.height do
+                local lineIdx = i + self.scrollOffset
+                UI.term.setCursorPos(self.x, self.y + i - 1)
+                UI.term.setBackgroundColor(bg)
+
+                -- Draw line numbers
+                if self.lineNumbers then
+                    if lineIdx <= #self.lines then
+                        UI.term.setTextColor(self.lineNumberColor)
+                        local numStr = tostring(lineIdx)
+                        UI.term.write(string.rep(" ", 3 - #numStr) .. numStr .. " ")
+                    else
+                        UI.term.write("    ")
+                    end
+                end
+
+                -- Draw line text
+                if lineIdx <= #self.lines then
+                    local line = self.lines[lineIdx]
+                    local displayWidth = self.width - lineNumWidth
+                    local displayText = line:sub(1, displayWidth)
+                    displayText = displayText .. string.rep(" ", displayWidth - #displayText)
+                    UI.term.setTextColor(self.fg)
+                    UI.term.write(displayText)
+                else
+                    -- Empty line below content
+                    UI.term.write(string.rep(" ", self.width - lineNumWidth))
+                end
+            end
+
+            -- Set cursor position
+            if isFocused then
+                local screenRow = self.cursorRow - self.scrollOffset
+                if screenRow >= 1 and screenRow <= self.height then
+                    local cursorX = self.x + lineNumWidth + self.cursorCol
+                    local cursorY = self.y + screenRow - 1
+                    if cursorX < self.x + self.width then
+                        UI.term.setCursorPos(cursorX, cursorY)
+                        UI.term.setCursorBlink(true)
+                    else
+                        UI.term.setCursorBlink(false)
+                    end
+                else
+                    UI.term.setCursorBlink(false)
+                end
+            else
+                UI.term.setCursorBlink(false)
+            end
+        end
+    }
+
+    -- Initialize text if provided
+    if opts.text then
+        e:setText(opts.text)
+    end
+
     return UI.addElement(defaultScene(opts), e)
 end
 
