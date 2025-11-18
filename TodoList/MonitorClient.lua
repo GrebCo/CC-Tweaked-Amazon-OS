@@ -2,8 +2,10 @@ local UI = dofile("UI.lua")
 local client = dofile("EETodoCore.lua")
 local registerThemes = dofile("themes.lua")
 
+local MONITOR_NAME = ""
+
 -- Find and wrap to monitor
-local monitor = peripheral.find("monitor")
+local monitor = peripheral.wrap("MONITOR_NAME")
 if not monitor then
     error("No monitor found! Please attach a monitor to this computer.")
 end
