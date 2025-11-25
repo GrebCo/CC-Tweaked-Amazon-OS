@@ -21,32 +21,26 @@ end
 -------------------------------------------------
 function dataDisplay.progressBar(opts)
     opts = opts or {}
-    
-    -- Resolve theme colors
-    local themeColors = UI.resolveTheme(opts, "progressBar", {
-        fg = colors.white,
-        bg = colors.gray,
-        fillColor = colors.green
-    })
-    
+
+    -- Resolve colors from theme roles with manual overrides
+    local fgColor = opts.fg or UI.resolveColor("text", colors.white)
+    local bgColor = opts.bg or UI.resolveColor("surface", colors.gray)
+    local fillColor = opts.fillColor or UI.resolveColor("success", colors.green)
+
     local e = {
         type = "progressBar",
+        opts = opts,
         value = opts.value or 0,
         maxValue = opts.maxValue or 100,
         width = opts.width or 20,
         height = opts.height or 1,
-        
+
         -- Use resolved theme colors
-        fg = themeColors.fg,
-        bg = themeColors.bg,
-        fillColor = themeColors.fillColor,
+        fg = fgColor,
+        bg = bgColor,
+        fillColor = fillColor,
         
         showPercent = opts.showPercent ~= false,
-        position = opts.position,
-        xOffset = opts.xOffset,
-        yOffset = opts.yOffset,
-        x = opts.x or 1,
-        y = opts.y or 1,
 
         setValue = function(self, val)
             self.value = math.max(0, math.min(val, self.maxValue))
@@ -77,6 +71,9 @@ function dataDisplay.progressBar(opts)
             end
         end
     }
+    -- Initialize bounds (x, y, width, height, visible, focusable)
+    UI.initBounds(e, opts)
+
     return UI.addElement(opts.scene or UI.activeScene, e)
 end
 
@@ -85,36 +82,30 @@ end
 -------------------------------------------------
 function dataDisplay.gauge(opts)
     opts = opts or {}
-    
-    -- Resolve theme colors
-    local themeColors = UI.resolveTheme(opts, "gauge", {
-        fg = colors.white,
-        bg = colors.black,
-        lowColor = colors.red,
-        medColor = colors.yellow,
-        highColor = colors.green
-    })
-    
+
+    -- Resolve colors from theme roles with manual overrides
+    local fgColor = opts.fg or UI.resolveColor("text", colors.white)
+    local bgColor = opts.bg or UI.resolveColor("background", colors.black)
+    local lowColor = opts.lowColor or UI.resolveColor("error", colors.red)
+    local medColor = opts.medColor or UI.resolveColor("warning", colors.yellow)
+    local highColor = opts.highColor or UI.resolveColor("success", colors.green)
+
     local e = {
         type = "gauge",
+        opts = opts,
         value = opts.value or 0,
         maxValue = opts.maxValue or 100,
         width = opts.width or 20,
         height = opts.height or 3,
         label = opts.label or "",
-        
+
         -- Use resolved theme colors
-        fg = themeColors.fg,
-        bg = themeColors.bg,
-        lowColor = themeColors.lowColor,
-        medColor = themeColors.medColor,
-        highColor = themeColors.highColor,
+        fg = fgColor,
+        bg = bgColor,
+        lowColor = lowColor,
+        medColor = medColor,
+        highColor = highColor,
         
-        position = opts.position,
-        xOffset = opts.xOffset,
-        yOffset = opts.yOffset,
-        x = opts.x or 1,
-        y = opts.y or 1,
 
         setValue = function(self, val)
             self.value = math.max(0, math.min(val, self.maxValue))
@@ -158,6 +149,9 @@ function dataDisplay.gauge(opts)
             UI.term.write(valueText)
         end
     }
+    -- Initialize bounds (x, y, width, height, visible, focusable)
+    UI.initBounds(e, opts)
+
     return UI.addElement(opts.scene or UI.activeScene, e)
 end
 
@@ -166,32 +160,26 @@ end
 -------------------------------------------------
 function dataDisplay.statPanel(opts)
     opts = opts or {}
-    
-    -- Resolve theme colors
-    local themeColors = UI.resolveTheme(opts, "statPanel", {
-        fg = colors.white,
-        bg = colors.black,
-        labelColor = colors.cyan,
-        valueColor = colors.white
-    })
-    
+
+    -- Resolve colors from theme roles with manual overrides
+    local fgColor = opts.fg or UI.resolveColor("text", colors.white)
+    local bgColor = opts.bg or UI.resolveColor("background", colors.black)
+    local labelColor = opts.labelColor or UI.resolveColor("info", colors.cyan)
+    local valueColor = opts.valueColor or UI.resolveColor("text", colors.white)
+
     local e = {
         type = "statPanel",
+        opts = opts,
         stats = opts.stats or {},
         width = opts.width or 20,
         height = opts.height or 5,
-        
+
         -- Use resolved theme colors
-        fg = themeColors.fg,
-        bg = themeColors.bg,
-        labelColor = themeColors.labelColor or opts.labelColor or colors.cyan,
-        valueColor = themeColors.valueColor or opts.valueColor or colors.white,
+        fg = fgColor,
+        bg = bgColor,
+        labelColor = labelColor,
+        valueColor = valueColor,
         
-        position = opts.position,
-        xOffset = opts.xOffset,
-        yOffset = opts.yOffset,
-        x = opts.x or 1,
-        y = opts.y or 1,
 
         updateStat = function(self, label, value)
             for _, stat in ipairs(self.stats) do
@@ -233,6 +221,9 @@ function dataDisplay.statPanel(opts)
             end
         end
     }
+    -- Initialize bounds (x, y, width, height, visible, focusable)
+    UI.initBounds(e, opts)
+
     return UI.addElement(opts.scene or UI.activeScene, e)
 end
 
@@ -241,32 +232,26 @@ end
 -------------------------------------------------
 function dataDisplay.scrollableList(opts)
     opts = opts or {}
-    
-    -- Resolve theme colors
-    local themeColors = UI.resolveTheme(opts, "scrollableList", {
-        fg = colors.white,
-        bg = colors.black,
-        selectedBg = colors.blue
-    })
-    
+
+    -- Resolve colors from theme roles with manual overrides
+    local fgColor = opts.fg or UI.resolveColor("text", colors.white)
+    local bgColor = opts.bg or UI.resolveColor("background", colors.black)
+    local selectedBgColor = opts.selectedBg or UI.resolveColor("selection", colors.blue)
+
     local e = {
         type = "scrollableList",
+        opts = opts,
         items = opts.items or {},
         width = opts.width or 20,
         height = opts.height or 5,
-        
+
         -- Use resolved theme colors
-        fg = themeColors.fg,
-        bg = themeColors.bg,
-        selectedBg = themeColors.selectedBg or opts.selectedBg or colors.blue,
+        fg = fgColor,
+        bg = bgColor,
+        selectedBg = selectedBgColor,
         
         selectedIndex = 1,
         scrollOffset = 0,
-        position = opts.position,
-        xOffset = opts.xOffset,
-        yOffset = opts.yOffset,
-        x = opts.x or 1,
-        y = opts.y or 1,
         onSelect = opts.onSelect,
 
         setItems = function(self, newItems)
@@ -329,6 +314,9 @@ function dataDisplay.scrollableList(opts)
             end
         end
     }
+    -- Initialize bounds (x, y, width, height, visible, focusable)
+    UI.initBounds(e, opts)
+
     return UI.addElement(opts.scene or UI.activeScene, e)
 end
 
@@ -337,37 +325,31 @@ end
 -------------------------------------------------
 function dataDisplay.table(opts)
     opts = opts or {}
-    
-    -- Resolve theme colors
-    local themeColors = UI.resolveTheme(opts, "table", {
-        fg = colors.white,
-        bg = colors.black,
-        headerBg = colors.gray,
-        headerFg = colors.white,
-        border = colors.gray
-    })
-    
+
+    -- Resolve colors from theme roles with manual overrides
+    local fgColor = opts.fg or UI.resolveColor("text", colors.white)
+    local bgColor = opts.bg or UI.resolveColor("background", colors.black)
+    local headerBgColor = opts.headerBg or UI.resolveColor("surface", colors.gray)
+    local headerFgColor = opts.headerFg or UI.resolveColor("text", colors.white)
+    local borderColor = opts.border or UI.resolveColor("border", colors.gray)
+
     local e = {
         type = "table",
+        opts = opts,
         headers = opts.headers or {},
         rows = opts.rows or {},
         columnWidths = opts.columnWidths,
         width = opts.width or 40,
         height = opts.height or 10,
-        
+
         -- Use resolved theme colors
-        fg = themeColors.fg,
-        bg = themeColors.bg,
-        headerBg = themeColors.headerBg or opts.headerBg or colors.gray,
-        headerFg = themeColors.headerFg or opts.headerFg or colors.white,
-        border = themeColors.border or opts.border or colors.gray,
+        fg = fgColor,
+        bg = bgColor,
+        headerBg = headerBgColor,
+        headerFg = headerFgColor,
+        border = borderColor,
         
         scrollOffset = 0,
-        position = opts.position,
-        xOffset = opts.xOffset,
-        yOffset = opts.yOffset,
-        x = opts.x or 1,
-        y = opts.y or 1,
 
         setRows = function(self, newRows)
             self.rows = newRows
@@ -448,6 +430,9 @@ function dataDisplay.table(opts)
             end
         end
     }
+    -- Initialize bounds (x, y, width, height, visible, focusable)
+    UI.initBounds(e, opts)
+
     return UI.addElement(opts.scene or UI.activeScene, e)
 end
 
@@ -456,31 +441,25 @@ end
 -------------------------------------------------
 function dataDisplay.barChart(opts)
     opts = opts or {}
-    
-    -- Resolve theme colors
-    local themeColors = UI.resolveTheme(opts, "barChart", {
-        fg = colors.white,
-        bg = colors.black,
-        barColor = colors.lime
-    })
-    
+
+    -- Resolve colors from theme roles with manual overrides
+    local fgColor = opts.fg or UI.resolveColor("text", colors.white)
+    local bgColor = opts.bg or UI.resolveColor("background", colors.black)
+    local barColor = opts.barColor or UI.resolveColor("success", colors.lime)
+
     local e = {
         type = "barChart",
+        opts = opts,
         data = opts.data or {},
         width = opts.width or 30,
         height = opts.height or 5,
         maxValue = opts.maxValue,
-        
+
         -- Use resolved theme colors
-        fg = themeColors.fg,
-        bg = themeColors.bg,
-        barColor = themeColors.barColor or opts.barColor or colors.lime,
+        fg = fgColor,
+        bg = bgColor,
+        barColor = barColor,
         
-        position = opts.position,
-        xOffset = opts.xOffset,
-        yOffset = opts.yOffset,
-        x = opts.x or 1,
-        y = opts.y or 1,
 
         setData = function(self, newData)
             self.data = newData
@@ -537,6 +516,9 @@ function dataDisplay.barChart(opts)
             end
         end
     }
+    -- Initialize bounds (x, y, width, height, visible, focusable)
+    UI.initBounds(e, opts)
+
     return UI.addElement(opts.scene or UI.activeScene, e)
 end
 
@@ -545,20 +527,19 @@ end
 -------------------------------------------------
 function dataDisplay.rangeBar(opts)
     opts = opts or {}
-    
-    -- Resolve theme colors
-    local themeColors = UI.resolveTheme(opts, "rangeBar", {
-        fg = colors.white,
-        bg = colors.black,
-        emptyBg = colors.gray,
-        borderBg = colors.lightGray,
-        lowColor = colors.red,
-        medColor = colors.yellow,
-        highColor = colors.green
-    })
-    
+
+    -- Resolve colors from theme roles with manual overrides
+    local fgColor = opts.fg or UI.resolveColor("text", colors.white)
+    local bgColor = opts.bg or UI.resolveColor("background", colors.black)
+    local emptyBgColor = opts.emptyBg or UI.resolveColor("surface", colors.gray)
+    local borderBgColor = opts.borderBg or UI.resolveColor("border", colors.lightGray)
+    local lowColor = opts.lowColor or UI.resolveColor("error", colors.red)
+    local medColor = opts.medColor or UI.resolveColor("warning", colors.yellow)
+    local highColor = opts.highColor or UI.resolveColor("success", colors.green)
+
     local e = {
         type = "rangeBar",
+        opts = opts,
         value = opts.value or 0,
         minValue = opts.minValue or 0,
         maxValue = opts.maxValue or 100,
@@ -568,15 +549,15 @@ function dataDisplay.rangeBar(opts)
         label = opts.label or "",
         showValue = opts.showValue ~= false,
         valueFormat = opts.valueFormat or "%.0f",
-        
+
         -- Use resolved theme colors
-        fg = themeColors.fg,
-        bg = themeColors.bg,
-        emptyBg = themeColors.emptyBg,
-        borderBg = themeColors.borderBg,
-        lowColor = themeColors.lowColor,
-        medColor = themeColors.medColor,
-        highColor = themeColors.highColor,
+        fg = fgColor,
+        bg = bgColor,
+        emptyBg = emptyBgColor,
+        borderBg = borderBgColor,
+        lowColor = lowColor,
+        medColor = medColor,
+        highColor = highColor,
         
         -- Thresholds (percentage based, 0-100)
         lowThreshold = opts.lowThreshold or 33,
@@ -591,11 +572,6 @@ function dataDisplay.rangeBar(opts)
         setpointColor = opts.setpointColor or colors.white,
         
         fillChar = opts.fillChar or " ",
-        position = opts.position,
-        xOffset = opts.xOffset,
-        yOffset = opts.yOffset,
-        x = opts.x or 1,
-        y = opts.y or 1,
 
         setValue = function(self, val)
             self.value = math.max(self.minValue, math.min(val, self.maxValue))
@@ -611,10 +587,10 @@ function dataDisplay.rangeBar(opts)
             if self.zones then
                 for _, zone in ipairs(self.zones) do
                     if val >= zone.min and val <= zone.max then
-                        return zone.color
+                        return zone.color or self.fg  -- Handle nil color
                     end
                 end
-                return self.fg
+                return self.emptyBg  -- Better default for "no zone"
             end
 
             -- Otherwise use simple 3-zone thresholds
@@ -803,6 +779,9 @@ function dataDisplay.rangeBar(opts)
             end
         end
     }
+
+    -- Initialize bounds (x, y, width, height, visible, focusable)
+    UI.initBounds(e, opts)
 
     return UI.addElement(opts.scene or UI.activeScene, e)
 end

@@ -11,7 +11,7 @@
   - TextArea (multi-line text editor with line numbers)
 ==================================================================== ]]--
 
-local dataDisplay = {}
+local inputs = {}
 
 -- Store reference to UI library (will be set on init)
 local UI = nil
@@ -19,24 +19,22 @@ local UI = nil
 -------------------------------------------------
 -- Initialize with UI reference
 -------------------------------------------------
-function dataDisplay.init(uiLib)
+function inputs.init(uiLib)
     UI = uiLib
 end
 
 -------------------------------------------------
 -- SLIDER ELEMENT
 -------------------------------------------------
-function dataDisplay.slider(opts)
+function inputs.slider(opts)
     opts = opts or {}
 
-    -- Resolve theme colors
-    local themeColors = UI.resolveTheme(opts, "slider", {
-        fg = colors.white,
-        bg = colors.gray,
-        trackColor = colors.gray,
-        fillColor = colors.blue,
-        thumbColor = colors.white
-    })
+    -- Resolve colors from theme roles with manual overrides
+    local fgColor = opts.fg or UI.resolveColor("text", colors.white)
+    local bgColor = opts.bg or UI.resolveColor("surface", colors.gray)
+    local trackColor = opts.trackColor or UI.resolveColor("surface", colors.gray)
+    local fillColor = opts.fillColor or UI.resolveColor("interactive", colors.blue)
+    local thumbColor = opts.thumbColor or UI.resolveColor("text", colors.white)
 
     local orientation = opts.orientation or "horizontal"
     local width = opts.width or (orientation == "horizontal" and 20 or 3)
@@ -44,6 +42,7 @@ function dataDisplay.slider(opts)
 
     local e = {
         type = "slider",
+        opts = opts,
         value = opts.value or 0,
         min = opts.min or 0,
         max = opts.max or 100,
@@ -56,17 +55,11 @@ function dataDisplay.slider(opts)
         label = opts.label or "",
 
         -- Theme colors
-        fg = themeColors.fg,
-        bg = themeColors.bg,
-        trackColor = themeColors.trackColor,
-        fillColor = themeColors.fillColor,
-        thumbColor = themeColors.thumbColor,
-
-        position = opts.position,
-        xOffset = opts.xOffset,
-        yOffset = opts.yOffset,
-        x = opts.x or 1,
-        y = opts.y or 1,
+        fg = fgColor,
+        bg = bgColor,
+        trackColor = trackColor,
+        fillColor = fillColor,
+        thumbColor = thumbColor,
 
         dragging = false,
 
@@ -85,10 +78,18 @@ function dataDisplay.slider(opts)
         -- Convert mouse position to value
         posToValue = function(self, mx, my)
             if self.orientation == "horizontal" then
+                -- Guard against division by zero
+                if self.width <= 1 then
+                    return self.min
+                end
                 local relX = mx - self.x
                 local percent = relX / (self.width - 1)
                 return self.min + percent * (self.max - self.min)
             else
+                -- Guard against division by zero
+                if self.height <= 1 then
+                    return self.min
+                end
                 local relY = my - self.y
                 -- Invert for vertical (top = max, bottom = min)
                 local percent = 1 - (relY / (self.height - 1))
@@ -96,22 +97,19 @@ function dataDisplay.slider(opts)
             end
         end,
 
-        onClick = function(self, mx, my)
-            -- Jump to clicked position
-            self:setValue(self:posToValue(mx, my))
+        onPress = function(self, x, y, button, isTouch)
             self.dragging = true
+            self:setValue(self:posToValue(x, y))
             return true
         end,
 
-        onDrag = function(self, mx, my)
-            if self.dragging then
-                self:setValue(self:posToValue(mx, my))
-                return true
-            end
-            return false
+        onDrag = function(self, x, y, button)
+            if not self.dragging then return false end
+            self:setValue(self:posToValue(x, y))
+            return true
         end,
 
-        onRelease = function(self)
+        onRelease = function(self, x, y, button, inBounds, isTouch)
             self.dragging = false
         end,
 
@@ -189,22 +187,26 @@ function dataDisplay.slider(opts)
         end
     }
 
+    -- Initialize bounds (x, y, width, height, visible, focusable)
+    UI.initBounds(e, opts)
+
+    -- Initialize bounds (x, y, width, height, visible, focusable)
+    UI.initBounds(e, opts)
+
     return UI.addElement(opts.scene or UI.activeScene, e)
 end
 
 -------------------------------------------------
 -- BUTTON GROUP / RADIO GROUP ELEMENT
 -------------------------------------------------
-function dataDisplay.buttonGroup(opts)
+function inputs.buttonGroup(opts)
     opts = opts or {}
 
-    -- Resolve theme colors
-    local themeColors = UI.resolveTheme(opts, "buttonGroup", {
-        fg = colors.white,
-        bg = colors.gray,
-        selectedBg = colors.blue,
-        selectedFg = colors.white
-    })
+    -- Resolve colors from theme roles with manual overrides
+    local fgColor = opts.fg or UI.resolveColor("text", colors.white)
+    local bgColor = opts.bg or UI.resolveColor("surface", colors.gray)
+    local selectedBgColor = opts.selectedBg or UI.resolveColor("interactive", colors.blue)
+    local selectedFgColor = opts.selectedFg or UI.resolveColor("text", colors.white)
 
     local orientation = opts.orientation or "horizontal"
     local spacing = opts.spacing or 2
@@ -236,6 +238,7 @@ function dataDisplay.buttonGroup(opts)
 
     local e = {
         type = "buttonGroup",
+        opts = opts,
         options = opts.options or {"Option 1", "Option 2", "Option 3"},
         selected = opts.selected or 1,
         orientation = orientation,
@@ -246,16 +249,10 @@ function dataDisplay.buttonGroup(opts)
         height = calculatedHeight,
 
         -- Theme colors
-        fg = themeColors.fg,
-        bg = themeColors.bg,
-        selectedBg = themeColors.selectedBg,
-        selectedFg = themeColors.selectedFg,
-
-        position = opts.position,
-        xOffset = opts.xOffset,
-        yOffset = opts.yOffset,
-        x = opts.x or 1,
-        y = opts.y or 1,
+        fg = fgColor,
+        bg = bgColor,
+        selectedBg = selectedBgColor,
+        selectedFg = selectedFgColor,
 
         -- Calculate dimensions based on options
         buttons = {},  -- Will hold button positions
@@ -294,11 +291,12 @@ function dataDisplay.buttonGroup(opts)
             end
         end,
 
-        onClick = function(self, mx, my)
+        onClick = function(self, x, y, button)
             -- Check which button was clicked
-            for i, button in ipairs(self.buttons) do
-                if mx >= button.x and mx < button.x + button.width and
-                        my >= button.y and my < button.y + button.height then
+            local mx, my = x, y
+            for i, btn in ipairs(self.buttons) do
+                if mx >= btn.x and mx < btn.x + btn.width and
+                        my >= btn.y and my < btn.y + btn.height then
                     self:setSelected(i)
                     return true
                 end
@@ -327,30 +325,32 @@ function dataDisplay.buttonGroup(opts)
         end
     }
 
+    -- Initialize bounds (x, y, width, height, visible, focusable)
+    UI.initBounds(e, opts)
+
     return UI.addElement(opts.scene or UI.activeScene, e)
 end
 
 -- Alias for more semantic naming
-dataDisplay.radioGroup = dataDisplay.buttonGroup
+inputs.radioGroup = inputs.buttonGroup
 
 -------------------------------------------------
 -- DROPDOWN MENU ELEMENT
 -------------------------------------------------
-function dataDisplay.dropdown(opts)
+function inputs.dropdown(opts)
     opts = opts or {}
 
-    -- Resolve theme colors
-    local themeColors = UI.resolveTheme(opts, "dropdown", {
-        fg = colors.white,
-        bg = colors.gray,
-        selectedBg = colors.blue,
-        selectedFg = colors.white,
-        border = colors.lightGray,
-        scrollbar = colors.lightGray
-    })
+    -- Resolve colors from theme roles with manual overrides
+    local fgColor = opts.fg or UI.resolveColor("text", colors.white)
+    local bgColor = opts.bg or UI.resolveColor("surface", colors.gray)
+    local selectedBgColor = opts.selectedBg or UI.resolveColor("interactive", colors.blue)
+    local selectedFgColor = opts.selectedFg or UI.resolveColor("text", colors.white)
+    local borderColor = opts.border or UI.resolveColor("border", colors.lightGray)
+    local scrollbarColor = opts.scrollbar or UI.resolveColor("border", colors.lightGray)
 
     local e = {
         type = "dropdown",
+        opts = opts,
         options = opts.options or {"Option 1", "Option 2", "Option 3"},
         selected = opts.selected,  -- Can be nil (no selection)
         width = opts.width or 20,
@@ -365,19 +365,17 @@ function dataDisplay.dropdown(opts)
         searchText = "",
 
         -- Theme colors
-        fg = themeColors.fg,
-        bg = themeColors.bg,
-        selectedBg = themeColors.selectedBg,
-        selectedFg = themeColors.selectedFg,
-        border = themeColors.border,
-        scrollbar = themeColors.scrollbar,
+        fg = fgColor,
+        bg = bgColor,
+        selectedBg = selectedBgColor,
+        selectedFg = selectedFgColor,
+        border = borderColor,
+        scrollbar = scrollbarColor,
 
-        position = opts.position,
-        xOffset = opts.xOffset,
-        yOffset = opts.yOffset,
-        x = opts.x or 1,
-        y = opts.y or 1,
         height = 1,  -- Collapsed height
+
+        -- Focus flag (for keyboard input when expanded and searchable)
+        focusable = opts.focusable ~= nil and opts.focusable or true,
 
         setSelected = function(self, index)
             if index >= 1 and index <= #self.options then
@@ -446,12 +444,15 @@ function dataDisplay.dropdown(opts)
                     local clickedIndex = relativeY + self.scrollOffset
 
                     if clickedIndex >= 1 and clickedIndex <= #filtered then
-                        if type(filtered[clickedIndex]) == "table" then
-                            self:setSelected(filtered[clickedIndex].index)
-                        else
-                            self:setSelected(clickedIndex)
+                        local item = filtered[clickedIndex]
+                        if item then  -- Guard against nil
+                            if type(item) == "table" then
+                                self:setSelected(item.index)
+                            else
+                                self:setSelected(clickedIndex)
+                            end
+                            return true
                         end
-                        return true
                     end
                 elseif my == self.y + 1 and self.searchable then
                     -- Clicked on search box - don't close, just focus it
@@ -590,6 +591,9 @@ function dataDisplay.dropdown(opts)
         end
     }
 
+    -- Initialize bounds (x, y, width, height, visible, focusable)
+    UI.initBounds(e, opts)
+
     return UI.addElement(opts.scene or UI.activeScene, e)
 end
 
@@ -598,261 +602,23 @@ end
 -- Supports masked input OR autocomplete (mutually exclusive)
 -- Uses CraftOS cursor for better autocomplete UX
 -------------------------------------------------
-function dataDisplay.advancedTextField(opts)
+function inputs.advancedTextField(opts)
     opts = opts or {}
 
-    -- Resolve theme colors
-    local themeColors = UI.resolveTheme(opts, "textfield", {
-        fg = colors.white,
-        bg = colors.gray,
-        bgActive = colors.lightGray,
-        placeholderColor = colors.lightGray,
-        suggestionColor = colors.lightGray
-    })
+    -- Resolve colors from theme roles with manual overrides
+    local fgColor = opts.fg or UI.resolveColor("text", colors.white)
+    local bgColor = opts.bg or UI.resolveColor("surface", colors.gray)
+    local bgActiveColor = opts.bgActive or UI.resolveColor("interactive", colors.lightGray)
+    local placeholderColor = opts.placeholderColor or UI.resolveColor("textDim", colors.lightGray)
+    local suggestionColor = opts.suggestionColor or UI.resolveColor("textDim", colors.lightGray)
+    local lineNumberFgColor = opts.lineNumberFg or UI.resolveColor("textDim", colors.lightGray)
+    local lineNumberBgColor = opts.lineNumberBg or UI.resolveColor("surface", colors.gray)
 
-    local e = {
-        type = "advancedTextField",
-        text = opts.text or "",
-        width = opts.width or 20,
-        height = 1,
-        fg = themeColors.fg,
-        bg = themeColors.bg,
-        bgActive = themeColors.bgActive,
-        placeholderColor = themeColors.placeholderColor,
-        suggestionColor = themeColors.suggestionColor,
-        position = opts.position,
-        xOffset = opts.xOffset,
-        yOffset = opts.yOffset,
-        x = opts.x or 1,
-        y = opts.y or 1,
+    -- Detect multiline mode
+    local height = opts.height or 1
+    local multiline = height > 1
 
-        -- Features (mutually exclusive)
-        masked = opts.masked or false,
-        maskChar = opts.maskChar or "*",
-        autocomplete = opts.autocomplete or nil,  -- Array of strings
-        placeholder = opts.placeholder or "",
-
-        -- State
-        cursorPos = #(opts.text or ""),
-        viewOffset = 0,
-        currentSuggestion = nil,
-
-        -- Callbacks
-        onChange = opts.onChange,
-        onSubmit = opts.onSubmit,
-        onAutocomplete = opts.onAutocomplete,
-
-        -- Update view offset for scrolling
-        updateViewOffset = function(self)
-            local visibleWidth = self.width - 1
-            if self.cursorPos < self.viewOffset then
-                self.viewOffset = self.cursorPos
-            end
-            if self.cursorPos >= self.viewOffset + visibleWidth then
-                self.viewOffset = self.cursorPos - visibleWidth + 1
-            end
-            self.viewOffset = math.max(0, self.viewOffset)
-        end,
-
-        -- Find best autocomplete match
-        updateSuggestion = function(self)
-            self.currentSuggestion = nil
-            if not self.autocomplete or #self.text == 0 then
-                return
-            end
-
-            -- Find first match that starts with current text
-            local searchText = self.text:lower()
-            for _, suggestion in ipairs(self.autocomplete) do
-                if suggestion:lower():sub(1, #searchText) == searchText and suggestion ~= self.text then
-                    self.currentSuggestion = suggestion
-                    return
-                end
-            end
-        end,
-
-        onClick = function(self, mx, my)
-            UI.focused = self
-            -- Position cursor based on click
-            local relX = mx - self.x
-            self.cursorPos = math.min(#self.text, math.max(0, relX + self.viewOffset))
-            self:updateViewOffset()
-            self:updateSuggestion()
-            UI.markDirty()
-            return true
-        end,
-
-        onChar = function(self, ch)
-            -- Insert character at cursor
-            local before = self.text:sub(1, self.cursorPos)
-            local after = self.text:sub(self.cursorPos + 1)
-            self.text = before .. ch .. after
-            self.cursorPos = self.cursorPos + 1
-            self:updateViewOffset()
-            self:updateSuggestion()
-            if self.onChange then self.onChange(self.text) end
-            UI.markDirty()
-        end,
-
-        onKey = function(self, key)
-            local name = keys.getName(key)
-
-            if name == "backspace" then
-                if self.cursorPos > 0 then
-                    local before = self.text:sub(1, self.cursorPos - 1)
-                    local after = self.text:sub(self.cursorPos + 1)
-                    self.text = before .. after
-                    self.cursorPos = self.cursorPos - 1
-                    self:updateViewOffset()
-                    self:updateSuggestion()
-                    if self.onChange then self.onChange(self.text) end
-                    UI.markDirty()
-                end
-            elseif name == "delete" then
-                if self.cursorPos < #self.text then
-                    local before = self.text:sub(1, self.cursorPos)
-                    local after = self.text:sub(self.cursorPos + 2)
-                    self.text = before .. after
-                    self:updateSuggestion()
-                    if self.onChange then self.onChange(self.text) end
-                    UI.markDirty()
-                end
-            elseif name == "left" then
-                if self.cursorPos > 0 then
-                    self.cursorPos = self.cursorPos - 1
-                    self:updateViewOffset()
-                    UI.markDirty()
-                end
-            elseif name == "right" then
-                if self.cursorPos < #self.text then
-                    self.cursorPos = self.cursorPos + 1
-                    self:updateViewOffset()
-                    UI.markDirty()
-                end
-            elseif name == "home" then
-                self.cursorPos = 0
-                self:updateViewOffset()
-                UI.markDirty()
-            elseif name == "end" then
-                self.cursorPos = #self.text
-                self:updateViewOffset()
-                UI.markDirty()
-            elseif name == "tab" and self.currentSuggestion then
-                -- Accept autocomplete suggestion
-                self.text = self.currentSuggestion
-                self.cursorPos = #self.text
-                self.currentSuggestion = nil
-                self:updateViewOffset()
-                if self.onAutocomplete then self.onAutocomplete(self.text) end
-                if self.onChange then self.onChange(self.text) end
-                UI.markDirty()
-            elseif name == "enter" then
-                if self.onSubmit then
-                    self.onSubmit(self.text)
-                end
-            end
-        end,
-
-        draw = function(self)
-            local isFocused = (UI.focused == self)
-            local bg = isFocused and self.bgActive or self.bg
-
-            UI.term.setBackgroundColor(bg)
-            UI.term.setCursorPos(self.x, self.y)
-
-            -- Determine display text
-            local displayText
-            local showPlaceholder = (#self.text == 0 and self.placeholder ~= "" and not isFocused)
-
-            if showPlaceholder then
-                displayText = self.placeholder
-                UI.term.setTextColor(self.placeholderColor)
-            else
-                -- Show masked or regular text
-                if self.masked then
-                    displayText = string.rep(self.maskChar, #self.text)
-                else
-                    displayText = self.text
-                end
-                UI.term.setTextColor(self.fg)
-            end
-
-            -- Apply view offset for scrolling
-            local visibleText
-            if #displayText > self.width then
-                visibleText = displayText:sub(self.viewOffset + 1, self.viewOffset + self.width)
-                if self.viewOffset > 0 then
-                    visibleText = "<" .. visibleText:sub(2)
-                end
-                if #displayText > self.viewOffset + self.width then
-                    visibleText = visibleText:sub(1, -2) .. ">"
-                end
-            else
-                visibleText = displayText
-            end
-
-            -- Draw main text
-            local textToDraw = visibleText
-            if #textToDraw < self.width then
-                textToDraw = textToDraw .. string.rep(" ", self.width - #textToDraw)
-            end
-            UI.term.write(textToDraw)
-
-            -- Draw autocomplete suggestion (only if focused, not masked, and has suggestion)
-            if isFocused and not self.masked and self.currentSuggestion and not showPlaceholder then
-                local suggestionPart = self.currentSuggestion:sub(#self.text + 1)
-                if #suggestionPart > 0 then
-                    -- Calculate position for suggestion
-                    local suggestionX = self.x + (self.cursorPos - self.viewOffset)
-                    if suggestionX < self.x + self.width then
-                        local remainingWidth = self.x + self.width - suggestionX
-                        local suggestionDisplay = suggestionPart:sub(1, remainingWidth)
-
-                        UI.term.setCursorPos(suggestionX, self.y)
-                        UI.term.setBackgroundColor(bg)
-                        UI.term.setTextColor(self.suggestionColor)
-                        UI.term.write(suggestionDisplay)
-                    end
-                end
-            end
-
-            -- Set CraftOS cursor
-            if isFocused then
-                local cursorX = self.x + (self.cursorPos - self.viewOffset)
-                if cursorX >= self.x and cursorX < self.x + self.width then
-                    UI.term.setCursorPos(cursorX, self.y)
-                    UI.term.setCursorBlink(true)
-                else
-                    UI.term.setCursorBlink(false)
-                end
-            else
-                UI.term.setCursorBlink(false)
-            end
-        end
-    }
-
-    return UI.addElement(opts.scene or UI.activeScene, e)
-end
-
--------------------------------------------------
--- TEXTAREA ELEMENT
--- Multi-line text input with scrolling, line wrapping, and line numbers
--------------------------------------------------
-function dataDisplay.textArea(opts)
-    opts = opts or {}
-
-    -- Resolve theme colors
-    local themeColors = UI.resolveTheme(opts, "textArea", {
-        fg = colors.white,
-        bg = colors.gray,
-        bgActive = colors.lightGray,
-        lineNumberFg = colors.lightGray,
-        lineNumberBg = colors.gray,
-        selectionBg = colors.blue,
-        cursorColor = colors.white
-    })
-
-    -- Parse initial text into lines
+    -- Parse initial text into lines (for multiline mode)
     local function parseLines(text)
         if not text or text == "" then
             return {""}
@@ -868,210 +634,267 @@ function dataDisplay.textArea(opts)
     end
 
     local e = {
-        type = "textArea",
-        lines = parseLines(opts.text or ""),
-        width = opts.width or 40,
-        height = opts.height or 10,
+        type = multiline and "textArea" or "advancedTextField",
+        opts = opts,
+        width = opts.width or 20,
+        height = height,
+        fg = fgColor,
+        bg = bgColor,
+        bgActive = bgActiveColor,
+        placeholderColor = placeholderColor,
+        suggestionColor = suggestionColor,
+        lineNumberFg = lineNumberFgColor,
+        lineNumberBg = lineNumberBgColor,
+
+        -- Focus flags (for new event system)
+        focusable = opts.focusable ~= nil and opts.focusable or true,
+        lockFocus = opts.lockFocus or false,
+
+        -- Multiline mode flag
+        multiline = multiline,
+
+        -- Single-line state
+        text = multiline and "" or (opts.text or ""),
+        cursorPos = multiline and 0 or #(opts.text or ""),
+        viewOffset = 0,
+
+        -- Multiline state
+        lines = multiline and parseLines(opts.text or "") or nil,
+        cursorLine = multiline and 1 or nil,
+        cursorCol = multiline and 0 or nil,
+        scrollLine = multiline and 0 or nil,
         lineNumbers = opts.lineNumbers or false,
-        wrap = opts.wrap or false,
         readOnly = opts.readOnly or false,
 
-        -- Theme colors
-        fg = themeColors.fg,
-        bg = themeColors.bg,
-        bgActive = themeColors.bgActive,
-        lineNumberFg = themeColors.lineNumberFg,
-        lineNumberBg = themeColors.lineNumberBg,
-        selectionBg = themeColors.selectionBg,
-        cursorColor = themeColors.cursorColor,
-
-        position = opts.position,
-        xOffset = opts.xOffset,
-        yOffset = opts.yOffset,
-        x = opts.x or 1,
-        y = opts.y or 1,
-
-        -- Cursor state
-        cursorLine = 1,
-        cursorCol = 0,
-        scrollLine = 0,  -- First visible line (0-indexed)
-
-        -- Selection state
-        selectionStart = nil,  -- {line, col}
-        selectionEnd = nil,
+        -- Features (for single-line mode)
+        masked = opts.masked or false,
+        maskChar = opts.maskChar or "*",
+        autocomplete = opts.autocomplete or nil,  -- Array of strings
+        placeholder = opts.placeholder or "",
+        currentSuggestion = nil,
 
         -- Callbacks
         onChange = opts.onChange,
         onSubmit = opts.onSubmit,
+        onAutocomplete = opts.onAutocomplete,
 
-        -- Calculate line number width
-        getLineNumberWidth = function(self)
-            if not self.lineNumbers then return 0 end
-            return #tostring(#self.lines) + 2  -- Add 2 for padding and separator
+        -- Update view offset for scrolling (single-line mode)
+        updateViewOffset = function(self)
+            if self.multiline then return end
+            local visibleWidth = self.width - 1
+            if self.cursorPos < self.viewOffset then
+                self.viewOffset = self.cursorPos
+            end
+            if self.cursorPos >= self.viewOffset + visibleWidth then
+                self.viewOffset = self.cursorPos - visibleWidth + 1
+            end
+            self.viewOffset = math.max(0, self.viewOffset)
         end,
 
-        -- Get text content width (accounting for line numbers)
+        -- Find best autocomplete match (single-line mode)
+        updateSuggestion = function(self)
+            if self.multiline then return end
+            self.currentSuggestion = nil
+            if not self.autocomplete or #self.text == 0 then
+                return
+            end
+
+            -- Find first match that starts with current text
+            local searchText = self.text:lower()
+            for _, suggestion in ipairs(self.autocomplete) do
+                if type(suggestion) == "string" then
+                    if suggestion:lower():sub(1, #searchText) == searchText and suggestion ~= self.text then
+                        self.currentSuggestion = suggestion
+                        return
+                    end
+                end
+            end
+        end,
+
+        -- Multiline helpers
+        getLineNumberWidth = function(self)
+            if not self.multiline or not self.lineNumbers then return 0 end
+            return #tostring(#self.lines) + 2
+        end,
+
         getContentWidth = function(self)
+            if not self.multiline then return self.width end
             return self.width - self:getLineNumberWidth()
         end,
 
-        -- Get full text as string
         getText = function(self)
-            return table.concat(self.lines, "\n")
+            if self.multiline then
+                return table.concat(self.lines, "\n")
+            else
+                return self.text
+            end
         end,
 
-        -- Set text from string
         setText = function(self, text)
-            self.lines = parseLines(text)
-            self.cursorLine = math.min(self.cursorLine, #self.lines)
-            self.cursorCol = math.min(self.cursorCol, #self.lines[self.cursorLine])
+            if self.multiline then
+                self.lines = parseLines(text)
+                self.cursorLine = math.min(self.cursorLine, #self.lines)
+                self.cursorCol = math.min(self.cursorCol, #self.lines[self.cursorLine])
+            else
+                self.text = text
+                self.cursorPos = #text
+                self:updateViewOffset()
+                self:updateSuggestion()
+            end
             if self.onChange then
                 self.onChange(self:getText())
             end
             UI.markDirty()
         end,
 
-        -- Insert character at cursor
         insertChar = function(self, char)
-            if self.readOnly then return end
-
-            local line = self.lines[self.cursorLine]
-            local before = line:sub(1, self.cursorCol)
-            local after = line:sub(self.cursorCol + 1)
-            self.lines[self.cursorLine] = before .. char .. after
-            self.cursorCol = self.cursorCol + 1
-
+            if self.multiline then
+                if self.readOnly then return end
+                local line = self.lines[self.cursorLine]
+                local before = line:sub(1, self.cursorCol)
+                local after = line:sub(self.cursorCol + 1)
+                self.lines[self.cursorLine] = before .. char .. after
+                self.cursorCol = self.cursorCol + 1
+            else
+                local before = self.text:sub(1, self.cursorPos)
+                local after = self.text:sub(self.cursorPos + 1)
+                self.text = before .. char .. after
+                self.cursorPos = self.cursorPos + 1
+                self:updateViewOffset()
+                self:updateSuggestion()
+            end
             if self.onChange then
                 self.onChange(self:getText())
             end
             UI.markDirty()
         end,
 
-        -- Insert newline at cursor
         insertNewline = function(self)
-            if self.readOnly then return end
-
+            if not self.multiline or self.readOnly then return end
             local line = self.lines[self.cursorLine]
             local before = line:sub(1, self.cursorCol)
             local after = line:sub(self.cursorCol + 1)
-
             self.lines[self.cursorLine] = before
             table.insert(self.lines, self.cursorLine + 1, after)
-
             self.cursorLine = self.cursorLine + 1
             self.cursorCol = 0
-
-            -- Ensure cursor is visible
             if self.cursorLine >= self.scrollLine + self.height then
                 self.scrollLine = self.cursorLine - self.height + 1
             end
-
             if self.onChange then
                 self.onChange(self:getText())
             end
             UI.markDirty()
         end,
 
-        -- Delete character before cursor (backspace)
         deleteChar = function(self)
-            if self.readOnly then return end
-
-            if self.cursorCol > 0 then
-                -- Delete within line
-                local line = self.lines[self.cursorLine]
-                local before = line:sub(1, self.cursorCol - 1)
-                local after = line:sub(self.cursorCol + 1)
-                self.lines[self.cursorLine] = before .. after
-                self.cursorCol = self.cursorCol - 1
-            elseif self.cursorLine > 1 then
-                -- Join with previous line
-                local prevLine = self.lines[self.cursorLine - 1]
-                local currentLine = self.lines[self.cursorLine]
-                self.cursorCol = #prevLine
-                self.lines[self.cursorLine - 1] = prevLine .. currentLine
-                table.remove(self.lines, self.cursorLine)
-                self.cursorLine = self.cursorLine - 1
+            if self.multiline then
+                if self.readOnly then return end
+                if self.cursorCol > 0 then
+                    local line = self.lines[self.cursorLine]
+                    local before = line:sub(1, self.cursorCol - 1)
+                    local after = line:sub(self.cursorCol + 1)
+                    self.lines[self.cursorLine] = before .. after
+                    self.cursorCol = self.cursorCol - 1
+                elseif self.cursorLine > 1 then
+                    local prevLine = self.lines[self.cursorLine - 1]
+                    local currentLine = self.lines[self.cursorLine]
+                    self.cursorCol = #prevLine
+                    self.lines[self.cursorLine - 1] = prevLine .. currentLine
+                    table.remove(self.lines, self.cursorLine)
+                    self.cursorLine = self.cursorLine - 1
+                end
+            else
+                if self.cursorPos > 0 then
+                    local before = self.text:sub(1, self.cursorPos - 1)
+                    local after = self.text:sub(self.cursorPos + 1)
+                    self.text = before .. after
+                    self.cursorPos = self.cursorPos - 1
+                    self:updateViewOffset()
+                    self:updateSuggestion()
+                end
             end
-
             if self.onChange then
                 self.onChange(self:getText())
             end
             UI.markDirty()
         end,
 
-        -- Delete character at cursor (delete key)
         deleteCharForward = function(self)
-            if self.readOnly then return end
-
-            local line = self.lines[self.cursorLine]
-            if self.cursorCol < #line then
-                -- Delete within line
-                local before = line:sub(1, self.cursorCol)
-                local after = line:sub(self.cursorCol + 2)
-                self.lines[self.cursorLine] = before .. after
-            elseif self.cursorLine < #self.lines then
-                -- Join with next line
-                local nextLine = self.lines[self.cursorLine + 1]
-                self.lines[self.cursorLine] = line .. nextLine
-                table.remove(self.lines, self.cursorLine + 1)
+            if self.multiline then
+                if self.readOnly then return end
+                local line = self.lines[self.cursorLine]
+                if self.cursorCol < #line then
+                    local before = line:sub(1, self.cursorCol)
+                    local after = line:sub(self.cursorCol + 2)
+                    self.lines[self.cursorLine] = before .. after
+                elseif self.cursorLine < #self.lines then
+                    local nextLine = self.lines[self.cursorLine + 1]
+                    self.lines[self.cursorLine] = line .. nextLine
+                    table.remove(self.lines, self.cursorLine + 1)
+                end
+            else
+                if self.cursorPos < #self.text then
+                    local before = self.text:sub(1, self.cursorPos)
+                    local after = self.text:sub(self.cursorPos + 2)
+                    self.text = before .. after
+                    self:updateSuggestion()
+                end
             end
-
             if self.onChange then
                 self.onChange(self:getText())
             end
             UI.markDirty()
         end,
 
-        -- Move cursor
         moveCursor = function(self, dLine, dCol)
+            if not self.multiline then return end
             if dLine ~= 0 then
-                self.cursorLine = math.max(1, math.min(#self.lines, self.cursorLine + dLine))
-                self.cursorCol = math.min(self.cursorCol, #self.lines[self.cursorLine])
-
-                -- Scroll to keep cursor visible
+                local newLine = math.max(1, math.min(#self.lines, self.cursorLine + dLine))
+                if self.lines[newLine] then
+                    self.cursorLine = newLine
+                    self.cursorCol = math.min(self.cursorCol, #self.lines[self.cursorLine])
+                end
                 if self.cursorLine < self.scrollLine + 1 then
                     self.scrollLine = self.cursorLine - 1
                 elseif self.cursorLine > self.scrollLine + self.height then
                     self.scrollLine = self.cursorLine - self.height
                 end
             end
-
             if dCol ~= 0 then
                 self.cursorCol = math.max(0, math.min(#self.lines[self.cursorLine], self.cursorCol + dCol))
             end
-
             UI.markDirty()
         end,
 
-        onClick = function(self, mx, my)
-            UI.focused = self
-
-            -- Calculate clicked position
-            local lineNumWidth = self:getLineNumberWidth()
-            local contentX = self.x + lineNumWidth
-
-            -- Check if click is in line numbers area
-            if mx < contentX then
-                return true
+        onPress = function(self, x, y, button, isTouch)
+            -- Focus is handled automatically by the new event system if focusable=true
+            local mx, my = x, y
+            if self.multiline then
+                local lineNumWidth = self:getLineNumberWidth()
+                local contentX = self.x + lineNumWidth
+                if mx < contentX then
+                    return true
+                end
+                local clickedLine = (my - self.y) + self.scrollLine + 1
+                clickedLine = math.max(1, math.min(#self.lines, clickedLine))
+                local clickedCol = mx - contentX
+                clickedCol = math.max(0, math.min(#self.lines[clickedLine], clickedCol))
+                self.cursorLine = clickedLine
+                self.cursorCol = clickedCol
+            else
+                local relX = mx - self.x
+                self.cursorPos = math.min(#self.text, math.max(0, relX + self.viewOffset))
+                self:updateViewOffset()
+                self:updateSuggestion()
             end
-
-            -- Calculate line and column
-            local clickedLine = (my - self.y) + self.scrollLine + 1
-            clickedLine = math.max(1, math.min(#self.lines, clickedLine))
-
-            local clickedCol = mx - contentX
-            clickedCol = math.max(0, math.min(#self.lines[clickedLine], clickedCol))
-
-            self.cursorLine = clickedLine
-            self.cursorCol = clickedCol
-
             UI.markDirty()
             return true
         end,
 
-        onChar = function(self, char)
-            if self.readOnly then return false end
-            self:insertChar(char)
+        onChar = function(self, ch)
+            if self.multiline and self.readOnly then return false end
+            self:insertChar(ch)
             return true
         end,
 
@@ -1085,58 +908,102 @@ function dataDisplay.textArea(opts)
                 self:deleteCharForward()
                 return true
             elseif name == "enter" then
-                if self.onSubmit and keys.isKeyDown(keys.leftCtrl) then
-                    -- Ctrl+Enter submits
-                    self.onSubmit(self:getText())
+                if self.multiline then
+                    if self.onSubmit and keys.isKeyDown(keys.leftCtrl) then
+                        self.onSubmit(self:getText())
+                    else
+                        self:insertNewline()
+                    end
                 else
-                    self:insertNewline()
+                    if self.onSubmit then
+                        self.onSubmit(self.text)
+                    end
                 end
                 return true
             elseif name == "up" then
-                self:moveCursor(-1, 0)
-                return true
-            elseif name == "down" then
-                self:moveCursor(1, 0)
-                return true
-            elseif name == "left" then
-                if self.cursorCol == 0 and self.cursorLine > 1 then
-                    -- Move to end of previous line
-                    self.cursorLine = self.cursorLine - 1
-                    self.cursorCol = #self.lines[self.cursorLine]
-                else
-                    self:moveCursor(0, -1)
+                if self.multiline then
+                    self:moveCursor(-1, 0)
+                    return true
                 end
-                return true
+            elseif name == "down" then
+                if self.multiline then
+                    self:moveCursor(1, 0)
+                    return true
+                end
+            elseif name == "left" then
+                if self.multiline then
+                    if self.cursorCol == 0 and self.cursorLine > 1 then
+                        self.cursorLine = self.cursorLine - 1
+                        self.cursorCol = #self.lines[self.cursorLine]
+                    else
+                        self:moveCursor(0, -1)
+                    end
+                    return true
+                else
+                    if self.cursorPos > 0 then
+                        self.cursorPos = self.cursorPos - 1
+                        self:updateViewOffset()
+                        UI.markDirty()
+                    end
+                end
             elseif name == "right" then
-                if self.cursorCol == #self.lines[self.cursorLine] and self.cursorLine < #self.lines then
-                    -- Move to start of next line
-                    self.cursorLine = self.cursorLine + 1
+                if self.multiline then
+                    if self.cursorCol == #self.lines[self.cursorLine] and self.cursorLine < #self.lines then
+                        self.cursorLine = self.cursorLine + 1
+                        self.cursorCol = 0
+                    else
+                        self:moveCursor(0, 1)
+                    end
+                    return true
+                else
+                    if self.cursorPos < #self.text then
+                        self.cursorPos = self.cursorPos + 1
+                        self:updateViewOffset()
+                        UI.markDirty()
+                    end
+                end
+            elseif name == "home" then
+                if self.multiline then
                     self.cursorCol = 0
                 else
-                    self:moveCursor(0, 1)
+                    self.cursorPos = 0
+                    self:updateViewOffset()
                 end
-                return true
-            elseif name == "home" then
-                self.cursorCol = 0
                 UI.markDirty()
                 return true
             elseif name == "end" then
-                self.cursorCol = #self.lines[self.cursorLine]
+                if self.multiline then
+                    self.cursorCol = #self.lines[self.cursorLine]
+                else
+                    self.cursorPos = #self.text
+                    self:updateViewOffset()
+                end
                 UI.markDirty()
                 return true
             elseif name == "pageUp" then
-                self:moveCursor(-self.height, 0)
-                return true
+                if self.multiline then
+                    self:moveCursor(-self.height, 0)
+                    return true
+                end
             elseif name == "pageDown" then
-                self:moveCursor(self.height, 0)
-                return true
+                if self.multiline then
+                    self:moveCursor(self.height, 0)
+                    return true
+                end
+            elseif name == "tab" and not self.multiline and self.currentSuggestion then
+                self.text = self.currentSuggestion
+                self.cursorPos = #self.text
+                self.currentSuggestion = nil
+                self:updateViewOffset()
+                if self.onAutocomplete then self.onAutocomplete(self.text) end
+                if self.onChange then self.onChange(self.text) end
+                UI.markDirty()
             end
-
             return false
         end,
 
         onScroll = function(self, direction, mx, my)
-            -- Scroll the view
+            if not self.multiline then return false end
             local maxScroll = math.max(0, #self.lines - self.height)
             self.scrollLine = math.max(0, math.min(maxScroll, self.scrollLine + direction))
             UI.markDirty()
@@ -1146,73 +1013,415 @@ function dataDisplay.textArea(opts)
         draw = function(self)
             local isFocused = (UI.focused == self)
             local bg = isFocused and self.bgActive or self.bg
-            local lineNumWidth = self:getLineNumberWidth()
-            local contentWidth = self:getContentWidth()
 
-            -- Draw each visible line
-            for screenLine = 0, self.height - 1 do
-                local lineNum = self.scrollLine + screenLine + 1
-                local y = self.y + screenLine
+            if self.multiline then
+                -- Multiline rendering
+                local lineNumWidth = self:getLineNumberWidth()
+                local contentWidth = self:getContentWidth()
 
-                -- Draw line number if enabled
-                if self.lineNumbers then
-                    UI.term.setCursorPos(self.x, y)
-                    UI.term.setBackgroundColor(self.lineNumberBg)
-                    UI.term.setTextColor(self.lineNumberFg)
+                for screenLine = 0, self.height - 1 do
+                    local lineNum = self.scrollLine + screenLine + 1
+                    local y = self.y + screenLine
+
+                    -- Draw line number if enabled
+                    if self.lineNumbers then
+                        UI.term.setCursorPos(self.x, y)
+                        UI.term.setBackgroundColor(self.lineNumberBg)
+                        UI.term.setTextColor(self.lineNumberFg)
+
+                        if lineNum <= #self.lines then
+                            local numText = tostring(lineNum)
+                            local padding = lineNumWidth - #numText - 1
+                            UI.term.write(string.rep(" ", padding) .. numText .. " ")
+                        else
+                            UI.term.write(string.rep(" ", lineNumWidth))
+                        end
+                    end
+
+                    -- Draw line content
+                    UI.term.setCursorPos(self.x + lineNumWidth, y)
+                    UI.term.setBackgroundColor(bg)
+                    UI.term.setTextColor(self.fg)
 
                     if lineNum <= #self.lines then
-                        local numText = tostring(lineNum)
-                        local padding = lineNumWidth - #numText - 1
-                        UI.term.write(string.rep(" ", padding) .. numText .. " ")
+                        local lineText = self.lines[lineNum]
+                        if #lineText > contentWidth then
+                            lineText = lineText:sub(1, contentWidth)
+                        else
+                            lineText = lineText .. string.rep(" ", contentWidth - #lineText)
+                        end
+                        UI.term.write(lineText)
                     else
-                        UI.term.write(string.rep(" ", lineNumWidth))
+                        UI.term.write(string.rep(" ", contentWidth))
                     end
                 end
 
-                -- Draw line content
-                UI.term.setCursorPos(self.x + lineNumWidth, y)
-                UI.term.setBackgroundColor(bg)
-                UI.term.setTextColor(self.fg)
+                -- Position cursor at end of render if focused
+                if isFocused and self.cursorLine >= self.scrollLine + 1 and
+                   self.cursorLine <= self.scrollLine + self.height then
+                    local cursorScreenY = self.y + (self.cursorLine - self.scrollLine - 1)
+                    local cursorX = self.x + lineNumWidth + self.cursorCol
 
-                if lineNum <= #self.lines then
-                    local lineText = self.lines[lineNum]
-
-                    -- Truncate or pad line to fit
-                    if #lineText > contentWidth then
-                        lineText = lineText:sub(1, contentWidth)
-                    else
-                        lineText = lineText .. string.rep(" ", contentWidth - #lineText)
+                    if cursorX < self.x + self.width then
+                        UI._cursorX = cursorX
+                        UI._cursorY = cursorScreenY
+                        UI._cursorBlink = true
                     end
-
-                    UI.term.write(lineText)
-                else
-                    -- Empty line
-                    UI.term.write(string.rep(" ", contentWidth))
-                end
-            end
-
-            -- Draw cursor if focused
-            if isFocused and self.cursorLine >= self.scrollLine + 1 and
-               self.cursorLine <= self.scrollLine + self.height then
-                local cursorScreenY = self.y + (self.cursorLine - self.scrollLine - 1)
-                local cursorX = self.x + lineNumWidth + self.cursorCol
-
-                if cursorX < self.x + self.width then
-                    UI.term.setCursorPos(cursorX, cursorScreenY)
-                    UI.term.setCursorBlink(true)
-                else
-                    UI.term.setCursorBlink(false)
                 end
             else
-                UI.term.setCursorBlink(false)
+                -- Single-line rendering
+                UI.term.setBackgroundColor(bg)
+                UI.term.setCursorPos(self.x, self.y)
+
+                local displayText
+                local showPlaceholder = (#self.text == 0 and self.placeholder ~= "" and not isFocused)
+
+                if showPlaceholder then
+                    displayText = self.placeholder
+                    UI.term.setTextColor(self.placeholderColor)
+                else
+                    if self.masked then
+                        displayText = string.rep(self.maskChar, #self.text)
+                    else
+                        displayText = self.text
+                    end
+                    UI.term.setTextColor(self.fg)
+                end
+
+                -- Apply view offset for scrolling
+                local visibleText
+                if #displayText > self.width then
+                    visibleText = displayText:sub(self.viewOffset + 1, self.viewOffset + self.width)
+                    if self.viewOffset > 0 then
+                        visibleText = "<" .. visibleText:sub(2)
+                    end
+                    if #displayText > self.viewOffset + self.width then
+                        visibleText = visibleText:sub(1, -2) .. ">"
+                    end
+                else
+                    visibleText = displayText
+                end
+
+                local textToDraw = visibleText
+                if #textToDraw < self.width then
+                    textToDraw = textToDraw .. string.rep(" ", self.width - #textToDraw)
+                end
+                UI.term.write(textToDraw)
+
+                -- Draw autocomplete suggestion
+                if isFocused and not self.masked and self.currentSuggestion and not showPlaceholder then
+                    local suggestionPart = self.currentSuggestion:sub(#self.text + 1)
+                    if #suggestionPart > 0 then
+                        local suggestionX = self.x + (self.cursorPos - self.viewOffset)
+                        if suggestionX < self.x + self.width then
+                            local remainingWidth = self.x + self.width - suggestionX
+                            local suggestionDisplay = suggestionPart:sub(1, remainingWidth)
+
+                            UI.term.setCursorPos(suggestionX, self.y)
+                            UI.term.setBackgroundColor(bg)
+                            UI.term.setTextColor(self.suggestionColor)
+                            UI.term.write(suggestionDisplay)
+                        end
+                    end
+                end
+
+                -- Position cursor at end of render if focused
+                if isFocused then
+                    local cursorX = self.x + (self.cursorPos - self.viewOffset)
+                    if cursorX >= self.x and cursorX < self.x + self.width then
+                        UI._cursorX = cursorX
+                        UI._cursorY = self.y
+                        UI._cursorBlink = true
+                    end
+                end
             end
         end
     }
+
+    -- Initialize bounds (x, y, width, height, visible, focusable)
+    UI.initBounds(e, opts)
 
     return UI.addElement(opts.scene or UI.activeScene, e)
 end
 
 -------------------------------------------------
+-- TERMINAL ELEMENT (TUI Console)
+-- Now implemented as a collection of elements (rectangle + textfield)
+-------------------------------------------------
+function inputs.terminal(opts)
+    opts = opts or {}
+
+    -- Resolve colors from theme roles with manual overrides
+    local fgColor = opts.fg or UI.resolveColor("text", colors.white)
+    local bgColor = opts.bg or UI.resolveColor("background", colors.black)
+    local promptColor = opts.promptColor or UI.resolveColor("success", colors.lime)
+    local spinnerColor = opts.spinnerColor or UI.resolveColor("info", colors.cyan)
+
+    -- Terminal state
+    local lines = opts.lines or {}
+    local scrollOffset = 0
+    local activePrompt = nil
+    local spinner = nil
+    local inputField = nil
+    local promptLabel = nil
+    local spinnerLabel = nil
+
+    -- Create container rectangle
+    local terminal = UI.rectangle({
+        x = opts.x,
+        y = opts.y,
+        width = opts.width or 50,
+        height = opts.height or 12,
+        bg = bgColor,
+        border = opts.border,
+        position = opts.position,
+        xOffset = opts.xOffset,
+        yOffset = opts.yOffset,
+        scene = opts.scene,
+        visible = opts.visible
+    })
+
+    -- Store terminal-specific properties
+    terminal.type = "terminal"
+    terminal.fg = fgColor
+    terminal.promptColor = promptColor
+    terminal.spinnerColor = spinnerColor
+    terminal.lines = lines
+    terminal.scrollOffset = scrollOffset
+
+    -- Custom draw to render output lines
+    local originalDraw = terminal.draw
+    terminal.draw = function(self)
+        if self._visible == false then return end
+
+        -- Draw the rectangle background first
+        UI.term.setBackgroundColor(bgColor)
+        for i = 0, self.height - 1 do
+            UI.term.setCursorPos(self.x, self.y + i)
+            UI.term.write(string.rep(" ", self.width))
+        end
+
+        -- Draw output lines (reserve bottom line for input)
+        UI.term.setTextColor(fgColor)
+        local linesAvailable = self.height - 1
+        local start = math.max(1, #lines - linesAvailable - scrollOffset)
+        for i = 0, linesAvailable - 1 do
+            local lineIdx = start + i
+            if lineIdx > 0 and lineIdx <= #lines then
+                local line = lines[lineIdx] or ""
+                UI.term.setCursorPos(self.x, self.y + i)
+                local displayLine = line:sub(1, self.width)
+                displayLine = displayLine .. string.rep(" ", self.width - #displayLine)
+                UI.term.write(displayLine)
+            end
+        end
+
+        -- Draw children (input field, labels, etc.)
+        for _, child in ipairs(self.children) do
+            if child.draw then child:draw() end
+        end
+    end
+
+    -- Terminal methods
+    terminal.append = function(self, text)
+        table.insert(lines, text)
+        if #lines > 200 then table.remove(lines, 1) end
+        UI.markDirty()
+    end
+
+    terminal.clear = function(self)
+        lines = {}
+        UI.markDirty()
+    end
+
+    terminal.prompt = function(self, prefix, callback, opts)
+        opts = opts or {}
+        local history = opts.history or {}
+        local autocomplete = opts.autocomplete or {}
+        local historyIndex = #history + 1  -- Start after last item
+
+        -- Ensure children array exists
+        if not self.children then
+            self.children = {}
+        end
+
+        -- Remove any existing input elements
+        if inputField then
+            inputField._visible = false
+        end
+        if promptLabel then
+            promptLabel._visible = false
+        end
+        if spinnerLabel then
+            spinnerLabel._visible = false
+        end
+
+        local prefixText = prefix or ">"
+        local prefixLen = #prefixText + 1  -- +1 for space
+
+        -- Create prompt label - add directly to children array without positioning
+        promptLabel = {
+            type = "label",
+            text = prefixText .. " ",
+            x = self.x,
+            y = self.y + self.height - 1,
+            fg = promptColor,
+            bg = bgColor,
+            _visible = true,
+            draw = function(self)
+                if self._visible == false then return end
+                UI.term.setCursorPos(self.x, self.y)
+                UI.term.setBackgroundColor(self.bg)
+                UI.term.setTextColor(self.fg)
+                UI.term.write(self.text)
+            end
+        }
+        table.insert(self.children, promptLabel)
+
+        -- Create input textfield - use advancedTextField if autocomplete provided
+        if #autocomplete > 0 then
+            inputField = inputs.advancedTextField({
+                width = self.width - prefixLen,
+                x = self.x + prefixLen,
+                y = self.y + self.height - 1,
+                bg = bgColor,
+                bgActive = bgColor,
+                fg = fgColor,
+                autocomplete = autocomplete,
+                scene = terminal.scene
+            })
+        else
+            inputField = UI.textfield({
+                width = self.width - prefixLen,
+                x = self.x + prefixLen,
+                y = self.y + self.height - 1,
+                bg = bgColor,
+                bgActive = bgColor,
+                fg = fgColor,
+                scene = terminal.scene
+            })
+        end
+        table.insert(self.children, inputField)
+
+        -- Auto-focus the input field
+        UI.focused = inputField
+
+        -- Override onKey to handle Enter and Up/Down arrow for history
+        local originalOnKey = inputField.onKey
+        inputField.onKey = function(field, key)
+            local name = keys.getName(key)
+            if name == "enter" then
+                local text = field.text
+                terminal:append(prefixText .. " " .. text)
+                inputField._visible = false
+                promptLabel._visible = false
+                inputField = nil
+                promptLabel = nil
+                UI.focused = nil
+                if callback then callback(text) end
+                UI.markDirty()
+                return true
+            elseif name == "up" then
+                -- Navigate up in history (older commands)
+                if historyIndex > 1 then
+                    historyIndex = historyIndex - 1
+                    field.text = history[historyIndex] or ""
+                    field.cursorPos = #field.text
+                    field:updateViewOffset()
+                    UI.markDirty()
+                end
+                return true
+            elseif name == "down" then
+                -- Navigate down in history (newer commands)
+                if historyIndex < #history then
+                    historyIndex = historyIndex + 1
+                    field.text = history[historyIndex] or ""
+                    field.cursorPos = #field.text
+                    field:updateViewOffset()
+                    UI.markDirty()
+                elseif historyIndex == #history then
+                    -- Go to empty line after last history item
+                    historyIndex = #history + 1
+                    field.text = ""
+                    field.cursorPos = 0
+                    field:updateViewOffset()
+                    UI.markDirty()
+                end
+                return true
+            else
+                return originalOnKey(field, key)
+            end
+        end
+
+        UI.markDirty()
+    end
+
+    terminal.startSpinner = function(self, label)
+        -- Remove any existing input elements
+        if inputField then inputField._visible = false end
+        if promptLabel then promptLabel._visible = false end
+        if spinnerLabel then spinnerLabel._visible = false end
+
+        -- Create animated spinner label
+        local chars = { "|", "/", "-", "\\" }
+        local i = 1
+        local timer = 0
+
+        spinnerLabel = UI.label({
+            text = chars[i] .. " " .. (label or ""),
+            x = self.x,
+            y = self.y + self.height - 1,
+            fg = spinnerColor,
+            bg = bgColor
+        })
+        self:addChild(spinnerLabel)
+
+        -- Add update function to animate
+        spinnerLabel.update = function(self, dt)
+            timer = timer + dt
+            if timer >= 0.15 then
+                timer = 0
+                i = (i % #chars) + 1
+                self.text = chars[i] .. " " .. (label or "")
+                return true
+            end
+            return false
+        end
+
+        UI.markDirty()
+    end
+
+    terminal.stopSpinner = function(self, finalText)
+        if finalText then
+            terminal:append(finalText)
+        end
+        if spinnerLabel then
+            spinnerLabel._visible = false
+            spinnerLabel = nil
+        end
+        UI.markDirty()
+    end
+
+    -- Handle scroll events
+    terminal.onScroll = function(self, direction, mx, my)
+        scrollOffset = math.max(0, math.min(scrollOffset + direction, #lines - self.height + 1))
+        UI.markDirty()
+        return true
+    end
+
+    -- Handle clicks - delegate to children or set focus
+    terminal.onClick = function(self, mx, my)
+        -- Check if clicking on input field
+        if inputField and inputField._visible ~= false then
+            return inputField:onClick(mx, my)
+        end
+        return true
+    end
+
+    return terminal
+end
+
+-------------------------------------------------
 -- Return the module
 -------------------------------------------------
-return dataDisplay
+return inputs

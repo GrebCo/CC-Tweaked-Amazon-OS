@@ -85,6 +85,24 @@ local function clamp(v,a,b) if v<a then return a elseif v>b then return b end; r
 -- Create terminal element
 function advterm.create(opts)
   opts = opts or {}
+
+  -- Resolve colors from theme roles with manual overrides
+  local UI = opts.ui
+  local fgColor = opts.fg
+  local bgColor = opts.bg
+
+  -- If UI is provided and no manual colors, use theme
+  if UI and not fgColor then
+    fgColor = UI.resolveColor and UI.resolveColor("text", C.white) or C.white
+  end
+  if UI and not bgColor then
+    bgColor = UI.resolveColor and UI.resolveColor("background", C.black) or C.black
+  end
+
+  -- Fallback to default if still not set
+  fgColor = fgColor or C.white
+  bgColor = bgColor or C.black
+
   local self = {
     type = "advterm",
     -- layout (newui will place x,y)
@@ -93,7 +111,7 @@ function advterm.create(opts)
     width = opts.width or 50, height = opts.height or 16,
 
     -- colors & wrapping
-    defaultFG = opts.fg or C.white, defaultBG = opts.bg or C.black,
+    defaultFG = fgColor, defaultBG = bgColor,
     wrap = (opts.wrap ~= false),
 
     -- prompt + input
@@ -150,6 +168,11 @@ function advterm.create(opts)
   function self:newline()
     table.insert(self.lines, {})
     self:_scrollToBottomIfAuto()
+    -- Re-clamp scroll if not in auto mode (content may have shrunk)
+    if not self.autoScroll then
+      local m = self:_maxScroll()
+      self.scroll = math.min(self.scroll, m)
+    end
   end
 
   function self:get(id) return self.idIndex[id] end
