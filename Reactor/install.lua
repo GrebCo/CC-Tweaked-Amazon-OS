@@ -6,7 +6,7 @@ local FILES = {
     "reactor.lua",
     "reactor_config.lua",
     "chatbox_notifications.lua",
-    "README.md"
+    "startup.lua"
 }
 
 -- Main installer
