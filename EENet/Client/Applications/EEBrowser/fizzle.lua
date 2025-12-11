@@ -3,8 +3,7 @@ local fizzleContext
 local log = function() end
 
 local fizzleEvents = {}
-
-local cacheFilePath = "/cache/"
+local cacheFilePath = "/cache/scripts/"
 
 -- sandbox
 local sandbox = {
@@ -42,13 +41,10 @@ local function createSandbox()
     -- Set up metatable to prevent access to global environment
     setmetatable(sandbox, {
         __index = function(t, k)
-            -- First check if it exists in the sandbox itself (rawget to avoid recursion)
             local val = rawget(t, k)
             if val ~= nil then
                 return val
             end
-            -- Only log/block if trying to access something not in sandbox
-            log("[fzzl] Access to '" .. tostring(k) .. "' is not allowed in Fizzle scripts")
             return nil
         end,
         __newindex = function(t, k, v)
@@ -59,28 +55,21 @@ local function createSandbox()
     return sandbox
 end
 
--- Saves the script to a cache file specific to this instance "_websiteName_fizzleCache.lua" and generate a table "vars" "_websiteName_fizzleCookies.lua"
 local function saveScriptToCache()
     if not fizzleContext or not fizzleContext.scripts then
-        log("[fzzl] No fizzleContext or scripts provided")
         return false
     end
 
-    -- Create cache directory if it doesn't exist
     local cacheDir = fs.getDir(cacheFilePath)
     if not fs.exists(cacheDir) then
         fs.makeDir(cacheDir)
     end
 
-    -- Save the script lines to cache
-    local f = fs.open(cacheFilePath, "w")
+    local f = fs.open(cacheFilePath .. "script.lua", "w")
     if not f then
-        log("[fzzl] Could not create cache file: " .. cacheFilePath)
         return false
     end
 
-
-    -- TODO Implement (fizzleContext.scripts is a table of eventName -> {code lines})
     for _, line in ipairs(fizzleContext.scripts) do
         f.writeLine(line)
     end
@@ -88,17 +77,14 @@ local function saveScriptToCache()
     return true
 end
 
--- Helper function to read lines from cache file
 local function getLinesFromCache()
-    if not fs.exists(cacheFilePath) then
-        log("[fzzl] Cache file does not exist: " .. cacheFilePath)
+    if not fs.exists(cacheFilePath .. "script.lua") then
         return {}
     end
 
     local lines = {}
-    local f = fs.open(cacheFilePath, "r")
+    local f = fs.open(cacheFilePath .. "script.lua", "r")
     if not f then
-        log("[fzzl] Could not read cache file: " .. cacheFilePath)
         return {}
     end
 
@@ -112,12 +98,9 @@ local function getLinesFromCache()
     return lines
 end
 
--- TODO [p2] Optimize the for loops
--- Extracts from "local function foo(bar) eventName" returns bool ok
 local function registerEventsFromCache()
     local lines = getLinesFromCache()
     if #lines == 0 then
-        log("[fzzl] No lines found in cache")
         return false
     end
 
@@ -125,25 +108,17 @@ local function registerEventsFromCache()
     local lastEventName = nil
 
     for _, line in ipairs(lines) do
-        -- Detect annotation first
         local eventTag = line:match("@([%w_]+)")
         if eventTag then
             lastEventName = eventTag
-            log("[fzzl] Found event annotation @" .. eventTag)
         end
 
-        -- Detect function declaration right after
-        -- Support multiple declaration styles:
-        --   local function name(...)
-        --   function name(...)
-        --   local name = function(...)
         local funcName = line:match("local%s+function%s+(%w+)%s*%(")
                 or line:match("function%s+(%w+)%s*%(")
                 or line:match("local%s+(%w+)%s*=%s*function%s*%(")
         if funcName and lastEventName then
             events.registerEvent(lastEventName)
-            log(string.format("[fzzl] Registered event '%s' for function '%s'", lastEventName, funcName))
-            lastEventName = nil -- reset for next pair
+            lastEventName = nil
         end
     end
 
@@ -153,126 +128,67 @@ end
 
 
 local function assignFizzleFunctionsToEventsFromCache()
-    local cache_luaPath = fs.getDir(cacheFilePath) .. "/cache_lua/"
-    local cache_LuaFile = cache_luaPath .. "script.lua"
-    fs.makeDir(cache_luaPath)
-
-    local cacheLua_scriptFile = fs.open(cache_LuaFile, "w")
-    if not cacheLua_scriptFile then
-        log("[fzzl] Could not create cache lua file: " .. cache_LuaFile)
-        return false
-    end
-
-    -- Build function→event mapping from annotations
     local functionEventMap = {}
     local lines = getLinesFromCache()
     if #lines == 0 then
-        log("[fzzl] No lines found in cache")
-        cacheLua_scriptFile.close()
         return false
     end
 
-    log("[fzzl] DEBUG: Processing " .. #lines .. " lines from cache")
     local lastEventName = nil
     for i, line in ipairs(lines) do
-        local eventTag = line:match("@([%w_]+)") -- detect annotation
+        local eventTag = line:match("@([%w_]+)")
         if eventTag then
             lastEventName = eventTag
-            cacheLua_scriptFile.writeLine(line)
-            log("[fzzl] DEBUG: Line " .. i .. " - Found event annotation: @" .. eventTag)
         else
-            -- detect several forms of function declaration
-            -- Use simpler, more robust patterns
             local funcName = line:match("local%s+function%s+([%w_]+)%s*%(")
                     or line:match("%s*function%s+([%w_]+)%s*%(")
                     or line:match("local%s+([%w_]+)%s*=%s*function%s*%(")
 
-            if lastEventName then
-                log("[fzzl] DEBUG: Line " .. i .. " (after @" .. lastEventName .. "): '" .. line:sub(1, 50) .. "'")
-                log("[fzzl] DEBUG:   Detected funcName: " .. tostring(funcName))
-            end
-
             if funcName and lastEventName then
                 functionEventMap[funcName] = lastEventName
-                log("[fzzl] DEBUG: Line " ..
-                        i .. " - Mapped function '" .. funcName .. "' to event '" .. lastEventName .. "'")
                 lastEventName = nil
             end
-            cacheLua_scriptFile.writeLine(line)
         end
     end
 
-    log("[fzzl] DEBUG: functionEventMap contains:")
-    for fn, ev in pairs(functionEventMap) do
-        log("[fzzl] DEBUG:   " .. fn .. " => " .. ev)
-    end
-
-    cacheLua_scriptFile.close()
-
-    -- Load the script content from cache
     local scriptContent = table.concat(lines, "\n")
-    log("[fzzl] DEBUG: Script content length: " .. #scriptContent .. " bytes")
-    log("[fzzl] DEBUG: Creating sandbox...")
-
     local sandbox = createSandbox()
-    log("[fzzl] DEBUG: Loading script into sandbox...")
-
     local scriptFunc, err = load(scriptContent, "fizzle_script", "t", sandbox)
 
     if not scriptFunc then
         log("[fzzl] ERROR: Failed to load script: " .. (err or "unknown error"))
-        log("[fzzl] DEBUG: Script content preview (first 200 chars):")
-        log(scriptContent:sub(1, 200))
         return false
     end
 
-    log("[fzzl] DEBUG: Executing script in sandbox...")
     local execSuccess, execErr = pcall(scriptFunc)
     if not execSuccess then
         log("[fzzl] ERROR: Failed to execute script: " .. (execErr or "unknown error"))
         return false
     end
-    log("[fzzl] DEBUG: Script executed successfully")
 
-    -- Register functions
-    log("[fzzl] DEBUG: functionEventMap has " .. tostring(#functionEventMap) .. " entries")
     for funcName, eventName in pairs(functionEventMap) do
-        log("[fzzl] DEBUG: Looking for function '" .. funcName .. "' in sandbox for event '" .. eventName .. "'")
         local func = sandbox[funcName]
-        log("[fzzl] DEBUG: sandbox[" .. funcName .. "] = " .. tostring(func) .. " (type: " .. type(func) .. ")")
 
         if func and type(func) == "function" then
             events.registerFunction(eventName, function(params)
-                log("[fzzl] DEBUG: Executing '" .. funcName .. "' for event '" .. eventName .. "'")
                 local ok, res = pcall(func, params)
                 if not ok then
                     log("[fzzl] ERROR: Exception in event '" .. eventName .. "': " .. tostring(res))
                     return false
                 end
-                log("[fzzl] DEBUG: '" .. funcName .. "' executed successfully, result: " .. tostring(res))
                 return res
             end)
             log("[fzzl] Registered '" .. funcName .. "' for event '" .. eventName .. "'")
         else
-            log("[fzzl] ERROR: function '" .. funcName .. "' not found in sandbox (type was: " .. type(func) .. ")")
-            -- Debug: List all keys in sandbox
-            local keys = {}
-            for k in pairs(sandbox) do
-                if type(sandbox[k]) == "function" then
-                    table.insert(keys, k)
-                end
-            end
-            log("[fzzl] DEBUG: Available functions in sandbox: " .. table.concat(keys, ", "))
+            log("[fzzl] ERROR: function '" .. funcName .. "' not found in sandbox")
         end
     end
 
-    --fs.delete(cache_luaPath)
     return true
 end
 
 
 local function triggerFizzleEvent(eventName, params)
-    print("[fzzl] Triggering event: " .. eventName)
     events.triggerEvent(eventName, params or {})
 end
 
@@ -417,7 +333,7 @@ local function init(contextTable)
     log = (fizzleContext.functions and fizzleContext.functions.log) or function() end
 
     -- setup libraries
-    libraries = dofile("EEBrowser/fizzleLibraries/libraries.lua")
+    libraries = dofile("applications/EEBrowser/fizzleLibraries/libraries.lua")
     libraries(sandbox, fizzleContext)
 
     log("[fzzl] Fizzle initialized!")

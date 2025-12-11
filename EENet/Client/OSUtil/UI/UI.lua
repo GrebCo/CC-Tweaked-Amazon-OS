@@ -4,9 +4,8 @@
 -- Compatible with browser.lua and MiniMark renderer
 
 local ENABLE_LOG = false  -- Set to true for debugging
-local LOG_FILE = "debug.log"
+local LOG_FILE = "applications/EEBrowser/logs/ui_debug.log"
 
--- Debug logging function
 local function debugLog(...)
     if not ENABLE_LOG then return end
     local args = {...}
@@ -18,7 +17,6 @@ local function debugLog(...)
     local timestamp = string.format("[%.3f]", os.clock())
     local line = timestamp .. " " .. msg .. "\n"
 
-    -- Append to file
     local mode = fs.exists(LOG_FILE) and "a" or "w"
     local f = fs.open(LOG_FILE, mode)
     if f then
@@ -26,10 +24,6 @@ local function debugLog(...)
         f.close()
     end
 end
-
--- Clear log at startup
-if fs.exists(LOG_FILE) then fs.delete(LOG_FILE) end
-debugLog("=== UI Framework Debug Log Started ===")
 
 local UI = {
     contextTable = {},
@@ -2241,6 +2235,7 @@ function UI.textfield(opts)
         -- Features
         placeholder = opts.placeholder or "",
         onChange = opts.onChange or nil,
+        onEnter = opts.onEnter or nil,
 
         -- Single-line cursor
         cursorPos = multiline and 0 or #initialText,
@@ -2343,7 +2338,12 @@ function UI.textfield(opts)
                 end
             else
                 -- Single-line mode
-                if name == "backspace" and self.cursorPos > 0 then
+                if name == "enter" then
+                    -- Call onEnter callback if defined
+                    if self.onEnter then
+                        self.onEnter(self)
+                    end
+                elseif name == "backspace" and self.cursorPos > 0 then
                     self.text = self.text:sub(1, self.cursorPos - 1) .. self.text:sub(self.cursorPos + 1)
                     self.cursorPos = self.cursorPos - 1
                     self:updateViewOffset()

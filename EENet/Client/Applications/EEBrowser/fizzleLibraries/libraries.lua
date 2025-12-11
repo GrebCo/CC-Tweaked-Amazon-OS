@@ -1,5 +1,5 @@
-local fizzleLibraryGenerator = dofile("EEBrowser/fizzleLibraries/fizzleNetwork.lua")
-local fizzleDocumentGenerator = dofile("EEBrowser/fizzleLibraries/document.lua")
+local fizzleLibraryGenerator = dofile("applications/EEBrowser/fizzleLibraries/fizzleNetwork.lua")
+local fizzleDocumentGenerator = dofile("applications/EEBrowser/fizzleLibraries/document.lua")
 
 
 

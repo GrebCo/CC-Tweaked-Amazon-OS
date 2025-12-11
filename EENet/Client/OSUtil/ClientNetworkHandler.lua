@@ -2,12 +2,12 @@
 local DNS_PROTOCOL = "DNS"
 
 -- Default file where resolved DNS entries (hostname → ID) are stored
-local CACHE_FILE = "dns_cache.txt"
+local CACHE_FILE = "applications/EEBrowser/cache/dns_cache.txt"
 
 -- Logging and output configuration flags
 local ENABLE_LOG = true         -- If true, logs will be written to a file
 local ENABLE_PRINT = false       -- If true, logs will be printed to the terminal
-local LOG_FILE = "logs/dns_client.log"  -- The file to which logs are written
+local LOG_FILE = "applications/EEBrowser/logs/dns_client.log"  -- The file to which logs are written
 
 local log = function() end  -- default no-op
 ---------------------------------------------------------------------
@@ -240,10 +240,67 @@ function query(target, message, protocol)
     end
 end
 
+---------------------------------------------------------------------
+-- Sends a message using rednet.lookup to find hosts by protocol
+-- If protocol is a number, sends directly to that ID
+-- If protocol is a string, looks up all hosts on that protocol
+-- Returns table with {sent = count, ids = {list of IDs}}
+---------------------------------------------------------------------
+function sendByLookup(protocolOrId, message, messageProtocol)
+    ensureRednet()
+
+    local targetIds = {}
+
+    -- Handle direct numeric ID
+    if type(protocolOrId) == "number" then
+        targetIds = {protocolOrId}
+        log("sendByLookup: Using direct ID " .. protocolOrId)
+
+    -- Handle protocol lookup
+    elseif type(protocolOrId) == "string" then
+        local result = rednet.lookup(protocolOrId)
+
+        -- Handle single ID returned
+        if type(result) == "number" then
+            targetIds = {result}
+            log("sendByLookup: Found single host for protocol '" .. protocolOrId .. "': " .. result)
+
+        -- Handle table of IDs returned
+        elseif type(result) == "table" then
+            targetIds = result
+            log("sendByLookup: Found " .. #targetIds .. " hosts for protocol '" .. protocolOrId .. "'")
+
+        -- No hosts found
+        else
+            log("sendByLookup: No hosts found for protocol '" .. protocolOrId .. "'")
+            return {sent = 0, ids = {}}
+        end
+
+    -- Invalid input
+    else
+        log("sendByLookup failed: Invalid protocolOrId type '" .. type(protocolOrId) .. "'. Expected number or string.")
+        return {sent = 0, ids = {}}
+    end
+
+    -- Send to all target IDs
+    local sentCount = 0
+    local sentIds = {}
+
+    for _, id in ipairs(targetIds) do
+        rednet.send(id, message, messageProtocol or "")
+        log("Sent message to ID " .. id .. " via protocol '" .. (messageProtocol or "") .. "': " .. tostring(message))
+        sentCount = sentCount + 1
+        table.insert(sentIds, id)
+    end
+
+    return {sent = sentCount, ids = sentIds}
+end
+
 local function getSanitized()
     return {
         send = send,
-        query = query
+        query = query,
+        sendByLookup = sendByLookup
     }
 end
 
@@ -258,7 +315,8 @@ return {
     requestNewDNS = requestNewDNS,
     resolveHostname = resolveHostname,
     send = send,
-    query = query
+    query = query,
+    sendByLookup = sendByLookup
 }
 
 

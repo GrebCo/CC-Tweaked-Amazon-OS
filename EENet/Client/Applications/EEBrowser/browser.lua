@@ -1,34 +1,24 @@
 -- Updated: Browser with splash screen
 -- Uses scenes (Splash -> Browser)
 
-local ui = dofile("OSUtil/ui.lua")
-local minimark = dofile("OSUtil/MiniMark.lua")
+local ui = dofile("OSUtil/UI/UI.lua")
+local minimark = dofile("applications/EEBrowser/MiniMark.lua")
 local net = dofile("OSUtil/ClientNetworkHandler.lua")
-local fizzle = dofile("EEBrowser/fizzle.lua")
+local fizzle = dofile("applications/EEBrowser/fizzle.lua")
 
 local protocol = "EENet"
-local cacheDir = "/browser_cache"
+local cacheDir = "applications/EEBrowser/cache"
 
-local ENABLE_LOG = true
-local logger
-if ENABLE_LOG then
-    logger = dofile("/OSUtil/Logger.lua")
-    log = logger.log
-    logQueue = logger.queue
-    logPush = logger.push
-    log("Logger initialized.")
-else
-    log = function() end
-    logQueue = function() end
-    logPush = function() end
-end
+local logger = dofile("/OSUtil/Logger.lua")
+local log = logger.log
+local logQueue = logger.queue
+local logPush = logger.push
 
 -- Context table
 local contextTable = {
-
-    mmElements = {},                                                   -- all active UI / MiniMark elements live here
-    scenes = {},                                                       -- All UI scenes live here
-    functions = { log = log, logQueue = logQueue, logPush = logPush }, -- shared callable functions
+    mmElements = {},
+    scenes = {},
+    functions = { log = log, logQueue = logQueue, logPush = logPush },
     scripts = {},                                                      -- script-defined functions or handlers
     eventTrigger = nil,                                                -- fizzle Events import is introduced in fizzle.lua init()
     events = {},
@@ -44,9 +34,7 @@ fs.makeDir(cacheDir)
 local function getWebsite(url, protocol)
     local baseUrl = url:match("([^/]+)")
     local response = net.query(baseUrl, url, protocol)
-    log("Attempting to get " .. url)
     if not response then
-        log("No response from " .. url)
         return false, "No response from server"
     end
 
@@ -173,17 +161,15 @@ local screenWidth, screenHeight = term.getSize()
 
 
 local mmRenderer = ui.addElement(nil, minimark.createRenderer({
-    path = "EEBrowser/Default.txt",
+    path = "applications/EEBrowser/Default.txt",
     x = 1,
     y = 2,
     height = screenHeight - 2,
     width = 45,
     scene = "Browser", -- Specify which scene to add interactive elements to
     onPageLoaded = function(pagePath)
-        -- Extract and load scripts into Fizzle when page is loaded
         local scripts = minimark.getScripts(pagePath)
         if scripts and #scripts > 0 then
-            log("[Browser] Loading " .. #scripts .. " scripts from " .. pagePath)
             fizzle.renew(scripts)
         end
     end
@@ -233,16 +219,13 @@ local testModify = ui.button({
     position = "bottomRight",
     onclick = function()
         local count = mmRenderer:modifyElementsByID("persistTest", function(elem)
-            -- Change the label/text of the element
             if elem.label then
                 return { label = "Modified at " .. os.clock() }
             elseif elem.text then
                 return { text = "Modified at " .. os.clock() }
             end
         end)
-        log("[Browser] Modified " .. count .. " elements with id='persistTest'")
         statusLabel.text = "Modified " .. count .. " elements"
-        log(mmRenderer:findElementsByID("persistTest")[1].element.text)
     end
 })
 
@@ -253,7 +236,6 @@ local back = ui.button({
     colorPressed = colors.lightBlue,
     position = "topLeft",
     onclick = function()
-        -- TODO: history
     end
 })
 
@@ -324,7 +306,6 @@ ui.checkbox({
     position = "center",
     yOffset = -1,
     onclick = function(e, state)
-        log("Developer mode: " .. tostring(state))
     end
 })
 
@@ -333,7 +314,6 @@ ui.checkbox({
     position = "center",
     yOffset = 1,
     onclick = function(e, state)
-        log("Sound effects: " .. tostring(state))
     end
 })
 
@@ -344,8 +324,8 @@ ui.button({
     bg = colors.red,
     colorPressed = colors.orange,
     onclick = function()
-        fs.delete("/browser_cache")
-        fs.makeDir("/browser_cache")
+        fs.delete("applications/EEBrowser/cache")
+        fs.makeDir("applications/EEBrowser/cache")
         ui.label({ text = "Cache cleared!", position = "bottomCenter", fg = colors.green })
     end
 })
@@ -387,6 +367,6 @@ ui.run({
     fps = 30,
     onTick = function()
         checkIfnewLink()
-        logPush() -- Push queued logs after each frame
+        logPush()
     end
 })

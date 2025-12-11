@@ -1,0 +1,3 @@
+[{"id":1,"protocol":"EENet","hostname":"COWZ"},
+{"id":12,"protocol":"EENet","hostname":"COWS"},
+{"id":12,"protocol":"EENet","hostname":"Debug"}]

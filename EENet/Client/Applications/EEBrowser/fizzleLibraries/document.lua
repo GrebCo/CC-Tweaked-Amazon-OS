@@ -12,8 +12,25 @@ local logger = nil
 --     myElement.text = "New Text"
 -- end
 local function getElementById(id)
-    local element = contextTable.fizzleLibFunctions.mmRenderer:findElementsByID(id)[1].element
-    return element
+    local mmRenderer = contextTable.fizzleLibFunctions.mmRenderer
+
+    -- First check UI elements (textboxes, etc.) for live data
+    -- These have the actual user input in the .text property
+    if mmRenderer._uiElements then
+        for _, uiElem in ipairs(mmRenderer._uiElements) do
+            if uiElem.id == id then
+                return uiElem  -- Returns textfield with .text property containing live input
+            end
+        end
+    end
+
+    -- Fallback to MiniMark elements for non-UI elements (buttons, text, etc.)
+    local results = mmRenderer:findElementsByID(id)
+    if results and results[1] then
+        return results[1].element
+    end
+
+    return nil
 end
 
 local function setElementBodyById(id, text)

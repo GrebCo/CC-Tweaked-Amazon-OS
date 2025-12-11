@@ -4,9 +4,8 @@
 -- Compatible with browser.lua and MiniMark renderer
 
 local ENABLE_LOG = false  -- Set to true for debugging
-local LOG_FILE = "debug.log"
+local LOG_FILE = "applications/EEBrowser/logs/ui_debug.log"
 
--- Debug logging function
 local function debugLog(...)
     if not ENABLE_LOG then return end
     local args = {...}
@@ -18,7 +17,6 @@ local function debugLog(...)
     local timestamp = string.format("[%.3f]", os.clock())
     local line = timestamp .. " " .. msg .. "\n"
 
-    -- Append to file
     local mode = fs.exists(LOG_FILE) and "a" or "w"
     local f = fs.open(LOG_FILE, mode)
     if f then
@@ -26,10 +24,6 @@ local function debugLog(...)
         f.close()
     end
 end
-
--- Clear log at startup
-if fs.exists(LOG_FILE) then fs.delete(LOG_FILE) end
-debugLog("=== UI Framework Debug Log Started ===")
 
 local UI = {
     contextTable = {},

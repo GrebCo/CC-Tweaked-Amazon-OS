@@ -35,7 +35,7 @@ end
 
 -- Immediate logging (original behavior)
 local function log(msg, LOG_FILE)
-    LOG_FILE = LOG_FILE or "logs/log.log"
+    LOG_FILE = LOG_FILE or "applications/EEBrowser/logs/log.log"
 
     -- make sure folder exists
     local dir = fs.getDir(LOG_FILE)
@@ -59,7 +59,7 @@ end
 -- Queue a log message (no I/O, just memory)
 local function queue(msg, LOG_FILE)
     if ENABLE_LOG then
-        LOG_FILE = LOG_FILE or "logs/log.log"
+        LOG_FILE = LOG_FILE or "applications/EEBrowser/logs/log.log"
         local timestamp = os.date("%Y-%m-%d %H:%M:%S")
         table.insert(logQueue, {
             timestamp = timestamp,

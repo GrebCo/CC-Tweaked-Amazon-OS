@@ -685,12 +685,14 @@ local function createRenderer(opts, ui)
                 fg = f.fg or colors.white,
                 bg = f.bg or colors.gray,
                 colorPressed = meta.pressBg or colors.lightGray,
-                onclick = function()
+                visible = true,  -- Use 'visible' instead of '_visible' for new UI
+                onClick = function(elem)
                   if meta.onClick and ui.contextTable.triggerEvent then
                     ui.contextTable.triggerEvent(meta.onClick)
                   end
                 end
               })
+              uiElem.id = meta.id  -- Assign ID for getElementById to work
               uiElem._mmLineIdx = lineIdx  -- Store which physical line this element is on
               uiElem._mmX = fragX          -- Store X position (doesn't change with scroll)
               table.insert(self._uiElements, uiElem)
@@ -705,12 +707,14 @@ local function createRenderer(opts, ui)
                 initial = false,
                 fg = f.fg or colors.white,
                 bg = f.bg or colors.black,
-                onclick = function(elem, checked)
+                visible = true,  -- Use 'visible' instead of '_visible' for new UI
+                onClick = function(elem, checked)
                   if meta.onClick and ui.contextTable.triggerEvent then
                     ui.contextTable.triggerEvent(meta.onClick, checked)
                   end
                 end
               })
+              uiElem.id = meta.id  -- Assign ID for getElementById to work
               uiElem._mmLineIdx = lineIdx
               uiElem._mmX = fragX
               table.insert(self._uiElements, uiElem)
@@ -724,8 +728,15 @@ local function createRenderer(opts, ui)
                 y = self.y + lineIdx,
                 width = f.width or 10,
                 fg = f.fg or colors.white,
-                bg = f.bg or colors.gray
+                bg = f.bg or colors.gray,
+                visible = true,  -- Use 'visible' instead of '_visible' for new UI
+                onEnter = meta.onEnter and function(elem)
+                  if ui.contextTable.triggerEvent then
+                    ui.contextTable.triggerEvent(meta.onEnter, elem.text)
+                  end
+                end or nil
               })
+              uiElem.id = meta.id  -- Assign ID for getElementById to work
               uiElem._mmLineIdx = lineIdx
               uiElem._mmX = fragX
               table.insert(self._uiElements, uiElem)
@@ -745,25 +756,16 @@ local function createRenderer(opts, ui)
       local pathChanged = (self.path ~= self._cachedPath)
 
       if pathChanged or self._needsTokenize then
-        -- Stage 1: Parse file -> logical lines (expensive: 50-100ms)
+        -- Reset scroll position when navigating to a new page
+        if pathChanged then
+          self.scrollOffset = 0
+        end
+
+        -- Stage 1: Parse file -> logical lines
         self._cachedTokens = parsePageToLogicalLines(self.path)
 
-        -- Debug: Dump cached tokens to file
-        local dumpFile = fs.open("minimark_logic_tokens_dump.txt", "w")
-        if dumpFile then
-          dumpFile.write(textutils.serialize(self._cachedTokens))
-          dumpFile.close()
-        end
-
-        -- Stage 2: Layout logical -> physical lines (expensive: 2-5ms)
+        -- Stage 2: Layout logical -> physical lines
         self._cachedPhysicalLines = layoutFromTokens(self._cachedTokens, self.width)
-
-        -- Debug: Dump physical lines to file
-        local dumpFile = fs.open("minimark_phys_tokens_dump.txt", "w")
-        if dumpFile then
-          dumpFile.write(textutils.serialize(self._cachedPhysicalLines))
-          dumpFile.close()
-        end
 
         self._cachedPath = self.path
         self._needsTokenize = false
@@ -776,6 +778,12 @@ local function createRenderer(opts, ui)
 
         -- Create UI elements from physical lines
         self:createUIElementsFromPhysicalLines()
+
+        -- Refresh the active scene to rebuild flattened element list
+        -- This ensures new buttons/checkboxes in the child scene are registered
+        if ui and ui.activeScene then
+          ui.setScene(ui.activeScene)
+        end
 
         -- Call onPageLoaded callback if provided
         if self.onPageLoaded then
@@ -808,8 +816,10 @@ local function createRenderer(opts, ui)
 
         -- Set visibility based on viewport bounds
         local inViewport = (screenY >= self.y and screenY < self.y + self.height)
-        if uiElem._visible ~= inViewport then
-          uiElem._visible = inViewport
+        -- Update both visible and _visible for compatibility with new and old UI
+        if uiElem.visible ~= inViewport then
+          uiElem.visible = inViewport
+          uiElem._visible = inViewport  -- Keep for backward compatibility
           changed = true
         end
       end
@@ -941,6 +951,12 @@ local function createRenderer(opts, ui)
           self:createUIElementsFromPhysicalLines()
         end
 
+        -- Refresh the active scene to rebuild flattened element list
+        -- This ensures modified buttons/checkboxes in the child scene are registered
+        if ui and ui.activeScene then
+          ui.setScene(ui.activeScene)
+        end
+
         if ui then ui.markDirty() end
       end
 
@@ -968,10 +984,21 @@ local function createRenderer(opts, ui)
 end
 
 ----------------------------------------------------------------------
+--- Backward-compatible renderPage (for testing without UI framework)
+----------------------------------------------------------------------
+local function renderPage(path, scroll, startY)
+  local tokens = parsePageToLogicalLines(path)
+  local physicalLines = layoutFromTokens(tokens)
+  local registry, lastY = renderFromPhysicalLines(physicalLines, scroll, startY)
+  return registry, lastY
+end
+
+----------------------------------------------------------------------
 --- Module export
 ----------------------------------------------------------------------
 
 return {
+  renderPage = renderPage,  -- Backward-compatible standalone rendering
   tokenizePage = parsePageToLogicalLines,  -- Export tokenization for caching
   layoutFromTokens = layoutFromTokens,  -- Layout physical lines (expensive, cache this!)
   renderFromPhysicalLines = renderFromPhysicalLines,  -- Fast render from layout cache
