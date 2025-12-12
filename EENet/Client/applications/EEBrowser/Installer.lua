@@ -9,7 +9,7 @@ end
 
 print("Current version: " .. version)
 
-shell.run("wget https://raw.githubusercontent.com/GrebCo/CC-Tweaked-Amazon-OS/refs/heads/dev/Elliot/EENet/Client/Applications/EEBrowser/version.txt applications/EEBrowser/remoteVersion.txt")
+shell.run("wget https://raw.githubusercontent.com/GrebCo/CC-Tweaked-Amazon-OS/refs/heads/dev/Elliot/EENet/Client/applications/EEBrowser/version.txt applications/EEBrowser/remoteVersion.txt")
 
 local file = fs.open("applications/EEBrowser/remoteVersion.txt", "r")
 local remoteVersion = file.readAll()
@@ -56,23 +56,23 @@ if remoteVersion ~= version then
     shell.run("wget https://raw.githubusercontent.com/GrebCo/CC-Tweaked-Amazon-OS/refs/heads/dev/Elliot/EENet/Client/OSUtil/UI/advancedTerminal.lua OSUtil/UI/advancedTerminal.lua")
 
     print("Downloading EEBrowser...")
-    shell.run("wget https://raw.githubusercontent.com/GrebCo/CC-Tweaked-Amazon-OS/refs/heads/dev/Elliot/EENet/Client/Applications/EEBrowser/browser.lua applications/EEBrowser/browser.lua")
-    shell.run("wget https://raw.githubusercontent.com/GrebCo/CC-Tweaked-Amazon-OS/refs/heads/dev/Elliot/EENet/Client/Applications/EEBrowser/Default.txt applications/EEBrowser/Default.txt")
-    shell.run("wget https://raw.githubusercontent.com/GrebCo/CC-Tweaked-Amazon-OS/refs/heads/dev/Elliot/EENet/Client/Applications/EEBrowser/fizzle.lua applications/EEBrowser/fizzle.lua")
-    shell.run("wget https://raw.githubusercontent.com/GrebCo/CC-Tweaked-Amazon-OS/refs/heads/dev/Elliot/EENet/Client/Applications/EEBrowser/MiniMark.lua applications/EEBrowser/MiniMark.lua")
-    shell.run("wget https://raw.githubusercontent.com/GrebCo/CC-Tweaked-Amazon-OS/refs/heads/dev/Elliot/EENet/Client/Applications/EEBrowser/version.txt applications/EEBrowser/version.txt")
+    shell.run("wget https://raw.githubusercontent.com/GrebCo/CC-Tweaked-Amazon-OS/refs/heads/dev/Elliot/EENet/Client/applications/EEBrowser/browser.lua applications/EEBrowser/browser.lua")
+    shell.run("wget https://raw.githubusercontent.com/GrebCo/CC-Tweaked-Amazon-OS/refs/heads/dev/Elliot/EENet/Client/applications/EEBrowser/Default.txt applications/EEBrowser/Default.txt")
+    shell.run("wget https://raw.githubusercontent.com/GrebCo/CC-Tweaked-Amazon-OS/refs/heads/dev/Elliot/EENet/Client/applications/EEBrowser/fizzle.lua applications/EEBrowser/fizzle.lua")
+    shell.run("wget https://raw.githubusercontent.com/GrebCo/CC-Tweaked-Amazon-OS/refs/heads/dev/Elliot/EENet/Client/applications/EEBrowser/MiniMark.lua applications/EEBrowser/MiniMark.lua")
+    shell.run("wget https://raw.githubusercontent.com/GrebCo/CC-Tweaked-Amazon-OS/refs/heads/dev/Elliot/EENet/Client/applications/EEBrowser/version.txt applications/EEBrowser/version.txt")
 
     print("Downloading Fizzle libraries...")
-    shell.run("wget https://raw.githubusercontent.com/GrebCo/CC-Tweaked-Amazon-OS/refs/heads/dev/Elliot/EENet/Client/Applications/EEBrowser/fizzleLibraries/libraries.lua applications/EEBrowser/fizzleLibraries/libraries.lua")
-    shell.run("wget https://raw.githubusercontent.com/GrebCo/CC-Tweaked-Amazon-OS/refs/heads/dev/Elliot/EENet/Client/Applications/EEBrowser/fizzleLibraries/fizzleNetwork.lua applications/EEBrowser/fizzleLibraries/fizzleNetwork.lua")
-    shell.run("wget https://raw.githubusercontent.com/GrebCo/CC-Tweaked-Amazon-OS/refs/heads/dev/Elliot/EENet/Client/Applications/EEBrowser/fizzleLibraries/document.lua applications/EEBrowser/fizzleLibraries/document.lua")
+    shell.run("wget https://raw.githubusercontent.com/GrebCo/CC-Tweaked-Amazon-OS/refs/heads/dev/Elliot/EENet/Client/applications/EEBrowser/fizzleLibraries/libraries.lua applications/EEBrowser/fizzleLibraries/libraries.lua")
+    shell.run("wget https://raw.githubusercontent.com/GrebCo/CC-Tweaked-Amazon-OS/refs/heads/dev/Elliot/EENet/Client/applications/EEBrowser/fizzleLibraries/fizzleNetwork.lua applications/EEBrowser/fizzleLibraries/fizzleNetwork.lua")
+    shell.run("wget https://raw.githubusercontent.com/GrebCo/CC-Tweaked-Amazon-OS/refs/heads/dev/Elliot/EENet/Client/applications/EEBrowser/fizzleLibraries/document.lua applications/EEBrowser/fizzleLibraries/document.lua")
 
     print("Downloading Config files...")
     shell.run("wget https://raw.githubusercontent.com/GrebCo/CC-Tweaked-Amazon-OS/refs/heads/dev/Elliot/EENet/Client/applications/EEBrowser/config/network_config.lua applications/EEBrowser/config/network_config.lua")
 
     print("Downloading installer files...")
-    shell.run("wget https://raw.githubusercontent.com/GrebCo/CC-Tweaked-Amazon-OS/refs/heads/dev/Elliot/EENet/Client/Applications/EEBrowser/Installer.lua applications/EEBrowser/Installer.lua")
-    shell.run("wget https://raw.githubusercontent.com/GrebCo/CC-Tweaked-Amazon-OS/refs/heads/dev/Elliot/EENet/Client/Applications/EEBrowser/update.lua applications/EEBrowser/update.lua")
+    shell.run("wget https://raw.githubusercontent.com/GrebCo/CC-Tweaked-Amazon-OS/refs/heads/dev/Elliot/EENet/Client/applications/EEBrowser/Installer.lua applications/EEBrowser/Installer.lua")
+    shell.run("wget https://raw.githubusercontent.com/GrebCo/CC-Tweaked-Amazon-OS/refs/heads/dev/Elliot/EENet/Client/applications/EEBrowser/update.lua applications/EEBrowser/update.lua")
 
     local newVersion = fs.open("applications/EEBrowser/version.txt", "w")
     newVersion.write(remoteVersion)
