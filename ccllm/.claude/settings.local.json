@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dir /s /b \"C:\\Users\\ellio\\Documents\\GitHub\\CC-Tweaked-Org\\CC-Tweaked-Amazon-OS\\ccllm\\WebBased\")",
+      "Bash(findstr:*)",
+      "Bash(ipconfig:*)",
+      "Bash(python run_orchestrator.py:*)",
+      "Bash(curl:*)",
+      "Bash(ollama list:*)"
+    ]
+  }
+}
