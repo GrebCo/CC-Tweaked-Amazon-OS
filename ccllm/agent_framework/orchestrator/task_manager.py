@@ -56,6 +56,10 @@ class Task:
         self.consecutive_errors = 0
         self.max_consecutive_errors = 3
 
+        # File cache for server-side patching/diff operations
+        # Key: file path (str), Value: file content (str)
+        self.file_cache: dict = {}
+
     def add_to_history(self, entry: dict):
         """Add an entry to the conversation history."""
         self.history.append(entry)

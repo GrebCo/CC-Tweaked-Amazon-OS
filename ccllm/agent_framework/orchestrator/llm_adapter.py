@@ -9,6 +9,7 @@ from typing import Dict, List, Optional, Any
 import httpx
 import json
 import re
+import traceback
 
 
 class LLMAdapter:
@@ -34,7 +35,8 @@ class LLMAdapter:
         self.model = model
         self.temperature = temperature
         self.max_tokens = max_tokens
-        self.client = httpx.AsyncClient(timeout=120.0)
+        # Increase timeout for large contexts and thinking time (10 minutes)
+        self.client = httpx.AsyncClient(timeout=600.0)
 
     async def chat_completion(
         self,
@@ -70,6 +72,10 @@ class LLMAdapter:
 
         # Make request to Ollama
         try:
+            import time
+            start_time = time.time()
+            print(f"[LLM] Waiting for response from {self.model}...")
+
             response = await self.client.post(
                 f"{self.base_url}/api/chat",
                 json={
@@ -82,22 +88,43 @@ class LLMAdapter:
                     }
                 }
             )
+
+            elapsed = time.time() - start_time
+            print(f"[LLM] Response received after {elapsed:.1f} seconds")
+
             response.raise_for_status()
             result = response.json()
 
             # Extract content
             content = result.get("message", {}).get("content", "")
 
+            # Strip thinking tokens if present (qwen3 models output these)
+            import re
+            # Remove <think>...</think> blocks
+            content = re.sub(r'<think>.*?</think>', '', content, flags=re.DOTALL)
+            # Clean up any extra whitespace left behind
+            content = content.strip()
+
             # Parse for tool calls
-            tool_calls = self._parse_tool_calls(content)
+            tool_calls, parse_errors = self._parse_tool_calls(content)
 
             return {
                 "content": content,
-                "tool_calls": tool_calls
+                "tool_calls": tool_calls,
+                "parse_errors": parse_errors
             }
 
+        except httpx.HTTPStatusError as e:
+            print(f"[LLM] HTTP Error calling Ollama: {e.response.status_code} - {e.response.text[:500]}")
+            traceback.print_exc()
+            raise
+        except httpx.TimeoutException as e:
+            print(f"[LLM] Timeout calling Ollama (>120s): {e}")
+            traceback.print_exc()
+            raise
         except Exception as e:
-            print(f"[LLM] Error calling Ollama: {e}")
+            print(f"[LLM] Error calling Ollama: {type(e).__name__}: {str(e)}")
+            traceback.print_exc()
             raise
 
     def _build_tool_prompt(self, tools: List[dict]) -> str:
@@ -113,35 +140,41 @@ class LLMAdapter:
         if not tools:
             return ""
 
-        prompt = "\n\n# CRITICAL INSTRUCTIONS - READ CAREFULLY\n\n"
-        prompt += "You can think through the problem, but you MUST call a tool.\n"
-        prompt += "EVERY response must include a tool call (unless the task is complete).\n\n"
-        prompt += "If the task requires multiple steps, do ONE step at a time. After each tool result, you'll be called again.\n\n"
-        prompt += "## Tool Call Format (ONLY OUTPUT THIS):\n\n"
+        prompt = "\n\n# TOOL USAGE\n\n"
+        prompt += "You can batch multiple tool calls in one response for efficiency.\n"
+        prompt += "Server-side tools (send_status, patch_cached, lua_check_cached) execute immediately.\n"
+        prompt += "CC-side tools (fs_read, fs_write, run_program) send commands and wait.\n\n"
+        prompt += "## Single Tool Call Format:\n\n"
         prompt += "```json\n"
-        prompt += "{\n"
-        prompt += '  "tool": "tool_name",\n'
-        prompt += '  "arguments": {\n'
-        prompt += '    "arg1": "value1"\n'
-        prompt += "  }\n"
-        prompt += "}\n"
+        prompt += '{"tool": "tool_name", "arguments": {"arg1": "value1"}}\n'
         prompt += "```\n\n"
-        prompt += "## Examples:\n\n"
-        prompt += "Task: List files in current directory\n"
-        prompt += "Your response:\n"
+        prompt += "## Multiple Tool Calls (Batched):\n\n"
+        prompt += "Use separate ```json blocks:\n\n"
         prompt += "```json\n"
-        prompt += '{"tool": "fs_list", "arguments": {"path": ""}}\n'
-        prompt += "```\n\n"
-        prompt += "Task: Create hello.lua with print(\"hello\")\n"
-        prompt += "Your response:\n"
+        prompt += '{"tool": "send_status", "arguments": {"message": "Reading file..."}}\n'
+        prompt += "```\n"
         prompt += "```json\n"
-        prompt += '{"tool": "fs_write", "arguments": {"path": "hello.lua", "content": "print(\\"hello\\")"}}\n'
+        prompt += '{"tool": "fs_read", "arguments": {"path": "foo.lua"}}\n'
         prompt += "```\n\n"
-        prompt += "Task: Run hello.lua\n"
-        prompt += "Your response:\n"
+        prompt += "## Edit Workflow Example:\n\n"
+        prompt += "When editing existing code, use this pattern:\n\n"
         prompt += "```json\n"
-        prompt += '{"tool": "run_program", "arguments": {"path": "hello.lua", "args": []}}\n'
+        prompt += '{"tool": "fs_read", "arguments": {"path": "myfile.lua"}}\n'
+        prompt += "```\n"
+        prompt += "```json\n"
+        prompt += '{"tool": "patch_cached", "arguments": {"path": "myfile.lua", "format": "replace_regex", "patch": "old_pattern|||new_replacement"}}\n'
+        prompt += "```\n"
+        prompt += "```json\n"
+        prompt += '{"tool": "lua_check_cached", "arguments": {"path": "myfile.lua"}}\n'
+        prompt += "```\n"
+        prompt += "```json\n"
+        prompt += '{"tool": "fs_write_cached", "arguments": {"path": "myfile.lua"}}\n'
+        prompt += "```\n"
+        prompt += "```json\n"
+        prompt += '{"tool": "run_program", "arguments": {"path": "myfile.lua", "args": []}}\n'
         prompt += "```\n\n"
+        prompt += "This batches: read → patch → syntax check → write → test in one response.\n"
+        prompt += "Server tools run immediately; execution stops at the first CC-side tool.\n\n"
         prompt += "## Available Tools:\n\n"
         for tool in tools:
             prompt += f"**{tool['name']}**: {tool['description']}\n"
@@ -156,7 +189,7 @@ class LLMAdapter:
 
         return prompt
 
-    def _parse_tool_calls(self, content: str) -> List[dict]:
+    def _parse_tool_calls(self, content: str) -> tuple[List[dict], List[str]]:
         """
         Parse tool calls from LLM response content.
 
@@ -172,9 +205,10 @@ class LLMAdapter:
             content: LLM response content
 
         Returns:
-            List of tool call dictionaries
+            Tuple of (tool_calls, parse_errors)
         """
         tool_calls = []
+        parse_errors = []
 
         print(f"[PARSE] Parsing content for tool calls...")
         print(f"[PARSE] Content length: {len(content)} chars")
@@ -198,9 +232,13 @@ class LLMAdapter:
                         "arguments": data.get("arguments", {})
                     })
                 else:
-                    print(f"[PARSE] [X] JSON block missing 'tool' field")
+                    error_msg = f"JSON block {i+1} missing 'tool' field"
+                    print(f"[PARSE] [X] {error_msg}")
+                    parse_errors.append(error_msg)
             except json.JSONDecodeError as e:
-                print(f"[PARSE] [X] Invalid JSON in block {i+1}: {e}")
+                error_msg = f"Invalid JSON in block {i+1}: {str(e)}\nJSON was: {json_str[:200]}"
+                print(f"[PARSE] [X] {error_msg}")
+                parse_errors.append(error_msg)
                 continue
 
         # Try 2: If no code blocks found, try parsing the entire content as JSON
@@ -247,7 +285,7 @@ class LLMAdapter:
             print(content)
             print("-" * 60)
 
-        return tool_calls
+        return tool_calls, parse_errors
 
     def format_tool_result(self, tool_name: str, result: Any, error: Optional[str] = None) -> dict:
         """

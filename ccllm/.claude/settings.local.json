@@ -6,7 +6,10 @@
       "Bash(ipconfig:*)",
       "Bash(python run_orchestrator.py:*)",
       "Bash(curl:*)",
-      "Bash(ollama list:*)"
+      "Bash(ollama list:*)",
+      "Bash(ls:*)",
+      "Bash(ollama pull:*)",
+      "Bash(tasklist:*)"
     ]
   }
 }
