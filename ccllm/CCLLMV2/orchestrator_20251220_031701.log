@@ -1,0 +1,24 @@
+2025-12-20 03:17:01,794 [INFO] ============================================================
+2025-12-20 03:17:01,795 [INFO] CC LLM Agent Orchestrator - Two-Agent Architecture
+2025-12-20 03:17:01,795 [INFO] ============================================================
+2025-12-20 03:17:01,796 [INFO] Architecture: PlannerAgent + ExecutorAgent
+2025-12-20 03:17:01,796 [INFO] Model: qwen2.5-coder:14b
+2025-12-20 03:17:01,797 [INFO] WebSocket endpoint: ws://localhost:8000/ws/{client_id}
+2025-12-20 03:17:01,798 [INFO] Ready to accept connections!
+2025-12-20 03:17:01,798 [INFO] ============================================================
+2025-12-20 16:10:51,678 [INFO] Client 'computer_30' connected
+2025-12-20 16:11:47,847 [INFO] Received from computer_30: create_task
+2025-12-20 16:11:47,851 [INFO] Creating task 1db79e72-8e96-4b7d-942a-0614cbe5a39e for client computer_30
+2025-12-20 16:11:47,851 [INFO] Prompt: Write me a fibbonacci counter program
+2025-12-20 16:11:47,855 [INFO] Starting task 1db79e72-8e96-4b7d-942a-0614cbe5a39e
+2025-12-20 16:13:12,700 [INFO] HTTP Request: POST http://localhost:11434/v1/chat/completions "HTTP/1.1 200 OK"
+2025-12-20 16:13:32,216 [INFO] HTTP Request: POST http://localhost:11434/v1/chat/completions "HTTP/1.1 200 OK"
+2025-12-20 16:13:51,849 [INFO] HTTP Request: POST http://localhost:11434/v1/chat/completions "HTTP/1.1 200 OK"
+2025-12-20 16:14:28,728 [INFO] HTTP Request: POST http://localhost:11434/v1/chat/completions "HTTP/1.1 200 OK"
+2025-12-20 16:14:52,294 [INFO] HTTP Request: POST http://localhost:11434/v1/chat/completions "HTTP/1.1 200 OK"
+2025-12-20 16:15:13,124 [INFO] HTTP Request: POST http://localhost:11434/v1/chat/completions "HTTP/1.1 200 OK"
+2025-12-20 16:16:07,702 [INFO] HTTP Request: POST http://localhost:11434/v1/chat/completions "HTTP/1.1 200 OK"
+2025-12-20 16:16:29,329 [INFO] HTTP Request: POST http://localhost:11434/v1/chat/completions "HTTP/1.1 200 OK"
+2025-12-20 16:16:49,589 [INFO] HTTP Request: POST http://localhost:11434/v1/chat/completions "HTTP/1.1 200 OK"
+2025-12-20 16:17:18,266 [INFO] Client 'computer_30' disconnected
+2025-12-20 16:17:20,401 [INFO] Shutting down orchestrator...

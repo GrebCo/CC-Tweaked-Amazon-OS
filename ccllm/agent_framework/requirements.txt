@@ -3,3 +3,6 @@ uvicorn>=0.24.0
 httpx>=0.25.0
 pydantic>=2.4.0
 websockets>=12.0
+pydantic-ai
+langgraph
+typing-extensions

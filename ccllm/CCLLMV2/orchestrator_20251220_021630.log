@@ -1,0 +1,28 @@
+2025-12-20 02:16:30,762 [INFO] ============================================================
+2025-12-20 02:16:30,763 [INFO] CC LLM Agent Orchestrator - Two-Agent Architecture
+2025-12-20 02:16:30,763 [INFO] ============================================================
+2025-12-20 02:16:30,763 [INFO] Architecture: PlannerAgent + ExecutorAgent
+2025-12-20 02:16:30,763 [INFO] Model: qwen2.5-coder:14b
+2025-12-20 02:16:30,763 [INFO] WebSocket endpoint: ws://localhost:8000/ws/{client_id}
+2025-12-20 02:16:30,763 [INFO] Ready to accept connections!
+2025-12-20 02:16:30,763 [INFO] ============================================================
+2025-12-20 02:16:32,312 [INFO] Client 'computer_30' connected
+2025-12-20 02:16:47,059 [INFO] Received from computer_30: create_task
+2025-12-20 02:16:47,059 [INFO] Creating task dfa98afa-c558-4af9-9b73-c736a6a25a27 for client computer_30
+2025-12-20 02:16:47,059 [INFO] Prompt: make me a hello world script
+2025-12-20 02:16:47,060 [INFO] Starting task dfa98afa-c558-4af9-9b73-c736a6a25a27
+2025-12-20 02:17:06,257 [INFO] HTTP Request: POST http://localhost:11434/v1/chat/completions "HTTP/1.1 200 OK"
+2025-12-20 02:17:17,444 [INFO] HTTP Request: POST http://localhost:11434/v1/chat/completions "HTTP/1.1 200 OK"
+2025-12-20 02:17:27,221 [INFO] HTTP Request: POST http://localhost:11434/v1/chat/completions "HTTP/1.1 200 OK"
+2025-12-20 02:17:37,295 [INFO] HTTP Request: POST http://localhost:11434/v1/chat/completions "HTTP/1.1 200 OK"
+2025-12-20 02:17:44,722 [INFO] HTTP Request: POST http://localhost:11434/v1/chat/completions "HTTP/1.1 200 OK"
+2025-12-20 02:18:02,467 [INFO] HTTP Request: POST http://localhost:11434/v1/chat/completions "HTTP/1.1 200 OK"
+2025-12-20 02:18:02,479 [INFO] Calling write_and_run on computer_30 (call c1f6e8f4-7158-43f7-a30a-db0cad5eb7dd)
+2025-12-20 02:18:02,497 [INFO] Received from computer_30: command_result
+2025-12-20 02:18:02,498 [INFO] Command result for task dfa98afa-c558-4af9-9b73-c736a6a25a27, call c1f6e8f4-7158-43f7-a30a-db0cad5eb7dd: ok=True
+2025-12-20 02:18:02,498 [INFO] Command write_and_run completed successfully
+2025-12-20 02:18:11,477 [INFO] HTTP Request: POST http://localhost:11434/v1/chat/completions "HTTP/1.1 200 OK"
+2025-12-20 02:18:17,677 [INFO] HTTP Request: POST http://localhost:11434/v1/chat/completions "HTTP/1.1 200 OK"
+2025-12-20 02:18:17,694 [INFO] Task dfa98afa-c558-4af9-9b73-c736a6a25a27 completed successfully
+2025-12-20 02:32:49,017 [INFO] Client 'computer_30' disconnected
+2025-12-20 02:32:49,125 [INFO] Shutting down orchestrator...

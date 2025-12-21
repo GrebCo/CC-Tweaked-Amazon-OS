@@ -1,0 +1,71 @@
+2025-12-19 22:55:45,329 [INFO] ============================================================
+2025-12-19 22:55:45,329 [INFO] CC LLM Agent Orchestrator - Two-Agent Architecture
+2025-12-19 22:55:45,330 [INFO] ============================================================
+2025-12-19 22:55:45,332 [INFO] Architecture: PlannerAgent + ExecutorAgent
+2025-12-19 22:55:45,333 [INFO] Model: qwen2.5-coder:14b
+2025-12-19 22:55:45,333 [INFO] WebSocket endpoint: ws://localhost:8000/ws/{client_id}
+2025-12-19 22:55:45,334 [INFO] Ready to accept connections!
+2025-12-19 22:55:45,334 [INFO] ============================================================
+2025-12-19 22:58:09,390 [INFO] Client 'computer_30' connected
+2025-12-19 22:58:21,108 [INFO] Received from computer_30: create_task
+2025-12-19 22:58:21,108 [INFO] Creating task 3edc1879-5eac-483c-8b87-92539f4aa1ab for client computer_30
+2025-12-19 22:58:21,110 [INFO] Prompt: Please fix my todo program, it's at root
+2025-12-19 22:58:21,112 [INFO] Starting task 3edc1879-5eac-483c-8b87-92539f4aa1ab
+2025-12-19 22:58:24,824 [INFO] HTTP Request: POST http://localhost:11434/v1/chat/completions "HTTP/1.1 200 OK"
+2025-12-19 22:58:31,813 [INFO] HTTP Request: POST http://localhost:11434/v1/chat/completions "HTTP/1.1 200 OK"
+2025-12-19 22:58:31,824 [INFO] Calling fs_read on computer_30 (call 17929bc5-d7c3-4b73-9cdc-92bc6ecf9e69)
+2025-12-19 22:58:31,830 [INFO] Received from computer_30: command_result
+2025-12-19 22:58:31,830 [INFO] Command result for task 3edc1879-5eac-483c-8b87-92539f4aa1ab, call 17929bc5-d7c3-4b73-9cdc-92bc6ecf9e69: ok=True
+2025-12-19 22:58:31,830 [INFO] Command fs_read completed successfully
+2025-12-19 23:00:32,404 [INFO] HTTP Request: POST http://localhost:11434/v1/chat/completions "HTTP/1.1 200 OK"
+2025-12-19 23:02:49,781 [INFO] HTTP Request: POST http://localhost:11434/v1/chat/completions "HTTP/1.1 200 OK"
+2025-12-19 23:05:15,695 [INFO] HTTP Request: POST http://localhost:11434/v1/chat/completions "HTTP/1.1 200 OK"
+2025-12-19 23:07:41,391 [INFO] Client 'computer_30' disconnected
+2025-12-19 23:07:41,531 [INFO] HTTP Request: POST http://localhost:11434/v1/chat/completions "HTTP/1.1 200 OK"
+2025-12-19 23:07:41,636 [INFO] Client 'computer_30' connected
+2025-12-19 23:08:05,797 [INFO] Received from computer_30: create_task
+2025-12-19 23:08:05,798 [INFO] Creating task e370e125-bf8b-471e-af27-4aac6192179f for client computer_30
+2025-12-19 23:08:05,800 [INFO] Prompt: Write me a program that returns all strings between two numbers ie primes.lua 50 500
+2025-12-19 23:08:05,809 [INFO] Starting task e370e125-bf8b-471e-af27-4aac6192179f
+2025-12-19 23:09:58,542 [INFO] HTTP Request: POST http://localhost:11434/v1/chat/completions "HTTP/1.1 200 OK"
+2025-12-19 23:09:58,554 [INFO] Calling write_and_run on computer_30 (call 4546962e-dc87-47e4-820c-7c28b79ffd89)
+2025-12-19 23:09:58,579 [INFO] Received from computer_30: command_result
+2025-12-19 23:09:58,579 [INFO] Command result for task 3edc1879-5eac-483c-8b87-92539f4aa1ab, call 4546962e-dc87-47e4-820c-7c28b79ffd89: ok=True
+2025-12-19 23:09:58,581 [INFO] Command write_and_run completed successfully
+2025-12-19 23:10:22,765 [INFO] HTTP Request: POST http://localhost:11434/v1/chat/completions "HTTP/1.1 200 OK"
+2025-12-19 23:12:28,745 [INFO] HTTP Request: POST http://localhost:11434/v1/chat/completions "HTTP/1.1 200 OK"
+2025-12-19 23:12:57,569 [INFO] HTTP Request: POST http://localhost:11434/v1/chat/completions "HTTP/1.1 200 OK"
+2025-12-19 23:12:57,584 [INFO] Calling write_and_run on computer_30 (call 2c8965b5-c4f9-4ceb-9d77-c77b3a15307c)
+2025-12-19 23:12:57,602 [INFO] Received from computer_30: command_result
+2025-12-19 23:12:57,602 [INFO] Command result for task e370e125-bf8b-471e-af27-4aac6192179f, call 2c8965b5-c4f9-4ceb-9d77-c77b3a15307c: ok=True
+2025-12-19 23:12:57,603 [INFO] Command write_and_run completed successfully
+2025-12-19 23:13:09,834 [INFO] HTTP Request: POST http://localhost:11434/v1/chat/completions "HTTP/1.1 200 OK"
+2025-12-19 23:13:17,849 [INFO] HTTP Request: POST http://localhost:11434/v1/chat/completions "HTTP/1.1 200 OK"
+2025-12-19 23:15:35,617 [INFO] HTTP Request: POST http://localhost:11434/v1/chat/completions "HTTP/1.1 200 OK"
+2025-12-19 23:15:40,956 [INFO] HTTP Request: POST http://localhost:11434/v1/chat/completions "HTTP/1.1 200 OK"
+2025-12-19 23:15:40,968 [INFO] Task e370e125-bf8b-471e-af27-4aac6192179f completed successfully
+2025-12-19 23:18:05,628 [INFO] HTTP Request: POST http://localhost:11434/v1/chat/completions "HTTP/1.1 200 OK"
+2025-12-19 23:18:05,644 [INFO] Calling write_and_run on computer_30 (call 87ca6523-6486-4ded-80f0-58ae7ebf79c5)
+2025-12-19 23:18:05,664 [INFO] Received from computer_30: command_result
+2025-12-19 23:18:05,665 [INFO] Command result for task 3edc1879-5eac-483c-8b87-92539f4aa1ab, call 87ca6523-6486-4ded-80f0-58ae7ebf79c5: ok=True
+2025-12-19 23:18:05,666 [INFO] Command write_and_run completed successfully
+2025-12-19 23:20:23,130 [INFO] HTTP Request: POST http://localhost:11434/v1/chat/completions "HTTP/1.1 200 OK"
+2025-12-19 23:20:39,589 [INFO] HTTP Request: POST http://localhost:11434/v1/chat/completions "HTTP/1.1 200 OK"
+2025-12-19 23:20:56,067 [INFO] HTTP Request: POST http://localhost:11434/v1/chat/completions "HTTP/1.1 200 OK"
+2025-12-19 23:21:12,636 [INFO] HTTP Request: POST http://localhost:11434/v1/chat/completions "HTTP/1.1 200 OK"
+2025-12-19 23:23:41,362 [INFO] HTTP Request: POST http://localhost:11434/v1/chat/completions "HTTP/1.1 200 OK"
+2025-12-19 23:23:54,894 [INFO] HTTP Request: POST http://localhost:11434/v1/chat/completions "HTTP/1.1 200 OK"
+2025-12-19 23:25:24,345 [INFO] HTTP Request: POST http://localhost:11434/v1/chat/completions "HTTP/1.1 200 OK"
+2025-12-19 23:27:20,109 [INFO] HTTP Request: POST http://localhost:11434/v1/chat/completions "HTTP/1.1 200 OK"
+2025-12-19 23:29:26,265 [INFO] HTTP Request: POST http://localhost:11434/v1/chat/completions "HTTP/1.1 200 OK"
+2025-12-19 23:30:01,833 [INFO] HTTP Request: POST http://localhost:11434/v1/chat/completions "HTTP/1.1 200 OK"
+2025-12-19 23:30:22,252 [INFO] HTTP Request: POST http://localhost:11434/v1/chat/completions "HTTP/1.1 200 OK"
+2025-12-19 23:32:32,857 [INFO] HTTP Request: POST http://localhost:11434/v1/chat/completions "HTTP/1.1 200 OK"
+2025-12-19 23:32:53,585 [INFO] HTTP Request: POST http://localhost:11434/v1/chat/completions "HTTP/1.1 200 OK"
+2025-12-19 23:35:03,394 [INFO] HTTP Request: POST http://localhost:11434/v1/chat/completions "HTTP/1.1 200 OK"
+2025-12-19 23:35:46,686 [INFO] HTTP Request: POST http://localhost:11434/v1/chat/completions "HTTP/1.1 200 OK"
+2025-12-19 23:36:08,513 [INFO] HTTP Request: POST http://localhost:11434/v1/chat/completions "HTTP/1.1 200 OK"
+2025-12-19 23:38:07,424 [INFO] HTTP Request: POST http://localhost:11434/v1/chat/completions "HTTP/1.1 200 OK"
+2025-12-19 23:38:07,433 [ERROR] Task 3edc1879-5eac-483c-8b87-92539f4aa1ab failed: Task exceeded maximum 20 steps without completing
+2025-12-20 02:06:15,397 [INFO] Client 'computer_30' disconnected
+2025-12-20 02:11:16,709 [INFO] Shutting down orchestrator...

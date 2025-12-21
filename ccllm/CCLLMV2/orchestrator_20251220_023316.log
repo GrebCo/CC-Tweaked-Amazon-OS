@@ -1,0 +1,9 @@
+2025-12-20 02:33:16,469 [INFO] ============================================================
+2025-12-20 02:33:16,469 [INFO] CC LLM Agent Orchestrator - Two-Agent Architecture
+2025-12-20 02:33:16,470 [INFO] ============================================================
+2025-12-20 02:33:16,470 [INFO] Architecture: PlannerAgent + ExecutorAgent
+2025-12-20 02:33:16,470 [INFO] Model: qwen2.5-coder:14b
+2025-12-20 02:33:16,471 [INFO] WebSocket endpoint: ws://localhost:8000/ws/{client_id}
+2025-12-20 02:33:16,472 [INFO] Ready to accept connections!
+2025-12-20 02:33:16,475 [INFO] ============================================================
+2025-12-20 02:34:03,982 [INFO] Shutting down orchestrator...

@@ -19,6 +19,11 @@ from .websocket_manager import WebSocketManager
 from .task_manager import TaskManager, TaskStatus
 from .llm_adapter import LLMAdapter
 from .config import config
+from .agents.planner import build_planner_agent
+from .agents.coder import build_coder_agent
+from .agents.schemas import ExecutorStep
+from .agents.graph import build_agent_graph
+from .agents.runner import AgentRunner
 
 # Set up logging to both file and console
 logging.basicConfig(
@@ -37,12 +42,27 @@ app = FastAPI(title="CC LLM Agent Framework Orchestrator")
 # Initialize managers
 ws_manager = WebSocketManager()
 task_manager = TaskManager()
+
+# Keep legacy LLM adapter for backwards compatibility with tools
 llm_adapter = LLMAdapter(
     base_url=config.llm.base_url,
     model=config.llm.model,
     temperature=config.llm.temperature,
     max_tokens=config.llm.max_tokens
 )
+
+# Initialize Pydantic AI agents (Dual LLM: Qwen planner + Gemma coder)
+planner_agent = build_planner_agent(
+    model_name=config.planner_llm.model,
+    base_url=config.planner_llm.base_url,
+)
+coder_agent = build_coder_agent(
+    model_name=config.coder_llm.model,
+    base_url=config.coder_llm.base_url,
+)
+
+# Agent runner will be initialized after execute_tool_calls is defined
+agent_runner = None
 
 
 # ============================================================================
@@ -175,8 +195,8 @@ async def handle_create_task(message: dict, requesting_client_id: str):
             "status": task.status.value
         })
 
-        # Start processing the task
-        asyncio.create_task(process_task(task.task_id))
+        # Start processing the task with AgentRunner
+        asyncio.create_task(agent_runner.start(task.task_id))
 
     except Exception as e:
         print(f"[TASK] Error creating task: {e}")
@@ -253,20 +273,20 @@ async def handle_command_result(message: dict):
     # Clear pending command
     task_manager.clear_pending_command(task_id)
 
-    # Continue processing the task
-    print(f"[RESULT] Continuing task processing...")
-    asyncio.create_task(process_task(task_id))
+    # Continue processing the task with AgentRunner
+    print(f"[RESULT] Resuming task with AgentRunner...")
+    asyncio.create_task(agent_runner.resume(task_id, {"kind": "command", "result": message}))
 
 
 # ============================================================================
 # Tool Execution - Batching Support
 # ============================================================================
 
-async def execute_tool_calls(task, tool_calls: List[dict]):
+async def execute_tool_calls(task, tool_calls: List[dict]) -> dict:
     """
     Execute a list of tool calls in order, batching server-side tools and stopping at first CC-side tool.
 
-    Server-side/immediate tools (send_status, future: patch_cached, lua_check_cached):
+    Server-side/immediate tools (send_status, patch_cached, lua_check_cached):
       - Execute immediately
       - Add result to history
       - Continue to next tool
@@ -279,6 +299,13 @@ async def execute_tool_calls(task, tool_calls: List[dict]):
     Args:
         task: Task object
         tool_calls: List of tool call dictionaries
+
+    Returns:
+        dict with outcome:
+          {"status": "done"} - all tools completed (server-side only)
+          {"status": "waiting_for_command", "call_id": str, "command": str} - stopped for CC tool
+          {"status": "waiting_for_user"} - stopped for ask_user
+          {"status": "error", "error": str} - error occurred
     """
     print(f"[BATCH] Executing {len(tool_calls)} tool calls...")
 
@@ -308,11 +335,12 @@ async def execute_tool_calls(task, tool_calls: List[dict]):
             print(f"[BATCH] ask_user requires user input, stopping batch...")
             result = await handle_ask_user(task, args)
             if result and not result.get("ok"):
-                # Invalid question - send error and continue task
+                # Invalid question - send error and return error status
                 tool_result = llm_adapter.format_tool_result("ask_user", None, result.get("error"))
                 task.add_to_history(tool_result)
-                asyncio.create_task(process_task(task.task_id))
-            return  # Stop batch execution (either waiting for response or gave error)
+                return {"status": "error", "error": result.get("error")}
+            # Waiting for user response
+            return {"status": "waiting_for_user"}
 
         # Server-side file cache tools
         if command == "patch_cached":
@@ -341,7 +369,12 @@ async def execute_tool_calls(task, tool_calls: List[dict]):
             if result is None:
                 # fs_write_cached sent command to CC, stop batch
                 print(f"[BATCH] fs_write_cached dispatched to CC, stopping batch...")
-                return
+                # The call_id is in the pending_call_id on the task
+                return {
+                    "status": "waiting_for_command",
+                    "call_id": task.pending_call_id,
+                    "command": "fs_write"
+                }
             else:
                 # Error occurred
                 tool_result = llm_adapter.format_tool_result("fs_write_cached", None, result.get("error"))
@@ -369,15 +402,19 @@ async def execute_tool_calls(task, tool_calls: List[dict]):
 
         if success:
             print(f"[TOOL] Command sent successfully, waiting for result...")
+            # STOP batch execution - return waiting status
+            return {
+                "status": "waiting_for_command",
+                "call_id": call_id,
+                "command": command
+            }
         else:
             print(f"[TOOL] ERROR: Failed to send command to client {task.client_id}")
+            return {"status": "error", "error": f"Failed to send command to client {task.client_id}"}
 
-        # STOP batch execution - we must wait for command_result
-        return
-
-    # If we get here, all tools were server-side - continue processing
-    print(f"[BATCH] All {len(tool_calls)} tools completed, continuing task...")
-    asyncio.create_task(process_task(task.task_id))
+    # If we get here, all tools were server-side - return done
+    print(f"[BATCH] All {len(tool_calls)} tools completed")
+    return {"status": "done"}
 
 
 # ============================================================================
@@ -407,9 +444,9 @@ async def handle_send_status(task, args: dict, continue_processing: bool = True)
     tool_result = llm_adapter.format_tool_result("send_status", {"sent": True})
     task.add_to_history(tool_result)
 
-    # Only auto-continue if not in batch mode
-    if continue_processing:
-        asyncio.create_task(process_task(task.task_id))
+    # Note: With LangGraph, the graph manages flow control
+    # The continue_processing parameter is kept for backwards compatibility
+    # but auto-continue is now handled by the graph's act node
 
 
 async def handle_ask_user(task, args: dict):
@@ -798,153 +835,60 @@ async def process_task(task_id: str):
         print(f"[TASK] Available tools: {[t['name'] for t in tools]}")
         print(f"[TASK] Sending {len(task.history)} messages to LLM...")
 
-        # Call LLM
-        print("[LLM] Calling Ollama...")
-        response = await llm_adapter.chat_completion(
-            messages=task.history,
-            tools=tools
-        )
-        print(f"[LLM] Response received ({len(response['content'])} chars)")
-        print(f"[LLM] Response content: {response['content'][:500]}...")
+        # Planner (run once per task)
+        if "plan" not in task.context:
+            print("[PLANNER] Generating task plan...")
+            plan_prompt = (
+                f"Task: {task.prompt}\n\n"
+                f"Available tools: {[t['name'] for t in tools]}\n"
+                "Return a plan."
+            )
+            plan_result = await planner_agent.run(plan_prompt)
+            task.context["plan"] = plan_result.data.model_dump()
+            print(f"[PLANNER] Plan generated: {task.context['plan']['goal']}")
 
-        # Add assistant response to history
+        # Coder tick (generates next ExecutorStep)
+        print("[CODER] Deciding next action...")
+        exec_prompt = (
+            f"Task: {task.prompt}\n\n"
+            f"Plan: {json.dumps(task.context['plan'], indent=2)}\n\n"
+            f"Available tools: {json.dumps(tools)}\n\n"
+            f"Conversation so far: {json.dumps(task.history[-30:], indent=2)}\n\n"
+            "Return the next ExecutorStep."
+        )
+
+        step_result = await coder_agent.run(exec_prompt)
+        decision = step_result.data
+        print(f"[CODER] Decision status: {decision.status}")
+
+        # Add coder's decision to history
         task.add_to_history({
             "role": "assistant",
-            "content": response["content"]
+            "content": json.dumps(decision.model_dump(), indent=2)
         })
 
-        # Check if there are tool calls
-        tool_calls = response.get("tool_calls", [])
-        parse_errors = response.get("parse_errors", [])
-        print(f"[LLM] Tool calls found: {len(tool_calls)}")
-
-        # If there are parse errors, ALWAYS send them back to the LLM
-        if parse_errors:
-            print(f"[PARSE] Sending {len(parse_errors)} parse errors back to LLM")
-            error_msg = "[SYSTEM ERROR] Your response contained JSON formatting errors:\n\n"
-            for i, err in enumerate(parse_errors, 1):
-                error_msg += f"{i}. {err}\n"
-            error_msg += "\nCOMMON MISTAKES:\n"
-            error_msg += "1. Missing content value: {\"content\"}} ← WRONG (no value after content)\n"
-            error_msg += "   Correct: {\"content\":\"print(\\\"Hello\\\")\"} ← RIGHT (has value)\n\n"
-            error_msg += "2. Using equals instead of colon: {\"content\"=\"text\"} ← WRONG\n"
-            error_msg += "   Correct: {\"content\":\"text\"} ← RIGHT\n\n"
-            error_msg += "3. For files with code, you MUST include the full code as a string in the JSON:\n"
-            error_msg += "   {\"tool\":\"fs_write\",\"arguments\":{\"path\":\"file.lua\",\"content\":\"local x = 5\\nprint(x)\"}}\n\n"
-            error_msg += "Please fix these errors and try again. Do NOT run programs that don't exist yet - create them first!"
-
-            task.add_to_history({
-                "role": "user",
-                "content": error_msg
-            })
-
-            # Reset consecutive errors since we're giving feedback
-            task.consecutive_errors = 0
-
-            # Re-process task to let LLM try again
-            asyncio.create_task(process_task(task_id))
-            return
-
-        if not tool_calls:
-            # Check if this is truly a completion or if the model forgot to call tools
-            # A legitimate completion has explanatory text like "I created..." or "The task is complete..."
-            # An illegitimate non-completion has prompting text like "Let's get started" or acknowledgments
-
-            response_lower = response["content"].lower()
-            suspicious_phrases = [
-                "let's get started",
-                "let's begin",
-                "i'll follow",
-                "i understand",
-                "understood!",
-                "i will",
-                "shall we",
-                "ready to",
-                "waiting for"
-            ]
-
-            # Check if response is just giving code examples instead of creating files
-            has_code_block = "```lua" in response["content"] or "```json" in response["content"]
-            has_example_language = any(phrase in response_lower for phrase in [
-                "here's a",
-                "here is a",
-                "simplified version",
-                "example",
-                "you can use",
-                "this code"
-            ])
-
-            is_suspicious = any(phrase in response_lower for phrase in suspicious_phrases)
-            has_completion_markers = any(marker in response_lower for marker in [
-                "created",
-                "completed",
-                "finished",
-                "done",
-                "successfully",
-                "verified",
-                "tested",
-                "working"
-            ])
-
-            # If giving code examples without tool calls, that's wrong
-            is_code_example_without_action = has_code_block and has_example_language and not has_completion_markers
-
-            if (is_suspicious or is_code_example_without_action) and not has_completion_markers and len(task.history) < 8:
-                # This looks like the model acknowledging instructions without doing work
-                print(f"[TASK] Model responded without tool calls but task is not complete!")
-
-                if is_code_example_without_action:
-                    error_msg = "[SYSTEM ERROR] You gave a code example instead of using tools.\n\n"
-                    error_msg += "You wrote code in markdown format but DID NOT call fs_write to create the file.\n\n"
-                    error_msg += "WRONG: Writing ```lua code ``` in your response\n"
-                    error_msg += "RIGHT: Using ```json tool calls ``` to CREATE the file\n\n"
-                    error_msg += "Do this instead:\n"
-                    error_msg += "```json\n"
-                    error_msg += "{\"tool\":\"fs_write\",\"arguments\":{\"path\":\"file.lua\",\"content\":\"<full lua code here>\"}}\n"
-                    error_msg += "```\n"
-                    error_msg += "```json\n"
-                    error_msg += "{\"tool\":\"run_program\",\"arguments\":{\"path\":\"file.lua\",\"args\":[]}}\n"
-                    error_msg += "```\n\n"
-                    error_msg += "You are not a tutor showing examples. You are an ENGINEER who CREATES working files."
-                else:
-                    error_msg = "[SYSTEM ERROR] You responded without calling any tools.\n\n"
-                    error_msg += "Your response was: \"" + response["content"][:200] + "\"\n\n"
-                    error_msg += "This is FORBIDDEN. EVERY response must include at least one tool call in ```json format.\n\n"
-                    error_msg += "The user asked you to complete a task. You must START WORKING IMMEDIATELY by calling tools.\n"
-                    error_msg += "Do NOT acknowledge or explain - just start calling tools to complete the task.\n\n"
-                    error_msg += "Example of what you should do:\n"
-                    error_msg += "```json\n"
-                    error_msg += "{\"tool\":\"fs_write\",\"arguments\":{\"path\":\"file.lua\",\"content\":\"print('hello')\"}}\n"
-                    error_msg += "```\n"
-                    error_msg += "```json\n"
-                    error_msg += "{\"tool\":\"run_program\",\"arguments\":{\"path\":\"file.lua\",\"args\":[]}}\n"
-                    error_msg += "```"
-
-                task.add_to_history({
-                    "role": "user",
-                    "content": error_msg
-                })
-
-                # Re-process task
-                asyncio.create_task(process_task(task_id))
-                return
-
-            # No tool calls - task is complete
-            print(f"[TASK] Task {task_id} complete - no tool calls, sending result to client")
-            task_manager.complete_task(task_id, {
-                "message": response["content"]
-            })
-
-            # Send task_completed message
+        # Handle decision based on status
+        if decision.status == "complete":
+            print(f"[TASK] Task {task_id} complete")
+            task_manager.complete_task(task_id, {"message": decision.final_message})
             await ws_manager.send_to_client(task.client_id, {
                 "type": "task_completed",
                 "task_id": task_id,
-                "result": task.result
+                "result": {"message": decision.final_message}
             })
-            print(f"[TASK] Completion message sent to client {task.client_id}")
+            return
+
+        if decision.status == "need_user":
+            # Convert to ask_user tool call
+            tool_calls = [{"tool": "ask_user", "arguments": {"question": decision.user_question}}]
         else:
-            # Process all tool calls with batch executor
-            await execute_tool_calls(task, tool_calls)
+            # status == "continue"
+            tool_calls = [tc.model_dump() for tc in decision.tool_calls]
+
+        print(f"[CODER] Tool calls to execute: {len(tool_calls)}")
+
+        # Process all tool calls with batch executor
+        await execute_tool_calls(task, tool_calls)
 
     except Exception as e:
         error_msg = f"{type(e).__name__}: {str(e)}"
@@ -962,7 +906,11 @@ async def process_task(task_id: str):
         })
 
 
-async def execute_tool_call(task, tool_call: dict):
+# ============================================================================
+# Legacy Tool Execution (Single Tool - Not Used)
+# ============================================================================
+
+async def execute_tool_call_legacy(task, tool_call: dict):
     """
     Execute a tool call by sending a command_call message to the client.
 
@@ -1093,14 +1041,24 @@ async def get_clients():
 @app.on_event("startup")
 async def startup_event():
     """Run on application startup."""
+    global agent_runner
+
     print("=" * 60)
     print("[STARTUP] CC LLM Agent Framework Orchestrator")
     print("=" * 60)
-    print(f"[STARTUP] LLM Model: {config.llm.model}")
+    print(f"[STARTUP] Planner Model: {config.planner_llm.model}")
+    print(f"[STARTUP] Coder Model: {config.coder_llm.model}")
     print(f"[STARTUP] LLM Base URL: {config.llm.base_url}")
     print(f"[STARTUP] Temperature: {config.llm.temperature}")
     print(f"[STARTUP] Max Tokens: {config.llm.max_tokens}")
     print(f"[STARTUP] Available Task Kinds: {list(config.task_kinds.keys())}")
+
+    # Initialize LangGraph and AgentRunner
+    print("[STARTUP] Building LangGraph...")
+    agent_graph = build_agent_graph(task_manager, ws_manager, config, execute_tool_calls)
+    agent_runner = AgentRunner(agent_graph)
+    print("[STARTUP] AgentRunner initialized")
+
     print("[STARTUP] Ready to accept connections!")
     print("=" * 60)
 
