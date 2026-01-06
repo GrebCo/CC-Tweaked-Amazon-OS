@@ -1,0 +1,2061 @@
+[
+  {
+    "reagent": {
+      "item": "ars_nouveau:alakarkinos_token"
+    },
+    "result": "ars_nouveau:alakarkinos_charm",
+    "count": 1,
+    "pedestal_items": [
+      {
+        "item": "minecraft:brush"
+      },
+      {
+        "tag": "minecraft:decorated_pot_sherds"
+      },
+      {
+        "tag": "minecraft:decorated_pot_sherds"
+      },
+      {
+        "tag": "minecraft:decorated_pot_sherds"
+      }
+    ],
+    "source_cost": 0,
+    "keep_nbt": false
+  },
+  {
+    "reagent": {
+      "item": "minecraft:golden_helmet"
+    },
+    "result": "ars_nouveau:alchemists_crown",
+    "count": 1,
+    "pedestal_items": [
+      {
+        "item": "minecraft:glass_bottle"
+      },
+      {
+        "item": "minecraft:glass_bottle"
+      },
+      {
+        "item": "minecraft:glass_bottle"
+      }
+    ],
+    "source_cost": 0,
+    "keep_nbt": false
+  },
+  {
+    "reagent": {
+      "item": "ars_nouveau:dull_trinket"
+    },
+    "result": "ars_nouveau:amulet_of_mana_boost",
+    "count": 1,
+    "pedestal_items": [
+      {
+        "tag": "c:gems/diamond"
+      },
+      {
+        "tag": "c:gems/diamond"
+      },
+      {
+        "tag": "c:gems/diamond"
+      },
+      {
+        "tag": "c:gems/source"
+      },
+      {
+        "tag": "c:gems/source"
+      },
+      {
+        "tag": "c:gems/source"
+      },
+      {
+        "tag": "c:gems/source"
+      },
+      {
+        "tag": "c:gems/source"
+      }
+    ],
+    "source_cost": 0,
+    "keep_nbt": false
+  },
+  {
+    "reagent": {
+      "item": "ars_nouveau:dull_trinket"
+    },
+    "result": "ars_nouveau:amulet_of_mana_regen",
+    "count": 1,
+    "pedestal_items": [
+      {
+        "tag": "c:gems/diamond"
+      },
+      {
+        "tag": "c:gems/diamond"
+      },
+      {
+        "tag": "c:ingots/gold"
+      },
+      {
+        "tag": "c:ingots/gold"
+      },
+      {
+        "tag": "c:gems/source"
+      },
+      {
+        "tag": "c:gems/source"
+      },
+      {
+        "tag": "c:gems/source"
+      },
+      {
+        "tag": "c:gems/source"
+      }
+    ],
+    "source_cost": 0,
+    "keep_nbt": false
+  },
+  {
+    "reagent": {
+      "item": "minecraft:iron_boots"
+    },
+    "result": "ars_nouveau:arcanist_boots",
+    "count": 1,
+    "pedestal_items": [
+      {
+        "item": "ars_nouveau:magebloom_fiber"
+      },
+      {
+        "item": "ars_nouveau:magebloom_fiber"
+      },
+      {
+        "item": "ars_nouveau:magebloom_fiber"
+      },
+      {
+        "item": "ars_nouveau:magebloom_fiber"
+      }
+    ],
+    "source_cost": 0,
+    "keep_nbt": true
+  },
+  {
+    "reagent": {
+      "item": "minecraft:iron_helmet"
+    },
+    "result": "ars_nouveau:arcanist_hood",
+    "count": 1,
+    "pedestal_items": [
+      {
+        "item": "ars_nouveau:magebloom_fiber"
+      },
+      {
+        "item": "ars_nouveau:magebloom_fiber"
+      },
+      {
+        "item": "ars_nouveau:magebloom_fiber"
+      },
+      {
+        "item": "ars_nouveau:magebloom_fiber"
+      }
+    ],
+    "source_cost": 0,
+    "keep_nbt": true
+  },
+  {
+    "reagent": {
+      "item": "minecraft:iron_leggings"
+    },
+    "result": "ars_nouveau:arcanist_leggings",
+    "count": 1,
+    "pedestal_items": [
+      {
+        "item": "ars_nouveau:magebloom_fiber"
+      },
+      {
+        "item": "ars_nouveau:magebloom_fiber"
+      },
+      {
+        "item": "ars_nouveau:magebloom_fiber"
+      },
+      {
+        "item": "ars_nouveau:magebloom_fiber"
+      }
+    ],
+    "source_cost": 0,
+    "keep_nbt": true
+  },
+  {
+    "reagent": {
+      "item": "minecraft:iron_chestplate"
+    },
+    "result": "ars_nouveau:arcanist_robes",
+    "count": 1,
+    "pedestal_items": [
+      {
+        "item": "ars_nouveau:magebloom_fiber"
+      },
+      {
+        "item": "ars_nouveau:magebloom_fiber"
+      },
+      {
+        "item": "ars_nouveau:magebloom_fiber"
+      },
+      {
+        "item": "ars_nouveau:magebloom_fiber"
+      }
+    ],
+    "source_cost": 0,
+    "keep_nbt": true
+  },
+  {
+    "reagent": {
+      "item": "minecraft:diamond_boots"
+    },
+    "result": "ars_nouveau:battlemage_boots",
+    "count": 1,
+    "pedestal_items": [
+      {
+        "item": "ars_nouveau:magebloom_fiber"
+      },
+      {
+        "item": "ars_nouveau:magebloom_fiber"
+      },
+      {
+        "item": "ars_nouveau:magebloom_fiber"
+      },
+      {
+        "item": "ars_nouveau:magebloom_fiber"
+      }
+    ],
+    "source_cost": 0,
+    "keep_nbt": true
+  },
+  {
+    "reagent": {
+      "item": "minecraft:diamond_helmet"
+    },
+    "result": "ars_nouveau:battlemage_hood",
+    "count": 1,
+    "pedestal_items": [
+      {
+        "item": "ars_nouveau:magebloom_fiber"
+      },
+      {
+        "item": "ars_nouveau:magebloom_fiber"
+      },
+      {
+        "item": "ars_nouveau:magebloom_fiber"
+      },
+      {
+        "item": "ars_nouveau:magebloom_fiber"
+      }
+    ],
+    "source_cost": 0,
+    "keep_nbt": true
+  },
+  {
+    "reagent": {
+      "item": "minecraft:diamond_leggings"
+    },
+    "result": "ars_nouveau:battlemage_leggings",
+    "count": 1,
+    "pedestal_items": [
+      {
+        "item": "ars_nouveau:magebloom_fiber"
+      },
+      {
+        "item": "ars_nouveau:magebloom_fiber"
+      },
+      {
+        "item": "ars_nouveau:magebloom_fiber"
+      },
+      {
+        "item": "ars_nouveau:magebloom_fiber"
+      }
+    ],
+    "source_cost": 0,
+    "keep_nbt": true
+  },
+  {
+    "reagent": {
+      "item": "minecraft:diamond_chestplate"
+    },
+    "result": "ars_nouveau:battlemage_robes",
+    "count": 1,
+    "pedestal_items": [
+      {
+        "item": "ars_nouveau:magebloom_fiber"
+      },
+      {
+        "item": "ars_nouveau:magebloom_fiber"
+      },
+      {
+        "item": "ars_nouveau:magebloom_fiber"
+      },
+      {
+        "item": "ars_nouveau:magebloom_fiber"
+      }
+    ],
+    "source_cost": 0,
+    "keep_nbt": true
+  },
+  {
+    "reagent": {
+      "item": "ars_nouveau:mundane_belt"
+    },
+    "result": "ars_nouveau:belt_of_levitation",
+    "count": 1,
+    "pedestal_items": [
+      {
+        "tag": "c:ingots/gold"
+      },
+      {
+        "tag": "c:ingots/gold"
+      },
+      {
+        "tag": "c:ingots/gold"
+      },
+      {
+        "tag": "c:ingots/gold"
+      },
+      {
+        "item": "minecraft:feather"
+      },
+      {
+        "item": "minecraft:feather"
+      },
+      {
+        "item": "minecraft:feather"
+      },
+      {
+        "item": "ars_nouveau:air_essence"
+      }
+    ],
+    "source_cost": 0,
+    "keep_nbt": false
+  },
+  {
+    "reagent": {
+      "item": "ars_nouveau:mundane_belt"
+    },
+    "result": "ars_nouveau:belt_of_unstable_gifts",
+    "count": 1,
+    "pedestal_items": [
+      {
+        "item": "minecraft:sugar"
+      },
+      {
+        "tag": "c:crops/nether_wart"
+      },
+      {
+        "tag": "c:rods/blaze"
+      },
+      {
+        "tag": "c:dusts/glowstone"
+      },
+      {
+        "item": "minecraft:fermented_spider_eye"
+      },
+      {
+        "tag": "c:dusts/redstone"
+      },
+      {
+        "item": "minecraft:brewing_stand"
+      },
+      {
+        "tag": "c:feathers"
+      }
+    ],
+    "source_cost": 0,
+    "keep_nbt": false
+  },
+  {
+    "reagent": {
+      "item": "ars_nouveau:ritual_brazier"
+    },
+    "result": "ars_nouveau:brazier_relay",
+    "count": 1,
+    "pedestal_items": [
+      {
+        "item": "ars_nouveau:manipulation_essence"
+      },
+      {
+        "item": "ars_nouveau:manipulation_essence"
+      },
+      {
+        "item": "ars_nouveau:manipulation_essence"
+      }
+    ],
+    "source_cost": 0,
+    "keep_nbt": false
+  },
+  {
+    "reagent": {
+      "item": "minecraft:spore_blossom"
+    },
+    "result": "ars_nouveau:decor_blossom",
+    "count": 1,
+    "pedestal_items": [
+      {
+        "item": "ars_nouveau:conjuration_essence"
+      }
+    ],
+    "source_cost": 0,
+    "keep_nbt": false
+  },
+  {
+    "reagent": {
+      "item": "minecraft:stick"
+    },
+    "result": "ars_nouveau:dominion_wand",
+    "count": 1,
+    "pedestal_items": [
+      {
+        "tag": "c:gems/source"
+      },
+      {
+        "tag": "c:gems/source"
+      },
+      {
+        "tag": "c:ingots/gold"
+      }
+    ],
+    "source_cost": 0,
+    "keep_nbt": false
+  },
+  {
+    "reagent": {
+      "item": "ars_nouveau:drygmy_shard"
+    },
+    "result": "ars_nouveau:drygmy_charm",
+    "count": 1,
+    "pedestal_items": [
+      {
+        "tag": "minecraft:fishes"
+      },
+      {
+        "item": "minecraft:wheat"
+      },
+      {
+        "item": "minecraft:apple"
+      },
+      {
+        "item": "minecraft:carrot"
+      },
+      {
+        "tag": "c:seeds"
+      },
+      {
+        "tag": "c:gems/source"
+      },
+      {
+        "tag": "c:gems/source"
+      },
+      {
+        "tag": "c:gems/source"
+      }
+    ],
+    "source_cost": 0,
+    "keep_nbt": false
+  },
+  {
+    "reagent": {
+      "item": "ars_nouveau:scryers_crystal"
+    },
+    "result": "ars_nouveau:enchanters_eye",
+    "count": 1,
+    "pedestal_items": [
+      {
+        "item": "minecraft:blaze_powder"
+      },
+      {
+        "item": "minecraft:blaze_powder"
+      },
+      {
+        "item": "minecraft:blaze_powder"
+      },
+      {
+        "item": "minecraft:blaze_powder"
+      },
+      {
+        "tag": "c:ender_pearls"
+      },
+      {
+        "tag": "c:ender_pearls"
+      },
+      {
+        "tag": "c:ender_pearls"
+      },
+      {
+        "tag": "c:ender_pearls"
+      }
+    ],
+    "source_cost": 0,
+    "keep_nbt": true
+  },
+  {
+    "reagent": {
+      "item": "minecraft:fishing_rod"
+    },
+    "result": "ars_nouveau:enchanters_fishing_rod",
+    "count": 1,
+    "pedestal_items": [
+      {
+        "tag": "c:storage_blocks/gold"
+      },
+      {
+        "tag": "c:storage_blocks/gold"
+      },
+      {
+        "tag": "c:storage_blocks/source"
+      },
+      {
+        "tag": "c:storage_blocks/source"
+      }
+    ],
+    "source_cost": 0,
+    "keep_nbt": true
+  },
+  {
+    "reagent": {
+      "tag": "c:leathers"
+    },
+    "result": "ars_nouveau:enchanters_gauntlet",
+    "count": 1,
+    "pedestal_items": [
+      {
+        "tag": "c:gems/diamond"
+      },
+      {
+        "tag": "c:storage_blocks/gold"
+      },
+      {
+        "tag": "c:storage_blocks/gold"
+      },
+      {
+        "tag": "c:storage_blocks/source"
+      },
+      {
+        "tag": "c:storage_blocks/source"
+      }
+    ],
+    "source_cost": 0,
+    "keep_nbt": true
+  },
+  {
+    "reagent": {
+      "tag": "c:storage_blocks/source"
+    },
+    "result": "ars_nouveau:enchanters_mirror",
+    "count": 1,
+    "pedestal_items": [
+      {
+        "tag": "c:glass_blocks"
+      },
+      {
+        "tag": "c:glass_blocks"
+      },
+      {
+        "item": "ars_nouveau:manipulation_essence"
+      },
+      {
+        "item": "ars_nouveau:manipulation_essence"
+      },
+      {
+        "tag": "c:logs/archwood"
+      },
+      {
+        "tag": "c:logs/archwood"
+      },
+      {
+        "tag": "c:ingots/gold"
+      },
+      {
+        "tag": "c:ingots/gold"
+      }
+    ],
+    "source_cost": 0,
+    "keep_nbt": false
+  },
+  {
+    "reagent": {
+      "item": "minecraft:shield"
+    },
+    "result": "ars_nouveau:enchanters_shield",
+    "count": 1,
+    "pedestal_items": [
+      {
+        "tag": "c:storage_blocks/gold"
+      },
+      {
+        "tag": "c:storage_blocks/gold"
+      },
+      {
+        "tag": "c:storage_blocks/source"
+      },
+      {
+        "tag": "c:storage_blocks/source"
+      }
+    ],
+    "source_cost": 0,
+    "keep_nbt": true
+  },
+  {
+    "reagent": {
+      "item": "minecraft:diamond_sword"
+    },
+    "result": "ars_nouveau:enchanters_sword",
+    "count": 1,
+    "pedestal_items": [
+      {
+        "tag": "c:gems/diamond"
+      },
+      {
+        "tag": "c:storage_blocks/gold"
+      },
+      {
+        "tag": "c:storage_blocks/gold"
+      },
+      {
+        "tag": "c:storage_blocks/source"
+      },
+      {
+        "tag": "c:storage_blocks/source"
+      }
+    ],
+    "source_cost": 0,
+    "keep_nbt": true
+  },
+  {
+    "reagent": {
+      "item": "minecraft:glass_bottle"
+    },
+    "result": "ars_nouveau:jar_of_light",
+    "count": 1,
+    "pedestal_items": [
+      {
+        "item": "minecraft:glowstone"
+      },
+      {
+        "item": "minecraft:glowstone"
+      },
+      {
+        "item": "minecraft:glowstone"
+      },
+      {
+        "item": "minecraft:glowstone"
+      },
+      {
+        "item": "minecraft:redstone_lamp"
+      },
+      {
+        "item": "minecraft:redstone_lamp"
+      },
+      {
+        "tag": "c:glass_blocks"
+      },
+      {
+        "tag": "c:glass_blocks"
+      }
+    ],
+    "source_cost": 0,
+    "keep_nbt": false
+  },
+  {
+    "reagent": {
+      "item": "ars_nouveau:ring_of_potential"
+    },
+    "result": "ars_nouveau:jump_ring",
+    "count": 1,
+    "pedestal_items": [
+      {
+        "item": "ars_nouveau:wilden_wing"
+      },
+      {
+        "item": "ars_nouveau:wilden_wing"
+      },
+      {
+        "item": "ars_nouveau:wilden_wing"
+      },
+      {
+        "item": "ars_nouveau:air_essence"
+      }
+    ],
+    "source_cost": 0,
+    "keep_nbt": false
+  },
+  {
+    "reagent": {
+      "item": "ars_nouveau:splash_flask_cannon"
+    },
+    "result": "ars_nouveau:lingering_flask_cannon",
+    "count": 1,
+    "pedestal_items": [
+      {
+        "item": "minecraft:dragon_breath"
+      },
+      {
+        "item": "ars_nouveau:air_essence"
+      },
+      {
+        "item": "ars_nouveau:air_essence"
+      }
+    ],
+    "source_cost": 0,
+    "keep_nbt": false
+  },
+  {
+    "reagent": {
+      "tag": "c:seeds"
+    },
+    "result": "ars_nouveau:magebloom_crop",
+    "count": 1,
+    "pedestal_items": [
+      {
+        "tag": "c:gems/source"
+      },
+      {
+        "tag": "c:gems/source"
+      },
+      {
+        "tag": "c:gems/source"
+      },
+      {
+        "tag": "c:gems/source"
+      }
+    ],
+    "source_cost": 0,
+    "keep_nbt": false
+  },
+  {
+    "reagent": {
+      "item": "minecraft:campfire"
+    },
+    "result": "ars_nouveau:potion_diffuser",
+    "count": 1,
+    "pedestal_items": [
+      {
+        "tag": "c:ingots/gold"
+      },
+      {
+        "tag": "c:ingots/gold"
+      },
+      {
+        "tag": "c:ingots/gold"
+      },
+      {
+        "item": "ars_nouveau:archwood_planks"
+      },
+      {
+        "item": "ars_nouveau:archwood_planks"
+      },
+      {
+        "item": "ars_nouveau:archwood_planks"
+      }
+    ],
+    "source_cost": 0,
+    "keep_nbt": false
+  },
+  {
+    "reagent": {
+      "item": "minecraft:glass_bottle"
+    },
+    "result": "ars_nouveau:potion_flask",
+    "count": 1,
+    "pedestal_items": [
+      {
+        "item": "ars_nouveau:abjuration_essence"
+      },
+      {
+        "item": "ars_nouveau:abjuration_essence"
+      },
+      {
+        "tag": "c:storage_blocks/source"
+      },
+      {
+        "tag": "c:storage_blocks/gold"
+      }
+    ],
+    "source_cost": 0,
+    "keep_nbt": false
+  },
+  {
+    "reagent": {
+      "item": "ars_nouveau:potion_flask"
+    },
+    "result": "ars_nouveau:potion_flask_amplify",
+    "count": 1,
+    "pedestal_items": [
+      {
+        "item": "ars_nouveau:abjuration_essence"
+      },
+      {
+        "item": "ars_nouveau:abjuration_essence"
+      },
+      {
+        "item": "ars_nouveau:abjuration_essence"
+      },
+      {
+        "item": "ars_nouveau:abjuration_essence"
+      },
+      {
+        "item": "ars_nouveau:abjuration_essence"
+      },
+      {
+        "item": "ars_nouveau:abjuration_essence"
+      },
+      {
+        "item": "ars_nouveau:abjuration_essence"
+      },
+      {
+        "item": "ars_nouveau:abjuration_essence"
+      }
+    ],
+    "source_cost": 0,
+    "keep_nbt": false
+  },
+  {
+    "reagent": {
+      "item": "ars_nouveau:potion_flask"
+    },
+    "result": "ars_nouveau:potion_flask_extend_time",
+    "count": 1,
+    "pedestal_items": [
+      {
+        "item": "ars_nouveau:manipulation_essence"
+      },
+      {
+        "item": "ars_nouveau:manipulation_essence"
+      },
+      {
+        "item": "ars_nouveau:manipulation_essence"
+      },
+      {
+        "item": "ars_nouveau:manipulation_essence"
+      },
+      {
+        "item": "ars_nouveau:manipulation_essence"
+      },
+      {
+        "item": "ars_nouveau:manipulation_essence"
+      },
+      {
+        "item": "ars_nouveau:manipulation_essence"
+      },
+      {
+        "item": "ars_nouveau:manipulation_essence"
+      }
+    ],
+    "source_cost": 0,
+    "keep_nbt": false
+  },
+  {
+    "reagent": {
+      "item": "ars_nouveau:potion_jar"
+    },
+    "result": "ars_nouveau:potion_melder",
+    "count": 1,
+    "pedestal_items": [
+      {
+        "item": "ars_nouveau:abjuration_essence"
+      },
+      {
+        "item": "ars_nouveau:abjuration_essence"
+      },
+      {
+        "tag": "c:storage_blocks/gold"
+      },
+      {
+        "tag": "c:storage_blocks/gold"
+      },
+      {
+        "tag": "c:rods/blaze"
+      },
+      {
+        "tag": "c:rods/blaze"
+      },
+      {
+        "tag": "c:rods/blaze"
+      },
+      {
+        "tag": "c:rods/blaze"
+      }
+    ],
+    "source_cost": 0,
+    "keep_nbt": false
+  },
+  {
+    "reagent": {
+      "item": "ars_nouveau:relay"
+    },
+    "result": "ars_nouveau:relay_collector",
+    "count": 1,
+    "pedestal_items": [
+      {
+        "tag": "c:chests"
+      },
+      {
+        "tag": "c:chests"
+      },
+      {
+        "tag": "c:chests"
+      },
+      {
+        "tag": "c:chests"
+      }
+    ],
+    "source_cost": 0,
+    "keep_nbt": false
+  },
+  {
+    "reagent": {
+      "item": "ars_nouveau:relay"
+    },
+    "result": "ars_nouveau:relay_deposit",
+    "count": 1,
+    "pedestal_items": [
+      {
+        "item": "minecraft:hopper"
+      },
+      {
+        "item": "minecraft:hopper"
+      },
+      {
+        "item": "minecraft:hopper"
+      },
+      {
+        "item": "minecraft:hopper"
+      }
+    ],
+    "source_cost": 0,
+    "keep_nbt": false
+  },
+  {
+    "reagent": {
+      "item": "ars_nouveau:relay"
+    },
+    "result": "ars_nouveau:relay_splitter",
+    "count": 1,
+    "pedestal_items": [
+      {
+        "tag": "c:gems/quartz"
+      },
+      {
+        "tag": "c:gems/quartz"
+      },
+      {
+        "tag": "c:gems/quartz"
+      },
+      {
+        "tag": "c:gems/quartz"
+      },
+      {
+        "tag": "c:gems/lapis"
+      },
+      {
+        "tag": "c:gems/lapis"
+      },
+      {
+        "tag": "c:gems/lapis"
+      },
+      {
+        "tag": "c:gems/lapis"
+      }
+    ],
+    "source_cost": 0,
+    "keep_nbt": false
+  },
+  {
+    "reagent": {
+      "item": "ars_nouveau:relay"
+    },
+    "result": "ars_nouveau:relay_warp",
+    "count": 1,
+    "pedestal_items": [
+      {
+        "tag": "c:ender_pearls"
+      },
+      {
+        "tag": "c:ender_pearls"
+      },
+      {
+        "tag": "c:ender_pearls"
+      },
+      {
+        "tag": "c:ender_pearls"
+      },
+      {
+        "item": "minecraft:popped_chorus_fruit"
+      },
+      {
+        "item": "minecraft:popped_chorus_fruit"
+      },
+      {
+        "item": "minecraft:popped_chorus_fruit"
+      },
+      {
+        "item": "minecraft:popped_chorus_fruit"
+      }
+    ],
+    "source_cost": 0,
+    "keep_nbt": false
+  },
+  {
+    "reagent": {
+      "item": "ars_nouveau:ring_of_lesser_discount"
+    },
+    "result": "ars_nouveau:ring_of_greater_discount",
+    "count": 1,
+    "pedestal_items": [
+      {
+        "tag": "c:gems/diamond"
+      },
+      {
+        "tag": "c:gems/diamond"
+      },
+      {
+        "tag": "c:gems/diamond"
+      },
+      {
+        "tag": "c:gems/diamond"
+      },
+      {
+        "tag": "c:rods/blaze"
+      },
+      {
+        "tag": "c:rods/blaze"
+      },
+      {
+        "tag": "c:gems/source"
+      },
+      {
+        "tag": "c:gems/source"
+      }
+    ],
+    "source_cost": 0,
+    "keep_nbt": false
+  },
+  {
+    "reagent": {
+      "item": "ars_nouveau:ring_of_potential"
+    },
+    "result": "ars_nouveau:ring_of_lesser_discount",
+    "count": 1,
+    "pedestal_items": [
+      {
+        "tag": "c:gems/diamond"
+      },
+      {
+        "tag": "c:gems/diamond"
+      },
+      {
+        "tag": "c:gems/diamond"
+      },
+      {
+        "tag": "c:gems/diamond"
+      },
+      {
+        "tag": "c:ender_pearls"
+      },
+      {
+        "tag": "c:ender_pearls"
+      },
+      {
+        "tag": "c:gems/source"
+      },
+      {
+        "tag": "c:gems/source"
+      }
+    ],
+    "source_cost": 0,
+    "keep_nbt": false
+  },
+  {
+    "reagent": {
+      "item": "minecraft:ender_eye"
+    },
+    "result": "ars_nouveau:scryers_oculus",
+    "count": 1,
+    "pedestal_items": [
+      {
+        "item": "minecraft:observer"
+      },
+      {
+        "item": "minecraft:spyglass"
+      },
+      {
+        "tag": "c:storage_blocks/source"
+      },
+      {
+        "tag": "c:gems/diamond"
+      }
+    ],
+    "source_cost": 0,
+    "keep_nbt": false
+  },
+  {
+    "reagent": {
+      "item": "ars_nouveau:manipulation_essence"
+    },
+    "result": "ars_nouveau:shapers_focus",
+    "count": 1,
+    "pedestal_items": [
+      {
+        "tag": "c:ingots/gold"
+      },
+      {
+        "item": "minecraft:piston"
+      },
+      {
+        "item": "minecraft:slime_block"
+      },
+      {
+        "tag": "c:gems/diamond"
+      }
+    ],
+    "source_cost": 0,
+    "keep_nbt": false
+  },
+  {
+    "reagent": {
+      "item": "minecraft:golden_boots"
+    },
+    "result": "ars_nouveau:sorcerer_boots",
+    "count": 1,
+    "pedestal_items": [
+      {
+        "item": "ars_nouveau:magebloom_fiber"
+      },
+      {
+        "item": "ars_nouveau:magebloom_fiber"
+      },
+      {
+        "item": "ars_nouveau:magebloom_fiber"
+      },
+      {
+        "item": "ars_nouveau:magebloom_fiber"
+      }
+    ],
+    "source_cost": 0,
+    "keep_nbt": true
+  },
+  {
+    "reagent": {
+      "item": "minecraft:golden_helmet"
+    },
+    "result": "ars_nouveau:sorcerer_hood",
+    "count": 1,
+    "pedestal_items": [
+      {
+        "item": "ars_nouveau:magebloom_fiber"
+      },
+      {
+        "item": "ars_nouveau:magebloom_fiber"
+      },
+      {
+        "item": "ars_nouveau:magebloom_fiber"
+      },
+      {
+        "item": "ars_nouveau:magebloom_fiber"
+      }
+    ],
+    "source_cost": 0,
+    "keep_nbt": true
+  },
+  {
+    "reagent": {
+      "item": "minecraft:golden_leggings"
+    },
+    "result": "ars_nouveau:sorcerer_leggings",
+    "count": 1,
+    "pedestal_items": [
+      {
+        "item": "ars_nouveau:magebloom_fiber"
+      },
+      {
+        "item": "ars_nouveau:magebloom_fiber"
+      },
+      {
+        "item": "ars_nouveau:magebloom_fiber"
+      },
+      {
+        "item": "ars_nouveau:magebloom_fiber"
+      }
+    ],
+    "source_cost": 0,
+    "keep_nbt": true
+  },
+  {
+    "reagent": {
+      "item": "minecraft:golden_chestplate"
+    },
+    "result": "ars_nouveau:sorcerer_robes",
+    "count": 1,
+    "pedestal_items": [
+      {
+        "item": "ars_nouveau:magebloom_fiber"
+      },
+      {
+        "item": "ars_nouveau:magebloom_fiber"
+      },
+      {
+        "item": "ars_nouveau:magebloom_fiber"
+      },
+      {
+        "item": "ars_nouveau:magebloom_fiber"
+      }
+    ],
+    "source_cost": 0,
+    "keep_nbt": true
+  },
+  {
+    "reagent": {
+      "item": "minecraft:bow"
+    },
+    "result": "ars_nouveau:spell_bow",
+    "count": 1,
+    "pedestal_items": [
+      {
+        "tag": "c:storage_blocks/source"
+      },
+      {
+        "tag": "c:storage_blocks/gold"
+      },
+      {
+        "item": "ars_nouveau:manipulation_essence"
+      }
+    ],
+    "source_cost": 0,
+    "keep_nbt": true
+  },
+  {
+    "reagent": {
+      "item": "minecraft:crossbow"
+    },
+    "result": "ars_nouveau:spell_crossbow",
+    "count": 1,
+    "pedestal_items": [
+      {
+        "tag": "c:storage_blocks/gold"
+      },
+      {
+        "item": "ars_nouveau:manipulation_essence"
+      },
+      {
+        "tag": "c:storage_blocks/source"
+      }
+    ],
+    "source_cost": 0,
+    "keep_nbt": true
+  },
+  {
+    "reagent": {
+      "item": "minecraft:sculk_sensor"
+    },
+    "result": "ars_nouveau:spell_sensor",
+    "count": 1,
+    "pedestal_items": [],
+    "source_cost": 0,
+    "keep_nbt": false
+  },
+  {
+    "reagent": {
+      "item": "ars_nouveau:basic_spell_turret"
+    },
+    "result": "ars_nouveau:spell_turret",
+    "count": 1,
+    "pedestal_items": [
+      {
+        "tag": "c:storage_blocks/source"
+      },
+      {
+        "tag": "c:rods/blaze"
+      },
+      {
+        "tag": "c:rods/blaze"
+      }
+    ],
+    "source_cost": 0,
+    "keep_nbt": false
+  },
+  {
+    "reagent": {
+      "item": "minecraft:dispenser"
+    },
+    "result": "ars_nouveau:splash_flask_cannon",
+    "count": 1,
+    "pedestal_items": [
+      {
+        "tag": "c:ingots/gold"
+      },
+      {
+        "tag": "c:ingots/gold"
+      },
+      {
+        "tag": "c:rods/blaze"
+      },
+      {
+        "tag": "c:rods/blaze"
+      },
+      {
+        "tag": "c:gunpowders"
+      },
+      {
+        "tag": "c:gunpowders"
+      },
+      {
+        "tag": "c:gunpowders"
+      },
+      {
+        "tag": "c:gunpowders"
+      }
+    ],
+    "source_cost": 0,
+    "keep_nbt": false
+  },
+  {
+    "reagent": {
+      "item": "ars_nouveau:warp_scroll"
+    },
+    "result": "ars_nouveau:stable_warp_scroll",
+    "count": 1,
+    "pedestal_items": [
+      {
+        "item": "minecraft:blaze_powder"
+      },
+      {
+        "item": "minecraft:blaze_powder"
+      },
+      {
+        "item": "minecraft:blaze_powder"
+      },
+      {
+        "item": "minecraft:blaze_powder"
+      },
+      {
+        "tag": "c:ender_pearls"
+      },
+      {
+        "tag": "c:ender_pearls"
+      }
+    ],
+    "source_cost": 0,
+    "keep_nbt": true
+  },
+  {
+    "reagent": {
+      "item": "ars_nouveau:starbuncle_shards"
+    },
+    "result": "ars_nouveau:starbuncle_charm",
+    "count": 1,
+    "pedestal_items": [
+      {
+        "tag": "c:ingots/gold"
+      },
+      {
+        "tag": "c:ingots/gold"
+      },
+      {
+        "tag": "c:ingots/gold"
+      },
+      {
+        "tag": "c:ingots/gold"
+      }
+    ],
+    "source_cost": 0,
+    "keep_nbt": true
+  },
+  {
+    "reagent": {
+      "item": "minecraft:lectern"
+    },
+    "result": "ars_nouveau:storage_lectern",
+    "count": 1,
+    "pedestal_items": [
+      {
+        "tag": "c:chests"
+      },
+      {
+        "tag": "c:chests"
+      },
+      {
+        "tag": "c:chests"
+      },
+      {
+        "tag": "c:chests"
+      }
+    ],
+    "source_cost": 0,
+    "keep_nbt": false
+  },
+  {
+    "reagent": {
+      "tag": "c:storage_blocks/source"
+    },
+    "result": "ars_nouveau:summon_focus",
+    "count": 1,
+    "pedestal_items": [
+      {
+        "item": "ars_nouveau:wilden_horn"
+      },
+      {
+        "item": "ars_nouveau:wilden_spike"
+      },
+      {
+        "item": "ars_nouveau:wilden_wing"
+      },
+      {
+        "item": "ars_nouveau:wilden_tribute"
+      },
+      {
+        "tag": "c:ingots/gold"
+      }
+    ],
+    "source_cost": 0,
+    "keep_nbt": false
+  },
+  {
+    "reagent": {
+      "item": "ars_nouveau:blank_thread"
+    },
+    "result": "ars_nouveau:thread_amethyst_golem",
+    "count": 1,
+    "pedestal_items": [
+      {
+        "tag": "c:obsidians"
+      },
+      {
+        "tag": "c:obsidians"
+      },
+      {
+        "tag": "c:obsidians"
+      }
+    ],
+    "source_cost": 0,
+    "keep_nbt": false
+  },
+  {
+    "reagent": {
+      "item": "ars_nouveau:blank_thread"
+    },
+    "result": "ars_nouveau:thread_chilling",
+    "count": 1,
+    "pedestal_items": [
+      {
+        "item": "minecraft:blue_ice"
+      },
+      {
+        "item": "ars_nouveau:water_essence"
+      },
+      {
+        "item": "ars_nouveau:water_essence"
+      },
+      {
+        "item": "minecraft:powder_snow_bucket"
+      }
+    ],
+    "source_cost": 0,
+    "keep_nbt": false
+  },
+  {
+    "reagent": {
+      "item": "ars_nouveau:blank_thread"
+    },
+    "result": "ars_nouveau:thread_depths",
+    "count": 1,
+    "pedestal_items": [
+      {
+        "tag": "minecraft:fishes"
+      },
+      {
+        "tag": "minecraft:fishes"
+      },
+      {
+        "tag": "minecraft:fishes"
+      },
+      {
+        "item": "ars_nouveau:water_essence"
+      },
+      {
+        "item": "ars_nouveau:water_essence"
+      },
+      {
+        "item": "minecraft:pufferfish"
+      }
+    ],
+    "source_cost": 0,
+    "keep_nbt": false
+  },
+  {
+    "reagent": {
+      "item": "ars_nouveau:blank_thread"
+    },
+    "result": "ars_nouveau:thread_drygmy",
+    "count": 1,
+    "pedestal_items": [
+      {
+        "item": "ars_nouveau:drygmy_shard"
+      },
+      {
+        "item": "ars_nouveau:drygmy_shard"
+      },
+      {
+        "item": "ars_nouveau:drygmy_shard"
+      },
+      {
+        "item": "ars_nouveau:earth_essence"
+      },
+      {
+        "item": "ars_nouveau:earth_essence"
+      },
+      {
+        "item": "minecraft:rabbit_foot"
+      }
+    ],
+    "source_cost": 0,
+    "keep_nbt": false
+  },
+  {
+    "reagent": {
+      "item": "ars_nouveau:blank_thread"
+    },
+    "result": "ars_nouveau:thread_feather",
+    "count": 1,
+    "pedestal_items": [
+      {
+        "tag": "c:feathers"
+      },
+      {
+        "tag": "c:feathers"
+      },
+      {
+        "tag": "c:feathers"
+      },
+      {
+        "tag": "c:feathers"
+      },
+      {
+        "item": "ars_nouveau:abjuration_essence"
+      },
+      {
+        "item": "ars_nouveau:abjuration_essence"
+      }
+    ],
+    "source_cost": 0,
+    "keep_nbt": false
+  },
+  {
+    "reagent": {
+      "item": "ars_nouveau:blank_thread"
+    },
+    "result": "ars_nouveau:thread_gliding",
+    "count": 1,
+    "pedestal_items": [
+      {
+        "item": "ars_nouveau:air_essence"
+      },
+      {
+        "item": "ars_nouveau:air_essence"
+      },
+      {
+        "item": "minecraft:elytra"
+      }
+    ],
+    "source_cost": 0,
+    "keep_nbt": false
+  },
+  {
+    "reagent": {
+      "item": "ars_nouveau:blank_thread"
+    },
+    "result": "ars_nouveau:thread_heights",
+    "count": 1,
+    "pedestal_items": [
+      {
+        "item": "minecraft:spider_eye"
+      },
+      {
+        "item": "minecraft:rabbit_hide"
+      },
+      {
+        "item": "minecraft:rabbit_hide"
+      },
+      {
+        "item": "minecraft:rabbit_hide"
+      },
+      {
+        "item": "ars_nouveau:air_essence"
+      },
+      {
+        "item": "ars_nouveau:air_essence"
+      }
+    ],
+    "source_cost": 0,
+    "keep_nbt": false
+  },
+  {
+    "reagent": {
+      "item": "ars_nouveau:blank_thread"
+    },
+    "result": "ars_nouveau:thread_high_step",
+    "count": 1,
+    "pedestal_items": [
+      {
+        "item": "ars_nouveau:air_essence"
+      },
+      {
+        "item": "ars_nouveau:air_essence"
+      },
+      {
+        "item": "ars_nouveau:air_essence"
+      }
+    ],
+    "source_cost": 0,
+    "keep_nbt": false
+  },
+  {
+    "reagent": {
+      "item": "ars_nouveau:blank_thread"
+    },
+    "result": "ars_nouveau:thread_immolation",
+    "count": 1,
+    "pedestal_items": [
+      {
+        "item": "ars_nouveau:fire_essence"
+      },
+      {
+        "item": "ars_nouveau:fire_essence"
+      },
+      {
+        "item": "ars_nouveau:fire_essence"
+      }
+    ],
+    "source_cost": 0,
+    "keep_nbt": false
+  },
+  {
+    "reagent": {
+      "item": "ars_nouveau:blank_thread"
+    },
+    "result": "ars_nouveau:thread_kindling",
+    "count": 1,
+    "pedestal_items": [
+      {
+        "item": "minecraft:magma_cream"
+      },
+      {
+        "item": "ars_nouveau:fire_essence"
+      },
+      {
+        "item": "minecraft:fire_charge"
+      }
+    ],
+    "source_cost": 0,
+    "keep_nbt": false
+  },
+  {
+    "reagent": {
+      "item": "ars_nouveau:blank_thread"
+    },
+    "result": "ars_nouveau:thread_life_drain",
+    "count": 1,
+    "pedestal_items": [
+      {
+        "item": "ars_nouveau:mendosteen_pod"
+      },
+      {
+        "item": "minecraft:sculk_catalyst"
+      },
+      {
+        "item": "ars_nouveau:abjuration_essence"
+      },
+      {
+        "item": "ars_nouveau:abjuration_essence"
+      }
+    ],
+    "source_cost": 0,
+    "keep_nbt": false
+  },
+  {
+    "reagent": {
+      "item": "ars_nouveau:blank_thread"
+    },
+    "result": "ars_nouveau:thread_magic_capacity",
+    "count": 1,
+    "pedestal_items": [
+      {
+        "item": "ars_nouveau:sourceberry_bush"
+      },
+      {
+        "item": "ars_nouveau:sourceberry_bush"
+      },
+      {
+        "item": "ars_nouveau:sourceberry_bush"
+      },
+      {
+        "item": "ars_nouveau:magebloom"
+      },
+      {
+        "item": "ars_nouveau:magebloom"
+      },
+      {
+        "item": "ars_nouveau:magebloom"
+      }
+    ],
+    "source_cost": 0,
+    "keep_nbt": false
+  },
+  {
+    "reagent": {
+      "item": "ars_nouveau:blank_thread"
+    },
+    "result": "ars_nouveau:thread_repairing",
+    "count": 1,
+    "pedestal_items": [
+      {
+        "item": "minecraft:anvil"
+      },
+      {
+        "item": "ars_nouveau:manipulation_essence"
+      },
+      {
+        "item": "ars_nouveau:manipulation_essence"
+      }
+    ],
+    "source_cost": 0,
+    "keep_nbt": false
+  },
+  {
+    "reagent": {
+      "item": "ars_nouveau:blank_thread"
+    },
+    "result": "ars_nouveau:thread_spellpower",
+    "count": 1,
+    "pedestal_items": [
+      {
+        "item": "ars_nouveau:fire_essence"
+      },
+      {
+        "item": "ars_nouveau:magebloom"
+      },
+      {
+        "item": "ars_nouveau:manipulation_essence"
+      },
+      {
+        "item": "ars_nouveau:water_essence"
+      },
+      {
+        "item": "ars_nouveau:abjuration_essence"
+      },
+      {
+        "item": "ars_nouveau:air_essence"
+      },
+      {
+        "item": "ars_nouveau:earth_essence"
+      },
+      {
+        "item": "ars_nouveau:conjuration_essence"
+      }
+    ],
+    "source_cost": 0,
+    "keep_nbt": false
+  },
+  {
+    "reagent": {
+      "item": "ars_nouveau:blank_thread"
+    },
+    "result": "ars_nouveau:thread_starbuncle",
+    "count": 1,
+    "pedestal_items": [
+      {
+        "item": "ars_nouveau:starbuncle_shards"
+      },
+      {
+        "item": "ars_nouveau:starbuncle_shards"
+      },
+      {
+        "item": "ars_nouveau:starbuncle_shards"
+      },
+      {
+        "item": "minecraft:sugar"
+      },
+      {
+        "item": "minecraft:sugar"
+      },
+      {
+        "item": "minecraft:sugar"
+      },
+      {
+        "item": "ars_nouveau:manipulation_essence"
+      },
+      {
+        "item": "ars_nouveau:manipulation_essence"
+      }
+    ],
+    "source_cost": 0,
+    "keep_nbt": false
+  },
+  {
+    "reagent": {
+      "item": "ars_nouveau:blank_thread"
+    },
+    "result": "ars_nouveau:thread_undying",
+    "count": 1,
+    "pedestal_items": [
+      {
+        "item": "minecraft:totem_of_undying"
+      },
+      {
+        "item": "minecraft:phantom_membrane"
+      },
+      {
+        "item": "ars_nouveau:abjuration_essence"
+      },
+      {
+        "item": "ars_nouveau:abjuration_essence"
+      }
+    ],
+    "source_cost": 0,
+    "keep_nbt": false
+  },
+  {
+    "reagent": {
+      "item": "ars_nouveau:blank_thread"
+    },
+    "result": "ars_nouveau:thread_warding",
+    "count": 1,
+    "pedestal_items": [
+      {
+        "item": "ars_nouveau:magebloom_fiber"
+      },
+      {
+        "item": "ars_nouveau:magebloom_fiber"
+      },
+      {
+        "item": "ars_nouveau:magebloom_fiber"
+      },
+      {
+        "item": "ars_nouveau:magebloom_fiber"
+      },
+      {
+        "item": "ars_nouveau:magebloom_fiber"
+      },
+      {
+        "item": "ars_nouveau:magebloom_fiber"
+      },
+      {
+        "item": "ars_nouveau:magebloom_fiber"
+      },
+      {
+        "item": "ars_nouveau:magebloom_fiber"
+      }
+    ],
+    "source_cost": 0,
+    "keep_nbt": false
+  },
+  {
+    "reagent": {
+      "item": "ars_nouveau:blank_thread"
+    },
+    "result": "ars_nouveau:thread_whirlisprig",
+    "count": 1,
+    "pedestal_items": [
+      {
+        "item": "ars_nouveau:whirlisprig_shards"
+      },
+      {
+        "item": "ars_nouveau:whirlisprig_shards"
+      },
+      {
+        "item": "ars_nouveau:whirlisprig_shards"
+      },
+      {
+        "item": "ars_nouveau:earth_essence"
+      },
+      {
+        "item": "ars_nouveau:earth_essence"
+      },
+      {
+        "item": "minecraft:golden_apple"
+      }
+    ],
+    "source_cost": 0,
+    "keep_nbt": false
+  },
+  {
+    "reagent": {
+      "item": "ars_nouveau:blank_thread"
+    },
+    "result": "ars_nouveau:thread_wixie",
+    "count": 1,
+    "pedestal_items": [
+      {
+        "item": "ars_nouveau:wixie_shards"
+      },
+      {
+        "item": "ars_nouveau:wixie_shards"
+      },
+      {
+        "item": "ars_nouveau:wixie_shards"
+      },
+      {
+        "item": "ars_nouveau:abjuration_essence"
+      },
+      {
+        "item": "ars_nouveau:abjuration_essence"
+      },
+      {
+        "tag": "c:crops/nether_wart"
+      },
+      {
+        "tag": "c:crops/nether_wart"
+      },
+      {
+        "item": "minecraft:blaze_rod"
+      }
+    ],
+    "source_cost": 0,
+    "keep_nbt": false
+  },
+  {
+    "reagent": {
+      "item": "ars_nouveau:basic_spell_turret"
+    },
+    "result": "ars_nouveau:timer_spell_turret",
+    "count": 1,
+    "pedestal_items": [
+      {
+        "item": "minecraft:clock"
+      }
+    ],
+    "source_cost": 0,
+    "keep_nbt": false
+  },
+  {
+    "reagent": {
+      "item": "minecraft:glass_bottle"
+    },
+    "result": "ars_nouveau:void_jar",
+    "count": 1,
+    "pedestal_items": [
+      {
+        "item": "minecraft:lava_bucket"
+      },
+      {
+        "item": "minecraft:bucket"
+      },
+      {
+        "item": "ars_nouveau:allow_scroll"
+      },
+      {
+        "tag": "c:ender_pearls"
+      }
+    ],
+    "source_cost": 0,
+    "keep_nbt": false
+  },
+  {
+    "reagent": {
+      "tag": "c:logs/archwood"
+    },
+    "result": "ars_nouveau:wand",
+    "count": 1,
+    "pedestal_items": [
+      {
+        "tag": "c:gems/source"
+      },
+      {
+        "tag": "c:gems/source"
+      },
+      {
+        "tag": "c:gems/source"
+      },
+      {
+        "tag": "c:gems/source"
+      },
+      {
+        "tag": "c:ingots/gold"
+      },
+      {
+        "tag": "c:ingots/gold"
+      },
+      {
+        "item": "ars_nouveau:air_essence"
+      },
+      {
+        "item": "ars_nouveau:manipulation_essence"
+      }
+    ],
+    "source_cost": 0,
+    "keep_nbt": false
+  },
+  {
+    "reagent": {
+      "item": "ars_nouveau:warp_scroll"
+    },
+    "result": "ars_nouveau:warp_scroll",
+    "count": 2,
+    "pedestal_items": [
+      {
+        "item": "ars_nouveau:warp_scroll"
+      }
+    ],
+    "source_cost": 1000,
+    "keep_nbt": true
+  },
+  {
+    "reagent": {
+      "item": "ars_nouveau:whirlisprig_shards"
+    },
+    "result": "ars_nouveau:whirlisprig_charm",
+    "count": 1,
+    "pedestal_items": [
+      {
+        "tag": "c:gems/source"
+      },
+      {
+        "item": "ars_nouveau:magebloom_crop"
+      },
+      {
+        "item": "ars_nouveau:magebloom"
+      },
+      {
+        "tag": "c:gems/diamond"
+      },
+      {
+        "item": "minecraft:oak_sapling"
+      },
+      {
+        "item": "minecraft:spruce_sapling"
+      },
+      {
+        "item": "minecraft:birch_sapling"
+      },
+      {
+        "tag": "c:seeds/wheat"
+      }
+    ],
+    "source_cost": 0,
+    "keep_nbt": false
+  },
+  {
+    "reagent": {
+      "item": "ars_nouveau:wixie_shards"
+    },
+    "result": "ars_nouveau:wixie_charm",
+    "count": 1,
+    "pedestal_items": [
+      {
+        "tag": "minecraft:saplings"
+      },
+      {
+        "tag": "c:gems/emerald"
+      },
+      {
+        "item": "minecraft:crafting_table"
+      },
+      {
+        "item": "minecraft:brewing_stand"
+      }
+    ],
+    "source_cost": 0,
+    "keep_nbt": false
+  }
+]
