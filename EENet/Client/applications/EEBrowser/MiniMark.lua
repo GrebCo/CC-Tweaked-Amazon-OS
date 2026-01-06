@@ -649,6 +649,9 @@ local function createRenderer(opts, ui)
     scene = opts.scene,  -- Parent scene for MiniMark renderer
     childScene = nil,    -- Child overlay scene for interactive elements (created below)
 
+    -- Store opts for hook API
+    opts = opts,
+
     -- Callbacks
     onPageLoaded = opts.onPageLoaded,  -- Called after page is tokenized and laid out
 
@@ -796,7 +799,8 @@ local function createRenderer(opts, ui)
     end,
 
     -- Update UI element positions based on scroll offset (called every frame)
-    update = function(self, dt)
+    -- Use onUpdate (canonical name) instead of update for new UI framework
+    onUpdate = function(self, dt)
       if not ui or #self._uiElements == 0 then return false end
 
       local changed = false
@@ -944,6 +948,12 @@ local function createRenderer(opts, ui)
       if count > 0 then
         self._cachedPhysicalLines = layoutFromTokens(self._cachedTokens, self.width)
 
+        -- Preserve focus before destroying elements
+        local focusedId = nil
+        if ui and ui.focused and ui.focused.id then
+          focusedId = ui.focused.id
+        end
+
         -- Recreate UI elements since physical lines changed
         if ui and self.childScene then
           ui.clearScene(self.childScene)
@@ -955,6 +965,16 @@ local function createRenderer(opts, ui)
         -- This ensures modified buttons/checkboxes in the child scene are registered
         if ui and ui.activeScene then
           ui.setScene(ui.activeScene)
+        end
+
+        -- Restore focus if it was on an element with an ID
+        if focusedId and ui then
+          for _, elem in ipairs(self._uiElements) do
+            if elem.id == focusedId and elem.focusable then
+              ui.setFocus(elem)
+              break
+            end
+          end
         end
 
         if ui then ui.markDirty() end
@@ -979,6 +999,11 @@ local function createRenderer(opts, ui)
 
   -- Tokenize AND layout initial content immediately (prevents flicker on first render)
   self:prepareRender()
+
+  -- Attach hook API to enable onUpdate, onDraw, and other lifecycle hooks
+  if ui and ui._attachHookAPI then
+    ui._attachHookAPI(self)
+  end
 
   return self
 end

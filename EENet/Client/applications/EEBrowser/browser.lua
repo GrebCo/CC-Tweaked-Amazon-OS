@@ -32,6 +32,24 @@ fs.makeDir(cacheDir)
 -- Website fetching function
 -------------------------------------------------
 local function getWebsite(url, protocol)
+    -- Handle "home" shortcut - redirect to local/home
+    if url == "home" then
+        url = "local/home"
+    end
+
+    -- Handle local pages (local/pageName)
+    if url:match("^local/") then
+        local pageName = url:match("^local/(.+)$")
+        local localPath = "applications/EEBrowser/local/" .. pageName .. ".txt"
+
+        if fs.exists(localPath) then
+            return true, localPath
+        else
+            return false, "Local page not found: " .. pageName
+        end
+    end
+
+    -- Regular network request
     local baseUrl = url:match("([^/]+)")
     local response = net.query(baseUrl, url, protocol)
     if not response then
@@ -160,8 +178,13 @@ local screenWidth, screenHeight = term.getSize()
 
 
 
+-- Frame counter for throttling onUpdate
+local updateFrameCounter = 0
+local UPDATE_THROTTLE = 15  -- Trigger fizzle onUpdate every 15 frames (2 FPS)
+local totalOnUpdateCalls = 0  -- Track if onUpdate is being called at all
+
 local mmRenderer = ui.addElement(nil, minimark.createRenderer({
-    path = "applications/EEBrowser/Default.txt",
+    path = "applications/EEBrowser/local/home.txt",
     x = 1,
     y = 2,
     height = screenHeight - 2,
@@ -172,12 +195,29 @@ local mmRenderer = ui.addElement(nil, minimark.createRenderer({
         if scripts and #scripts > 0 then
             fizzle.renew(scripts)
         end
+    end,
+    onUpdate = function(self, dt)
+        -- Count total calls to verify this is running
+        totalOnUpdateCalls = totalOnUpdateCalls + 1
+
+        -- Throttle fizzle onUpdate to reduce expensive rebuilds
+        updateFrameCounter = updateFrameCounter + 1
+        if updateFrameCounter >= UPDATE_THROTTLE then
+            updateFrameCounter = 0
+            log("[browser] Triggering fizzle onUpdate event (total calls: " .. totalOnUpdateCalls .. ")")
+            fizzle.triggerFizzleEvent("onUpdate", { dt = dt })
+        end
+        return false  -- Don't mark UI dirty
     end
 }, ui))
 
 contextTable.fizzleLibFunctions.findElementByID = mmRenderer.findElementsByID
 contextTable.fizzleLibFunctions.modifyElementsByID = mmRenderer.modifyElementsByID
 contextTable.fizzleLibFunctions.mmRenderer = mmRenderer
+contextTable.currentUrl = "local/home" -- Set initial URL for cookie domain tracking
+contextTable.debugCounters = {
+    getOnUpdateCalls = function() return totalOnUpdateCalls end
+}
 
 
 --ui.createExitButton(function()
@@ -276,6 +316,7 @@ local submit = ui.button({
         os.sleep(0.25) -- allow UI to update
         local ok, result = getWebsite(url, protocol)
         if ok then
+            contextTable.currentUrl = url
             mmRenderer.path = result
             mmRenderer:prepareRender()
         else
@@ -348,6 +389,7 @@ function checkIfnewLink()
         statusLabel.text = "Loading: " .. url
         local ok, result = getWebsite(url, protocol)
         if ok then
+            contextTable.currentUrl = url
             mmRenderer.path = result
             mmRenderer:prepareRender() -- Pre-tokenize BEFORE marking dirty
             ui.markDirty()             -- Triggers draw() which syncs UI elements

@@ -20,6 +20,13 @@ local sandbox = {
     print = log,
     error = error,
     assert = assert,
+    -- Safe os functions (time-related only, no file system access)
+    os = {
+        clock = os.clock,
+        time = os.time,
+        date = os.date,
+        difftime = os.difftime
+    },
     -- Add other safe functions as needed
 
     -- Fizzle-specific functions can be added here
@@ -106,11 +113,13 @@ local function registerEventsFromCache()
 
     fizzleEvents = {}
     local lastEventName = nil
+    local registeredEvents = {}
 
     for _, line in ipairs(lines) do
         local eventTag = line:match("@([%w_]+)")
         if eventTag then
             lastEventName = eventTag
+            log("[fzzl] Found event tag: " .. eventTag)
         end
 
         local funcName = line:match("local%s+function%s+(%w+)%s*%(")
@@ -118,10 +127,13 @@ local function registerEventsFromCache()
                 or line:match("local%s+(%w+)%s*=%s*function%s*%(")
         if funcName and lastEventName then
             events.registerEvent(lastEventName)
+            table.insert(registeredEvents, lastEventName)
+            log("[fzzl] Registered event: " .. lastEventName .. " for function: " .. funcName)
             lastEventName = nil
         end
     end
 
+    log("[fzzl] Total events registered: " .. textutils.serialize(registeredEvents))
     return true
 end
 
@@ -166,6 +178,8 @@ local function assignFizzleFunctionsToEventsFromCache()
         return false
     end
 
+    log("[fzzl] Function-Event Map: " .. textutils.serialize(functionEventMap))
+
     for funcName, eventName in pairs(functionEventMap) do
         local func = sandbox[funcName]
 
@@ -189,6 +203,7 @@ end
 
 
 local function triggerFizzleEvent(eventName, params)
+    log("[fzzl] triggerFizzleEvent called: " .. eventName)
     events.triggerEvent(eventName, params or {})
 end
 

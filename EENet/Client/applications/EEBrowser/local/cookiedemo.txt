@@ -1,0 +1,287 @@
+# <text:cyan>Cookie Storage Demo
+<text:lightGray>Test the cookie storage system with domain isolation
+
+<hr:"=">
+
+## <text:yellow>1. Save User Preferences
+<text:white>Store your preferences using cookies.
+
+<text:lightGray>Your Name: <textbox width:"20" fg:yellow bg:gray blinkChar:"_" id:"userName" text:"Guest">
+<text:lightGray>Favorite Color: <textbox width:"15" fg:yellow bg:gray blinkChar:"_" id:"userColor" text:"blue">
+<text:lightGray>Theme: <textbox width:"10" fg:yellow bg:gray blinkChar:"_" id:"userTheme" text:"dark">
+
+<button label:"Save Preferences" fg:black bg:lime pressBg:green id:"saveBtn" onClick:SavePreferences>
+
+<text:gray>Status: <id:"saveStatus"><text:white>Ready
+
+<hr:"-">
+
+## <text:yellow>2. Load Saved Preferences
+<text:white>Retrieve your previously saved preferences.
+
+<button label:"Load Preferences" fg:white bg:cyan pressBg:blue id:"loadBtn" onClick:LoadPreferences>
+
+<text:gray>Result: <id:"loadStatus"><text:white>Click Load to retrieve saved data
+
+<hr:"-">
+
+## <text:yellow>3. Custom Cookie Test
+<text:white>Write and read any custom cookie data.
+
+<text:lightGray>Cookie Name: <textbox width:"20" fg:yellow bg:gray blinkChar:"_" id:"cookieName" text:"test_cookie">
+<text:lightGray>Cookie Value: <textbox width:"30" fg:yellow bg:gray blinkChar:"_" id:"cookieValue" text:"Hello, World!">
+
+<button label:"Write Cookie" fg:white bg:orange pressBg:red id:"writeBtn" onClick:WriteCookie>
+<button label:"Read Cookie" fg:white bg:purple pressBg:magenta id:"readBtn" onClick:ReadCookie>
+
+<text:gray>Result: <id:"cookieResult"><text:white>No operation yet
+
+<hr:"-">
+
+## <text:yellow>4. Visit Counter
+<text:white>This page tracks how many times you've visited.
+
+<text:lightGray>Visit Count: <id:"visitCount"><text:white>Loading...
+
+<button label:"Reset Counter" fg:black bg:red pressBg:orange id:"resetBtn" onClick:ResetCounter>
+
+<hr:"-">
+
+## <text:yellow>5. Domain Mode Testing
+<text:white>Test different domain isolation modes.
+
+<text:lightGray>Cookie Name: <textbox width:"15" fg:yellow bg:gray blinkChar:"_" id:"domainTestName" text:"test">
+<text:lightGray>Cookie Value: <textbox width:"20" fg:yellow bg:gray blinkChar:"_" id:"domainTestValue" text:"example">
+
+<button label:"Write (Base)" fg:white bg:green pressBg:lime id:"writeBaseBtn" onClick:WriteBase>
+<button label:"Write (Full)" fg:white bg:cyan pressBg:blue id:"writeFullBtn" onClick:WriteFull>
+<button label:"Write (Custom)" fg:white bg:orange pressBg:red id:"writeCustomBtn" onClick:WriteCustom>
+
+<button label:"Read (Base)" fg:black bg:lime pressBg:green id:"readBaseBtn" onClick:ReadBase>
+<button label:"Read (Full)" fg:black bg:lightBlue pressBg:cyan id:"readFullBtn" onClick:ReadFull>
+<button label:"Read (Custom)" fg:black bg:yellow pressBg:orange id:"readCustomBtn" onClick:ReadCustom>
+
+<text:gray>Result: <id:"domainTestResult"><text:white>No operation yet
+
+<text:lightGray>Domain Info:
+<text:lightGray>- Base domain: "local"
+<text:lightGray>- Full domain: "local/cookiedemo"
+<text:lightGray>- Custom domain: "local/cookiedemo/custom"
+
+<hr:"=">
+
+<text:gray><id:"infoDisplay"><text:lightGray>Current URL: local/cookiedemo
+
+<script>
+@onLoad
+function initializePage()
+  -- Load and increment visit counter (using "full" domain mode)
+  local visits = cookie.cookieRead("visit_counter", "full")
+  local count = 1
+
+  if visits then
+    count = tonumber(visits) or 1
+    count = count + 1
+  end
+
+  cookie.cookieWrite("visit_counter", tostring(count), "full")
+  document.setElementBodyById("visitCount", tostring(count))
+
+  -- Auto-load preferences if they exist (using "full" domain mode)
+  local savedName = cookie.cookieRead("user_name", "full")
+  if savedName then
+    local nameElem = document.getElementById("userName")
+    if nameElem then
+      nameElem.text = savedName
+    end
+  end
+
+  local savedColor = cookie.cookieRead("user_color", "full")
+  if savedColor then
+    local colorElem = document.getElementById("userColor")
+    if colorElem then
+      colorElem.text = savedColor
+    end
+  end
+
+  local savedTheme = cookie.cookieRead("user_theme", "full")
+  if savedTheme then
+    local themeElem = document.getElementById("userTheme")
+    if themeElem then
+      themeElem.text = savedTheme
+    end
+  end
+
+  document.setElementBodyById("saveStatus", "Preferences auto-loaded from cookies (full domain)")
+end
+</script>
+
+<script>
+@SavePreferences
+function handleSavePreferences()
+  local nameElem = document.getElementById("userName")
+  local colorElem = document.getElementById("userColor")
+  local themeElem = document.getElementById("userTheme")
+
+  local name = nameElem.text
+  local color = colorElem.text
+  local theme = themeElem.text
+
+  -- Save each preference as a separate cookie (using "full" domain mode)
+  cookie.cookieWrite("user_name", name, "full")
+  cookie.cookieWrite("user_color", color, "full")
+  cookie.cookieWrite("user_theme", theme, "full")
+
+  local msg = "Saved: " .. name .. ", " .. color .. " theme, " .. theme .. " mode"
+  document.setElementBodyById("saveStatus", msg)
+end
+</script>
+
+<script>
+@LoadPreferences
+function handleLoadPreferences()
+  local name = cookie.cookieRead("user_name", "full")
+  local color = cookie.cookieRead("user_color", "full")
+  local theme = cookie.cookieRead("user_theme", "full")
+
+  if name and color and theme then
+    local msg = "Name: " .. name .. " | Color: " .. color .. " | Theme: " .. theme
+    document.setElementBodyById("loadStatus", msg)
+  else
+    document.setElementBodyById("loadStatus", "No saved preferences found. Save some first!")
+  end
+end
+</script>
+
+<script>
+@WriteCookie
+function handleWriteCookie()
+  local nameElem = document.getElementById("cookieName")
+  local valueElem = document.getElementById("cookieValue")
+
+  local cookieName = nameElem.text
+  local cookieValue = valueElem.text
+
+  cookie.cookieWrite(cookieName, cookieValue)
+
+  local msg = "Wrote cookie '" .. cookieName .. "' = '" .. cookieValue .. "'"
+  document.setElementBodyById("cookieResult", msg)
+end
+</script>
+
+<script>
+@ReadCookie
+function handleReadCookie()
+  local nameElem = document.getElementById("cookieName")
+  local cookieName = nameElem.text
+
+  local value = cookie.cookieRead(cookieName)
+
+  if value then
+    local msg = "Cookie '" .. cookieName .. "' = '" .. value .. "'"
+    document.setElementBodyById("cookieResult", msg)
+  else
+    local msg = "Cookie '" .. cookieName .. "' not found"
+    document.setElementBodyById("cookieResult", msg)
+  end
+end
+</script>
+
+<script>
+@ResetCounter
+function handleResetCounter()
+  cookie.cookieWrite("visit_counter", "0", "full")
+  document.setElementBodyById("visitCount", "0 (reset)")
+  document.setElementBodyById("saveStatus", "Visit counter has been reset!")
+end
+</script>
+
+<script>
+@WriteBase
+function handleWriteBase()
+  local nameElem = document.getElementById("domainTestName")
+  local valueElem = document.getElementById("domainTestValue")
+
+  local cookieName = nameElem.text
+  local cookieValue = valueElem.text
+
+  cookie.cookieWrite(cookieName, cookieValue, "base")
+  document.setElementBodyById("domainTestResult", "Wrote to BASE domain 'local'")
+end
+</script>
+
+<script>
+@WriteFull
+function handleWriteFull()
+  local nameElem = document.getElementById("domainTestName")
+  local valueElem = document.getElementById("domainTestValue")
+
+  local cookieName = nameElem.text
+  local cookieValue = valueElem.text
+
+  cookie.cookieWrite(cookieName, cookieValue, "full")
+  document.setElementBodyById("domainTestResult", "Wrote to FULL domain 'local/cookiedemo'")
+end
+</script>
+
+<script>
+@WriteCustom
+function handleWriteCustom()
+  local nameElem = document.getElementById("domainTestName")
+  local valueElem = document.getElementById("domainTestValue")
+
+  local cookieName = nameElem.text
+  local cookieValue = valueElem.text
+
+  cookie.cookieWrite(cookieName, cookieValue, "local/cookiedemo/custom")
+  document.setElementBodyById("domainTestResult", "Wrote to CUSTOM domain 'local/cookiedemo/custom'")
+end
+</script>
+
+<script>
+@ReadBase
+function handleReadBase()
+  local nameElem = document.getElementById("domainTestName")
+  local cookieName = nameElem.text
+
+  local value = cookie.cookieRead(cookieName, "base")
+
+  if value then
+    document.setElementBodyById("domainTestResult", "Read from BASE: '" .. value .. "'")
+  else
+    document.setElementBodyById("domainTestResult", "Not found in BASE domain 'local'")
+  end
+end
+</script>
+
+<script>
+@ReadFull
+function handleReadFull()
+  local nameElem = document.getElementById("domainTestName")
+  local cookieName = nameElem.text
+
+  local value = cookie.cookieRead(cookieName, "full")
+
+  if value then
+    document.setElementBodyById("domainTestResult", "Read from FULL: '" .. value .. "'")
+  else
+    document.setElementBodyById("domainTestResult", "Not found in FULL domain 'local/cookiedemo'")
+  end
+end
+</script>
+
+<script>
+@ReadCustom
+function handleReadCustom()
+  local nameElem = document.getElementById("domainTestName")
+  local cookieName = nameElem.text
+
+  local value = cookie.cookieRead(cookieName, "local/cookiedemo/custom")
+
+  if value then
+    document.setElementBodyById("domainTestResult", "Read from CUSTOM: '" .. value .. "'")
+  else
+    document.setElementBodyById("domainTestResult", "Not found in CUSTOM domain 'local/cookiedemo/custom'")
+  end
+end
+</script>

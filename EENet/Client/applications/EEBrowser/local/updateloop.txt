@@ -1,0 +1,119 @@
+# <text:cyan>onUpdate Loop Demo
+<text:lightGray>Non-blocking scripts that run continuously at 30 FPS
+
+<hr:"=">
+
+## <text:yellow>1. Simple Frame Counter
+<text:white>Counts every frame update (30 FPS).
+
+<text:lightGray>Frame Count: <id:"frameCount"><text:white>0
+
+<hr:"-">
+
+## <text:yellow>2. Interactive Counter
+<text:white>Manual counter with auto-increment option.
+
+<text:lightGray>Counter Value: <id:"counterValue"><text:white>0
+
+<button label:"Increment" fg:black bg:lime pressBg:green id:"incBtn" onClick:IncrementCounter>
+<button label:"Reset" fg:black bg:red pressBg:orange id:"resetBtn" onClick:ResetCounter>
+<button label:"Toggle Auto" fg:white bg:blue pressBg:cyan id:"toggleBtn" onClick:ToggleAuto>
+<button label:"Check Cookie" fg:white bg:yellow pressBg:orange id:"checkBtn" onClick:CheckCookie>
+
+<text:lightGray>Auto-Increment: <id:"autoStatus"><text:white>OFF
+<text:lightGray>Cookie Test: <id:"cookieTest"><text:white>Not checked
+
+<hr:"=">
+
+<text:gray>onUpdate runs at 30 FPS without blocking the UI!
+
+<script>
+@onLoad
+function initialize()
+  -- Initialize global state in sandbox
+  frameCount = 0
+  userCounter = 0
+  autoIncrement = false
+
+  -- Test: Write to cookie to confirm onLoad works
+  cookie.cookieWrite("test_onload", "onLoad fired!", "full")
+
+  document.setElementBodyById("frameCount", "0")
+  document.setElementBodyById("counterValue", "0")
+  document.setElementBodyById("autoStatus", "OFF")
+end
+</script>
+
+<script>
+@onUpdate
+function updateLoop()
+  -- Increment frame counter
+  if not frameCount then frameCount = 0 end
+  frameCount = frameCount + 1
+  document.setElementBodyById("frameCount", tostring(frameCount))
+
+  -- Auto-increment counter if enabled
+  if autoIncrement and userCounter then
+    userCounter = userCounter + 1
+    document.setElementBodyById("counterValue", tostring(userCounter))
+  end
+end
+</script>
+
+<script>
+@IncrementCounter
+function handleIncrement()
+  if userCounter then
+    userCounter = userCounter + 1
+    document.setElementBodyById("counterValue", tostring(userCounter))
+  end
+end
+</script>
+
+<script>
+@ResetCounter
+function handleReset()
+  userCounter = 0
+  frameCount = 0
+  document.setElementBodyById("counterValue", "0")
+  document.setElementBodyById("frameCount", "0")
+end
+</script>
+
+<script>
+@ToggleAuto
+function handleToggleAuto()
+  autoIncrement = not autoIncrement
+  if autoIncrement then
+    document.setElementBodyById("autoStatus", "ON")
+  else
+    document.setElementBodyById("autoStatus", "OFF")
+  end
+end
+</script>
+
+<script>
+@CheckCookie
+function handleCheckCookie()
+  local onLoadCookie = cookie.cookieRead("test_onload", "full")
+  local onUpdateCookie = cookie.cookieRead("test_update", "full")
+  local hookCalls = debug.getOnUpdateCalls()
+
+  local msg = ""
+  if onLoadCookie then
+    msg = msg .. "onLoad: YES | "
+  else
+    msg = msg .. "onLoad: NO | "
+  end
+
+  if onUpdateCookie then
+    msg = msg .. "onUpdate: YES (val=" .. onUpdateCookie .. ") | "
+  else
+    msg = msg .. "onUpdate: NO | "
+  end
+
+  msg = msg .. "Hook calls: " .. tostring(hookCalls)
+
+  document.setElementBodyById("cookieTest", msg)
+end
+</script>
