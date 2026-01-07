@@ -11,6 +11,7 @@ function registerFunction(eventName, func)
     table.insert(events[eventName], func)
 end
 
+-- TODO: launch as a coroutine to prevent blocking the thread. !Possible race condition!
 function triggerEvent(eventName, params)
     local funcs = events[eventName]
     if not funcs then return end

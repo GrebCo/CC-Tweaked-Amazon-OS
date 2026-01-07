@@ -1,6 +1,6 @@
 local contextTable = nil
 local logger = nil
-local cookiesBasePath = "/applications/EEBrowser/cookies/"
+local cookiesBasePath = "/applications/EEBrowser/cookies/" --TODO: should be dynamic through config file
 local maxSizePerDomain = 1048576 -- 1MB in bytes
 
 -- Extract base domain from URL (e.g., "example.com/page" -> "example.com")
