@@ -42,6 +42,83 @@ local libraries = nil
 -- Import events module
 local events = dofile("OSUtil/events.lua")
 
+-- ============================================================================
+-- FIZZLE TIMEOUT CONFIGURATION
+-- ============================================================================
+-- Default configuration (can be overridden by config/fizzle_config.lua)
+local FIZZLE_CONFIG = {
+    MAX_INSTRUCTIONS = 100000,
+    TIMEOUT_ENABLED = true,
+    LOG_TIMEOUTS = true,
+    EXEMPT_EVENTS = {}
+}
+
+-- Load user configuration if it exists
+local configPath = "applications/EEBrowser/config/fizzle_config.lua"
+if fs.exists(configPath) then
+    local userConfig = dofile(configPath)
+    if userConfig and type(userConfig) == "table" then
+        -- Merge user config with defaults
+        for key, value in pairs(userConfig) do
+            FIZZLE_CONFIG[key] = value
+        end
+        -- Log successful config load (will use log function when available)
+        print("[fzzl] Loaded custom configuration from " .. configPath)
+    end
+else
+    print("[fzzl] Using default timeout configuration (no custom config found)")
+end
+
+-- Timeout wrapper function using debug hooks
+-- Wraps a function to enforce instruction count limits
+local function createTimeoutWrapper(func, eventName)
+    -- If timeout is disabled, return function as-is
+    if not FIZZLE_CONFIG.TIMEOUT_ENABLED or FIZZLE_CONFIG.MAX_INSTRUCTIONS <= 0 then
+        return func
+    end
+
+    -- If event is exempt from timeout, return function as-is
+    if FIZZLE_CONFIG.EXEMPT_EVENTS[eventName] then
+        return func
+    end
+
+    return function(params)
+        local instructionCount = 0
+        local timedOut = false
+
+        -- Set debug hook to count instructions
+        debug.sethook(function()
+            instructionCount = instructionCount + 1
+            if instructionCount > FIZZLE_CONFIG.MAX_INSTRUCTIONS then
+                timedOut = true
+                error("TIMEOUT: Script exceeded " .. FIZZLE_CONFIG.MAX_INSTRUCTIONS .. " instructions")
+            end
+        end, "", 1) -- Hook fires every instruction
+
+        -- Execute the function with error handling
+        local ok, res = pcall(func, params)
+
+        -- ALWAYS remove the hook, even if function errored
+        debug.sethook()
+
+        -- Handle errors
+        if not ok then
+            if timedOut then
+                if FIZZLE_CONFIG.LOG_TIMEOUTS then
+                    log("[fzzl] TIMEOUT: Script in event '" .. eventName .. "' exceeded " ..
+                        FIZZLE_CONFIG.MAX_INSTRUCTIONS .. " instruction limit")
+                end
+            else
+                log("[fzzl] ERROR: Exception in event '" .. eventName .. "': " .. tostring(res))
+            end
+            return false
+        end
+
+        return res
+    end
+end
+
+-- ============================================================================
 
 -- Create a safe sandbox environment
 local function createSandbox()
@@ -184,15 +261,10 @@ local function assignFizzleFunctionsToEventsFromCache()
         local func = sandbox[funcName]
 
         if func and type(func) == "function" then
-            events.registerFunction(eventName, function(params)
-                local ok, res = pcall(func, params)
-                if not ok then
-                    log("[fzzl] ERROR: Exception in event '" .. eventName .. "': " .. tostring(res))
-                    return false
-                end
-                return res
-            end)
-            log("[fzzl] Registered '" .. funcName .. "' for event '" .. eventName .. "'")
+            -- Wrap function with timeout protection
+            local wrappedFunc = createTimeoutWrapper(func, eventName)
+            events.registerFunction(eventName, wrappedFunc)
+            log("[fzzl] Registered '" .. funcName .. "' for event '" .. eventName .. "' (with timeout protection)")
         else
             log("[fzzl] ERROR: function '" .. funcName .. "' not found in sandbox")
         end
