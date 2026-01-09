@@ -2884,6 +2884,8 @@ function UI.run(opts)
     local onTick = opts.onTick  -- Optional callback called each render frame
     local onReady = opts.onReady  -- Optional callback called after first render
     local readyCalled = false
+    local parallelThread = opts.parallel
+    
 
     local function updateEvents()
         while true do
@@ -2921,7 +2923,12 @@ function UI.run(opts)
         end
     end
 
-    parallel.waitForAny(renderUI, updateEvents)
+
+    if parallelThread then -- If a parallel thread is provided, run it too
+        parallel.waitForAny(renderUI, updateEvents, parallelThread)
+    else
+        parallel.waitForAny(renderUI, updateEvents)
+    end
 end
 
 return UI
