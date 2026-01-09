@@ -198,9 +198,11 @@ function send(target, message, protocol)
     return true
 end
 
+
+-- TODO: Add query by lookup function
 ---------------------------------------------------------------------
 -- Sends a query to a target and waits for a response (like RPC)
--- Target can be a hostname or numeric ID; includes optional timeout
+-- Target can be a hostname or numeric ID; includes optional timeout 
 ---------------------------------------------------------------------
 function query(target, message, protocol)
     ensureRednet()
@@ -296,6 +298,7 @@ function sendByLookup(protocolOrId, message, messageProtocol)
     return {sent = sentCount, ids = sentIds}
 end
 
+-- TODO Remove?
 local function getSanitized()
     return {
         send = send,
