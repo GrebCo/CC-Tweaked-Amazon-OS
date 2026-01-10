@@ -3,7 +3,7 @@ local fizzleContext
 local log = function() end
 
 local fizzleEvents = {}
-local cacheFilePath = "/cache/scripts/"
+local cacheFilePath = "EEBrowser/cache/scripts/"
 
 -- sandbox
 local sandbox = {
