@@ -69,11 +69,11 @@ else
     print("[fzzl] Using default timeout configuration (no custom config found)")
 end
 
--- Timeout wrapper function using debug hooks
--- Wraps a function to enforce instruction count limits
+-- Timeout wrapper function using time-based watchdog
+-- Wraps a function to enforce 10ms execution time limit
 local function createTimeoutWrapper(func, eventName)
     -- If timeout is disabled, return function as-is
-    if not FIZZLE_CONFIG.TIMEOUT_ENABLED or FIZZLE_CONFIG.MAX_INSTRUCTIONS <= 0 then
+    if not FIZZLE_CONFIG.TIMEOUT_ENABLED then
         return func
     end
 
@@ -83,17 +83,17 @@ local function createTimeoutWrapper(func, eventName)
     end
 
     return function(params)
-        local instructionCount = 0
+        local startTime = os.clock()
         local timedOut = false
+        local MAX_TIME = 0.01  -- 10ms max execution time
 
-        -- Set debug hook to count instructions
+        -- Set debug hook to check time periodically (every 1000 instructions for lower overhead)
         debug.sethook(function()
-            instructionCount = instructionCount + 1
-            if instructionCount > FIZZLE_CONFIG.MAX_INSTRUCTIONS then
+            if (os.clock() - startTime) > MAX_TIME then
                 timedOut = true
-                error("TIMEOUT: Script exceeded " .. FIZZLE_CONFIG.MAX_INSTRUCTIONS .. " instructions")
+                error("TIMEOUT: Script exceeded 10ms execution time")
             end
-        end, "", 1) -- Hook fires every instruction
+        end, "", 1000) -- Check every 1000 instructions instead of every instruction
 
         -- Execute the function with error handling
         local ok, res = pcall(func, params)
@@ -105,8 +105,7 @@ local function createTimeoutWrapper(func, eventName)
         if not ok then
             if timedOut then
                 if FIZZLE_CONFIG.LOG_TIMEOUTS then
-                    log("[fzzl] TIMEOUT: Script in event '" .. eventName .. "' exceeded " ..
-                        FIZZLE_CONFIG.MAX_INSTRUCTIONS .. " instruction limit")
+                    log("[fzzl] TIMEOUT: Script in event '" .. eventName .. "' exceeded 10ms execution time")
                 end
             else
                 log("[fzzl] ERROR: Exception in event '" .. eventName .. "': " .. tostring(res))
