@@ -651,8 +651,9 @@ local function getScripts(path)
         inScript = false
       else
         -- capture, also check for @EventName line
+        -- Skip @onCCEvent because fizzle handles the full syntax parsing
         local atEvent = line:match("^%s*@([%w_]+)")
-        if atEvent and not currentEvent then
+        if atEvent and atEvent ~= "onCCEvent" and not currentEvent then
           currentEvent = atEvent
         end
         table.insert(current, line)

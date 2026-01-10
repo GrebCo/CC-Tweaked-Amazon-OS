@@ -25,8 +25,15 @@ local sandbox = {
         clock = os.clock,
         time = os.time,
         date = os.date,
-        difftime = os.difftime
+        difftime = os.difftime,
+        startTimer = os.startTimer,  -- For timer demo
+        setAlarm = os.setAlarm        -- For alarm demo
     },
+    -- ComputerCraft APIs
+    keys = keys,      -- For key code constants (keys.w, keys.a, etc.)
+    rs = rs,          -- For redstone API (rs.getInput, etc.)
+    redstone = rs,    -- Alias for redstone API
+
     -- Add other safe functions as needed
 
     -- Fizzle-specific functions can be added here
@@ -69,8 +76,36 @@ else
     print("[fzzl] Using default timeout configuration (no custom config found)")
 end
 
+-- ============================================================================
+-- CC EVENT VALIDATION & TRACKING
+-- ============================================================================
+
+-- Validate if a CC event is allowed by configuration
+local function isCCEventAllowed(ccEventName)
+    if not FIZZLE_CONFIG or not FIZZLE_CONFIG.ALLOWED_CC_EVENTS then
+        return false
+    end
+
+    for _, allowedEvent in ipairs(FIZZLE_CONFIG.ALLOWED_CC_EVENTS) do
+        if allowedEvent == ccEventName then
+            return true
+        end
+    end
+
+    return false
+end
+
+-- Track which CC events have registered handlers
+-- Format: { ["mouse_click"] = true, ["key"] = true, ... }
+local registeredCCEvents = {}
+
+-- ============================================================================
+-- TIMEOUT PROTECTION
+-- ============================================================================
+
 -- Timeout wrapper function using time-based watchdog
 -- Wraps a function to enforce 10ms execution time limit
+-- Handles both CC events (direct parameters) and fizzle events (params table)
 local function createTimeoutWrapper(func, eventName)
     -- If timeout is disabled, return function as-is
     if not FIZZLE_CONFIG.TIMEOUT_ENABLED then
@@ -82,7 +117,10 @@ local function createTimeoutWrapper(func, eventName)
         return func
     end
 
-    return function(params)
+    -- Detect if this is a CC event (prefixed with "cc:")
+    local isCCEvent = eventName:match("^cc:")
+
+    return function(...)
         local startTime = os.clock()
         local timedOut = false
         local MAX_TIME = 0.01  -- 10ms max execution time
@@ -93,10 +131,19 @@ local function createTimeoutWrapper(func, eventName)
                 timedOut = true
                 error("TIMEOUT: Script exceeded 10ms execution time")
             end
-        end, "", 1000) -- Check every 1000 instructions instead of every instruction
+        end, "", FIZZLE_CONFIG.MAX_INSTRUCTIONS)
 
         -- Execute the function with error handling
-        local ok, res = pcall(func, params)
+        -- Different parameter handling for CC events vs fizzle events
+        local ok, res
+        if isCCEvent then
+            -- CC events: pass parameters directly (p1, p2, p3, p4)
+            ok, res = pcall(func, ...)
+        else
+            -- Fizzle events: wrap in params table (existing behavior)
+            local params = ...
+            ok, res = pcall(func, params)
+        end
 
         -- ALWAYS remove the hook, even if function errored
         debug.sethook()
@@ -192,8 +239,33 @@ local function registerEventsFromCache()
     local registeredEvents = {}
 
     for _, line in ipairs(lines) do
-        local eventTag = line:match("@([%w_]+)")
-        if eventTag then
+        -- Match both --@eventName and @eventName formats
+        local eventTag = line:match("%-%-@([%w_]+)") or line:match("@([%w_]+)")
+        local ccEventName = nil
+
+        if eventTag == "onCCEvent" then
+            -- Extract CC event name: --@onCCEvent "mouse_click" or @onCCEvent("mouse_click")
+            ccEventName = line:match('%-%-@onCCEvent%s+"([^"]+)"')
+                          or line:match('@onCCEvent%s+"([^"]+)"')
+                          or line:match('%-%-@onCCEvent%s*%(%s*"([^"]+)"%s*%)')
+                          or line:match('@onCCEvent%s*%(%s*"([^"]+)"%s*%)')
+
+            if ccEventName then
+                -- Validate against allowlist
+                if isCCEventAllowed(ccEventName) then
+                    lastEventName = "cc:" .. ccEventName  -- Prefix with "cc:"
+                    registeredCCEvents[ccEventName] = true  -- Track for subscription
+                    log("[fzzl] Found CC event tag: " .. ccEventName)
+                else
+                    log("[fzzl] WARNING: CC event '" .. ccEventName .. "' not in allowlist, skipping")
+                    lastEventName = nil
+                end
+            else
+                log("[fzzl] ERROR: Invalid @onCCEvent syntax, expected @onCCEvent \"eventName\"")
+                lastEventName = nil
+            end
+        elseif eventTag then
+            -- Regular fizzle event (existing behavior)
             lastEventName = eventTag
             log("[fzzl] Found event tag: " .. eventTag)
         end
@@ -224,8 +296,29 @@ local function assignFizzleFunctionsToEventsFromCache()
 
     local lastEventName = nil
     for i, line in ipairs(lines) do
-        local eventTag = line:match("@([%w_]+)")
-        if eventTag then
+        -- Match both --@eventName and @eventName formats
+        local eventTag = line:match("%-%-@([%w_]+)") or line:match("@([%w_]+)")
+        local ccEventName = nil
+
+        if eventTag == "onCCEvent" then
+            -- Extract CC event name: --@onCCEvent "mouse_click" or @onCCEvent("mouse_click")
+            ccEventName = line:match('%-%-@onCCEvent%s+"([^"]+)"')
+                          or line:match('@onCCEvent%s+"([^"]+)"')
+                          or line:match('%-%-@onCCEvent%s*%(%s*"([^"]+)"%s*%)')
+                          or line:match('@onCCEvent%s*%(%s*"([^"]+)"%s*%)')
+
+            if ccEventName then
+                -- Validate against allowlist
+                if isCCEventAllowed(ccEventName) then
+                    lastEventName = "cc:" .. ccEventName  -- Prefix with "cc:"
+                else
+                    lastEventName = nil
+                end
+            else
+                lastEventName = nil
+            end
+        elseif eventTag then
+            -- Regular fizzle event
             lastEventName = eventTag
         else
             local funcName = line:match("local%s+function%s+([%w_]+)%s*%(")
@@ -254,6 +347,14 @@ local function assignFizzleFunctionsToEventsFromCache()
         return false
     end
 
+    -- Debug: Check what functions are in the sandbox
+    log("[fzzl] Functions in sandbox:")
+    for k, v in pairs(sandbox) do
+        if type(v) == "function" then
+            log("[fzzl]   - " .. k)
+        end
+    end
+
     log("[fzzl] Function-Event Map: " .. textutils.serialize(functionEventMap))
 
     for funcName, eventName in pairs(functionEventMap) do
@@ -279,11 +380,21 @@ local function triggerFizzleEvent(eventName, params)
 end
 
 
+-- Route CC events from browser to fizzle event system
+-- Called by browser's global event listener
+-- Parameters are passed directly (p1, p2, p3, p4) to match ComputerCraft event structure
+local function routeCCEvent(eventName, p1, p2, p3, p4)
+    local fizzleEventName = "cc:" .. eventName
+    events.triggerEvent(fizzleEventName, p1, p2, p3, p4)
+end
+
+
 -- Internal do not use outside of fizzle
 -- Clears fizzleEvents and deletes the cache
 local function reset()
     -- Nuke Everything
     fizzleEvents = {}
+    registeredCCEvents = {}  -- Clear tracked CC events
     if fs.exists(cacheFilePath) then
         fs.delete(cacheFilePath)
     end
@@ -333,25 +444,45 @@ local function renew(mmScripts)
                 end
 
                 -- Check first non-empty line for @eventName annotation
+                -- For @onCCEvent, we need to preserve the full line for later parsing
+                local isCCEventScript = false
                 for i, line in ipairs(codeLines) do
                     local trimmed = line:match("^%s*(.-)%s*$")
                     if trimmed ~= "" then
                         local atEvent = trimmed:match("^%-%-@([%w_]+)") or trimmed:match("^@([%w_]+)")
                         if atEvent then
-                            eventName = atEvent
-                            -- Remove this line from codeLines
-                            table.remove(codeLines, i)
-                            break
+                            if atEvent == "onCCEvent" then
+                                -- Mark as CC event script, leave line intact
+                                isCCEventScript = true
+                                break
+                            else
+                                -- Regular fizzle event - extract and remove line
+                                eventName = atEvent
+                                table.remove(codeLines, i)
+                                break
+                            end
                         else
                             break -- first non-empty line isn't an annotation
                         end
                     end
                 end
 
-                if not eventName then
-                    log("[fzzl] Warning: skipping script entry with missing event name")
-                else
-                    -- Add @event annotation as a comment (required for registerEventsFromCache)
+                -- Handle three cases: regular events, CC events, and helper functions (no event)
+                if isCCEventScript then
+                    -- CC event script - add code with @onCCEvent line commented
+                    -- The @onCCEvent "eventName" line needs to be commented for Lua parsing
+                    for _, codeLine in ipairs(codeLines) do
+                        -- Comment out @onCCEvent lines so Lua can parse the script
+                        if codeLine:match("^%s*@onCCEvent") then
+                            table.insert(lines, "--" .. codeLine)
+                        else
+                            table.insert(lines, codeLine)
+                        end
+                    end
+                    log("[fzzl] Added CC event script")
+                    table.insert(lines, "") -- blank line for readability
+                elseif eventName then
+                    -- Regular fizzle event - add with --@eventName prefix
                     table.insert(lines, "--@" .. eventName)
 
                     -- Detect if this is a shorthand script (no function declaration)
@@ -382,6 +513,13 @@ local function renew(mmScripts)
                         tempIndex = tempIndex + 1
                     end
 
+                    table.insert(lines, "") -- blank line for readability
+                else
+                    -- Helper function (no event decorator) - add as-is for global sandbox access
+                    for _, codeLine in ipairs(codeLines) do
+                        table.insert(lines, codeLine)
+                    end
+                    log("[fzzl] Added helper function (no event)")
                     table.insert(lines, "") -- blank line for readability
                 end
             end
@@ -430,5 +568,6 @@ end
 return {
     init = init,
     triggerFizzleEvent = triggerFizzleEvent,
-    renew = renew
+    renew = renew,
+    routeCCEvent = routeCCEvent  -- NEW: Export for browser CC event routing
 }

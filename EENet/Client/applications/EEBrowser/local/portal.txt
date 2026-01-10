@@ -8,7 +8,7 @@
 
 ## <text:cyan>Quick Access
 <text:white>
-<link "local/home","Network Demo"> <link "local/cookiedemo","Cookies"> <link "local/updateloop","Updates"> <link "local/fillbgtest","fillBg Test">
+<link "local/home","Network Demo"> <link "local/cceventdemo","CC Events"> <link "local/cookiedemo","Cookies"> <link "local/updateloop","Updates"> <link "local/fillbgtest","fillBg Test">
 
 <br>
 <hr:"-">

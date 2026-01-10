@@ -81,6 +81,7 @@ function UI.emitEvent(eventName, ...)
 end
 
 -- Subscribe a global event listener (non-element, always active)
+-- Returns an unsubscribe function that can be called to remove the listener
 function UI.subscribeGlobalEvent(eventName, fn)
     local reg = UI._globalEventRegistry
     local list = reg[eventName]
@@ -89,6 +90,16 @@ function UI.subscribeGlobalEvent(eventName, fn)
         reg[eventName] = list
     end
     table.insert(list, fn)
+
+    -- Return unsubscribe function
+    return function()
+        for i = #list, 1, -1 do
+            if list[i] == fn then
+                table.remove(list, i)
+                break
+            end
+        end
+    end
 end
 
 -- Attach subscription API to an element (element-local subscriptions)

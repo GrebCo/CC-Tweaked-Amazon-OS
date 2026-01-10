@@ -1,7 +1,7 @@
 # <text:cyan>Fizzle Network Demo
 <text:lightGray>Interactive demonstration of network capabilities
 
-<text:white>Quick Links: <link "local/portal","Portal" fg:white bg:purple> | <link "local/cookiedemo","Cookie Demo" fg:yellow bg:blue> | <link "local/updateloop","Update Loop" fg:yellow bg:blue> | <link "local/killtest","Kill Test" fg:yellow bg:blue> | <link "local/fillbgtest","fillBg Test" fg:yellow bg:blue>
+<text:white>Quick Links: <link "local/portal","Portal" fg:white bg:purple> | <link "local/cceventdemo","CC Event Demo" fg:white bg:green> | <link "local/cookiedemo","Cookie Demo" fg:yellow bg:blue> | <link "local/updateloop","Update Loop" fg:yellow bg:blue> | <link "local/killtest","Kill Test" fg:yellow bg:blue> | <link "local/fillbgtest","fillBg Test" fg:yellow bg:blue>
 
 <hr:"=">
 
