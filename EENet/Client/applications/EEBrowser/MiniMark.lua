@@ -1,6 +1,6 @@
--- MiniMark v0.91 (Spec-Conformant) for CC:Tweaked
+-- MiniMark v0.92 (Spec-Conformant) for CC:Tweaked
 -- Drop-in renderer + tokenizer with UI registry output
--- Implements: line-based blocks, persistent attributes (fg/bg/id), <hr>, <br>,
+-- Implements: line-based blocks, persistent attributes (fg/bg/id/fillBg), <hr>, <br>,
 -- escape sequences (\\, \<, \>, \"), links (3 forms), buttons, checkboxes, textboxes,
 -- script extraction with optional @EventName annotations or event:"Name" attribute.
 --
@@ -21,7 +21,9 @@
 --   • <checkbox> supports label:"...", boxChecked:"[X]", boxUnchecked:"[ ]", id:"...", onClick:EventName
 --   • <id:"..."> applies to subsequent text/inline elements until reset/newline
 --   • <fg:color>/<bg:color> are aliases for <text:color>/<background:color>
---   • <reset> resets fg/bg/id to defaults
+--   • <fillBg:color> fills entire line with background color (persists across lines)
+--   • <fillBg:reset> removes line fill
+--   • <reset> resets fg/bg/id to defaults (but NOT fillBg)
 --   • <hr:"--+"> repeats pattern across terminal width
 --   • <br> inserts a blank line
 --
@@ -122,7 +124,7 @@ local function parseTag(tagInner)
   for key, val in rest:gmatch("([%w]+)%s*:%s*\"([^\"]*)\"") do
     attrs[key] = val
   end
-  for key, val in rest:gmatch("([%w]+)%s*:%s*([%w%p]+)") do
+  for key, val in rest:gmatch("([%w]+)%s*:%s*([%w_%-]+)") do
     if attrs[key] == nil then
       attrs[key] = val
     end
@@ -174,6 +176,7 @@ local function parsePageToLogicalLines(path)
   local logical = {}
 
   local inScript = false
+  local currentFillBg = nil  -- Persistent fill background across lines
 
   for _, raw in ipairs(rawLines) do
     local line = protectEscapes(raw or "")
@@ -190,16 +193,16 @@ local function parsePageToLogicalLines(path)
       -- skip script content from visual rendering
     else
       if line:find("^%s*$") then
-        table.insert(logical, {type="blank"})
+        table.insert(logical, {type="blank", fillBg=currentFillBg})
       else
         -- Check for structural single-line tags first: <hr:"..."> or <br>
         local structural = line:match("^%s*<%s*hr[^>]*>%s*$")
         if structural then
           local _, attrs, posArgs = parseTag(line:match("<(.-)>"))
           local pattern = attrs[1] or (posArgs[1] or "-")
-          table.insert(logical, {type="hr", pattern = pattern ~= "" and pattern or "-"})
+          table.insert(logical, {type="hr", pattern = pattern ~= "" and pattern or "-", fillBg=currentFillBg})
         elseif line:match("^%s*<%s*br%s*>%s*$") then
-          table.insert(logical, {type="blank"})
+          table.insert(logical, {type="blank", fillBg=currentFillBg})
         else
           local align, body = getAlignment(line)
           local st = defaultState()
@@ -237,6 +240,13 @@ local function parsePageToLogicalLines(path)
                 else
                   st.bg = colorMap[colorKey] or colors.black
                 end
+              elseif name == "fillBg" then
+                local colorKey = attrs.color or attrs[1] or posArgs[1] or inner:match("^fillBg:%s*([%w]+)")
+                if colorKey == "reset" then
+                  currentFillBg = nil
+                else
+                  currentFillBg = colorMap[colorKey] or nil
+                end
               elseif name == "reset" then
                 st = defaultState()
               elseif name == "id" then
@@ -259,8 +269,8 @@ local function parsePageToLogicalLines(path)
                   target = attrs.target or attrs[1]
                   label  = attrs.label or attrs[2] or target
                 end
-                lfg = attrs.fg and (colorMap[attrs.fg] or st.fg) or st.fg
-                lbg = attrs.bg and (colorMap[attrs.bg] or st.bg) or st.bg
+                lfg = attrs.fg and (colorMap[attrs.fg] or colors.lightBlue) or colors.lightBlue
+                lbg = attrs.bg and (colorMap[attrs.bg] or colors.lightGray) or colors.lightGray
 
                 table.insert(elements, {
                   type="link",
@@ -324,7 +334,7 @@ local function parsePageToLogicalLines(path)
           end
 
           -- Insert as a logical line
-          table.insert(logical, {type="line", align=align, elements=elements})
+          table.insert(logical, {type="line", align=align, elements=elements, fillBg=currentFillBg})
         end
       end
     end
@@ -375,7 +385,7 @@ local function layoutFromTokens(logical, maxWidth)
 
   for _, entry in ipairs(logical) do
     if entry.type == "blank" then
-      table.insert(physicalLines, {type = "blank"})
+      table.insert(physicalLines, {type = "blank", fillBg = entry.fillBg})
 
     elseif entry.type == "hr" then
       local pattern = entry.pattern or "-"
@@ -389,7 +399,8 @@ local function layoutFromTokens(logical, maxWidth)
         type = "hr",
         text = rep,
         fg = colors.white,
-        bg = colors.black
+        bg = colors.black,
+        fillBg = entry.fillBg
       })
 
     elseif entry.type == "line" then
@@ -450,7 +461,8 @@ local function layoutFromTokens(logical, maxWidth)
           type = "text",
           fragments = pl,
           baseX = baseX,
-          align = entry.align
+          align = entry.align,
+          fillBg = entry.fillBg
         })
       end
     end
@@ -486,18 +498,35 @@ local function renderFromPhysicalLines(physicalLines, scroll, startY, elemX, ele
     end
 
     if pline.type == "blank" then
+      if pline.fillBg then
+        paintutils.drawLine(elemX, y, elemX + elemWidth - 1, y, pline.fillBg)
+      end
       y = y + 1
 
     elseif pline.type == "hr" then
+      if pline.fillBg then
+        paintutils.drawLine(elemX, y, elemX + elemWidth - 1, y, pline.fillBg)
+      end
       term.setCursorPos(elemX, y)
       term.setTextColor(pline.fg)
-      term.setBackgroundColor(pline.bg)
+
+      -- Use fillBg if hr bg is default black and fillBg is set
+      local bgColor = pline.bg
+      if pline.fillBg and bgColor == colors.black then
+        bgColor = pline.fillBg
+      end
+      term.setBackgroundColor(bgColor)
+
       -- Clip to element width
       local hrText = pline.text:sub(1, elemWidth)
       write(hrText)
       y = y + 1
 
     elseif pline.type == "text" then
+      if pline.fillBg then
+        paintutils.drawLine(elemX, y, elemX + elemWidth - 1, y, pline.fillBg)
+      end
+
       local x = pline.baseX + elemX - 1  -- Offset by element's x position
       for _, f in ipairs(pline.fragments) do
         -- Clip fragments that exceed element width
@@ -507,7 +536,13 @@ local function renderFromPhysicalLines(physicalLines, scroll, startY, elemX, ele
 
         term.setCursorPos(x, y)
         term.setTextColor(f.fg or colors.white)
-        term.setBackgroundColor(f.bg or colors.black)
+
+        -- Use fillBg if fragment bg is default black and fillBg is set
+        local bgColor = f.bg or colors.black
+        if pline.fillBg and bgColor == colors.black then
+          bgColor = pline.fillBg
+        end
+        term.setBackgroundColor(bgColor)
 
         -- Clip text to remaining width
         local remainingWidth = elemWidth - (x - elemX)

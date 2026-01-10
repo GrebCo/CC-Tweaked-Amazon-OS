@@ -1,0 +1,68 @@
+<fillBg:blue>
+<br>
+## <text:white>SIMPLICITY SMP NETWORK
+### <text:lightGray>Central Hub v1.0
+<br>
+<fillBg:gray>
+<hr:"-">
+
+## <text:cyan>Quick Access
+<text:white>
+<link "local/home","Network Demo"> <link "local/cookiedemo","Cookies"> <link "local/updateloop","Updates"> <link "local/fillbgtest","fillBg Test">
+
+<br>
+<hr:"-">
+
+## <text:cyan>Server Tools
+<text:white>
+<link "local/killtest","Process Manager">  <link "applications/EEBrowser/MiniMarkDocs.md","Documentation">
+
+<br>
+<hr:"-">
+
+## <text:cyan>System Status
+<text:white>Network: <text:lime>ONLINE  <text:lightGray>| Storage: <text:yellow>78%  <text:lightGray>| Uptime: <text:cyan>12h 34m
+
+<br>
+<hr:"-">
+
+## <text:cyan>Featured Applications
+
+<text:lightGray>Web Browser - Browse local and network pages
+<text:lightGray>File Manager - Navigate your computer's files
+<text:lightGray>Chat Client - Connect with other computers
+<text:lightGray>Code Editor - Write and execute programs
+
+<br>
+<hr:"-">
+
+## <text:cyan>Network Activity
+
+<text:white>Recent connections: <text:lightGray>Computer #15, #23, #42
+<text:white>Latest broadcast: <text:lightGray>"Server maintenance at 2100h"
+<text:white>Messages sent: <text:lime>127 today
+
+<br>
+<hr:"-">
+
+<fillBg:lightGray>
+<br>
+## <text:red>System Alerts
+<text:black>
+Storage space running low - cleanup recommended
+New update available for MiniMark v0.92
+<br>
+
+<fillBg:gray>
+<hr:"-">
+
+## <text:cyan>Quick Stats
+
+<text:white>Total Users: <text:lime>24  <text:lightGray>| Active Now: <text:yellow>8  <text:lightGray>| Peak Today: <text:cyan>15
+<text:white>Files Shared: <text:lime>342  <text:lightGray>| Data Transfer: <text:cyan>1.2 GB
+
+<br>
+<hr:"=">
+
+### <text:lightGray>Powered by MiniMark v0.92
+<br>
