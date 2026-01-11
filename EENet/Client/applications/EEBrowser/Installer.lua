@@ -1,5 +1,13 @@
--- Load configuration
-dofile("applications/EEBrowser/installer_config.lua")
+-- ========================================
+-- CONFIGURATION - Edit these to change branch/repo
+-- ========================================
+local config = {
+    owner = "GrebCo",
+    repo = "CC-Tweaked-Amazon-OS",
+    branch = "EEnetv2",  -- Change this to switch branches
+    basePath = "EENet/Client",
+}
+-- ========================================
 
 -- Helper function to build GitHub raw URL
 local function buildUrl(relativePath)
@@ -108,7 +116,6 @@ if remoteVersion ~= version then
     shell.run("wget", buildUrl("applications/EEBrowser/Installer.lua"), "applications/EEBrowser/Installer.lua")
     shell.run("wget", buildUrl("applications/EEBrowser/update.lua"), "applications/EEBrowser/update.lua")
     shell.run("wget", buildUrl("applications/EEBrowser/APIInstaller.lua"), "applications/EEBrowser/APIInstaller.lua")
-    shell.run("wget", buildUrl("applications/EEBrowser/installer_config.lua"), "applications/EEBrowser/installer_config.lua")
 
     print("")
     print("Update complete!")

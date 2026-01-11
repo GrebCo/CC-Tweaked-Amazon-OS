@@ -2,8 +2,16 @@
 -- Uses GitHub's Contents API to recursively list and download files
 -- No unzip needed; downloads exactly what you need
 
--- Load configuration
-dofile("applications/EEBrowser/installer_config.lua")
+-- ========================================
+-- CONFIGURATION - Edit these to change branch/repo
+-- ========================================
+local config = {
+    owner = "GrebCo",
+    repo = "CC-Tweaked-Amazon-OS",
+    branch = "EEnetv2",  -- Change this to switch branches
+    basePath = "EENet/Client",
+}
+-- ========================================
 
 -- Helper function to make HTTP requests and parse JSON
 local function githubRequest(path)
