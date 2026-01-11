@@ -1,0 +1,228 @@
+# <text:cyan>CC Event Demo - @onCCEvent
+<text:lightGray>Test page for ComputerCraft event handlers in Fizzle
+
+<text:white>Quick Links: <link "local/home","Home" fg:white bg:purple> | <link "local/portal","Portal" fg:yellow bg:blue>
+
+<hr:"=">
+
+## <text:yellow>1. WASD Movement Tracker
+<text:white>Press W, A, S, or D to move the character around
+
+<text:lightGray>Position: <id:"posX"><text:white>0<text:lightGray>, <id:"posY"><text:white>0
+<text:lightGray>Last key: <id:"lastKey"><text:white>None
+
+<text:yellow><id:"canvas0">........................................
+<text:yellow><id:"canvas1">........................................
+<text:yellow><id:"canvas2">..................@.....................
+<text:yellow><id:"canvas3">........................................
+<text:yellow><id:"canvas4">........................................
+<text:yellow><id:"canvas5">........................................
+
+<hr:"-">
+
+## <text:yellow>2. Mouse Click Tracker
+<text:white>Click anywhere or drag your mouse
+
+<text:lightGray>Last click: <id:"clickPos"><text:white>None
+<text:lightGray>Button: <id:"clickButton"><text:white>-
+<text:lightGray>Drag position: <id:"dragPos"><text:white>None
+<text:lightGray>Total clicks: <id:"clickCount"><text:white>0
+
+<hr:"-">
+
+## <text:yellow>3. Redstone Detector
+<text:white>Place redstone next to the computer and toggle it
+
+<text:lightGray>Redstone status: <id:"redstoneStatus"><text:white>Checking...
+<text:lightGray>Last change: <id:"redstoneTime"><text:white>Never
+<text:lightGray>Change count: <id:"redstoneCount"><text:white>0
+
+<hr:"-">
+
+## <text:yellow>4. Keyboard Character Input
+<text:white>Type any characters (they'll appear below)
+
+<text:lightGray>Input buffer: <id:"charBuffer"><text:white>
+
+<hr:"-">
+
+## <text:yellow>5. Mouse Scroll Detector
+<text:white>Scroll your mouse wheel
+
+<text:lightGray>Last scroll: <id:"scrollDir"><text:white>None
+<text:lightGray>Scroll count: <id:"scrollCount"><text:white>0
+
+<hr:"-">
+
+## <text:yellow>6. Timer System
+<text:white>Click to start a 3-second timer
+
+<button label:"Start Timer" fg:black bg:lime pressBg:green onClick:StartTimer>
+
+<text:lightGray>Timer status: <id:"timerStatus"><text:white>Not started
+<text:lightGray>Timer ID: <id:"timerID"><text:white>-
+
+<hr:"=">
+
+<text:gray>Event System Status: <text:green>Active
+
+<script>
+@onLoad
+function initialize()
+  -- Initialize global state
+  posX = 0
+  posY = 0
+  clickCount = 0
+  scrollCount = 0
+  redstoneCount = 0
+  charBuffer = ""
+
+  -- Draw initial canvas
+  updateCanvas()
+
+  -- Check initial redstone state
+  checkRedstone()
+end
+</script>
+
+<script>
+@onCCEvent "key"
+function handleKey(keyCode, isHeld)
+  -- WASD movement using keys API
+  local keyName = keys.getName(keyCode) or "Unknown"
+
+  if keyCode == keys.w then
+    -- W key - move up
+    keyName = "W (Up)"
+    posY = math.max(-2, posY - 1)
+    updateCanvas()
+  elseif keyCode == keys.a then
+    -- A key - move left
+    keyName = "A (Left)"
+    posX = math.max(-18, posX - 1)
+    updateCanvas()
+  elseif keyCode == keys.s then
+    -- S key - move down
+    keyName = "S (Down)"
+    posY = math.min(2, posY + 1)
+    updateCanvas()
+  elseif keyCode == keys.d then
+    -- D key - move right
+    keyName = "D (Right)"
+    posX = math.min(18, posX + 1)
+    updateCanvas()
+  end
+
+  document.setElementBodyById("lastKey", keyName)
+  document.setElementBodyById("posX", tostring(posX))
+  document.setElementBodyById("posY", tostring(posY))
+end
+</script>
+
+<script>
+@onCCEvent "char"
+function handleChar(character)
+  -- Add character to buffer (max 30 chars)
+  charBuffer = charBuffer .. character
+  if string.len(charBuffer) > 30 then
+    charBuffer = string.sub(charBuffer, -30)
+  end
+  document.setElementBodyById("charBuffer", charBuffer)
+end
+</script>
+
+<script>
+@onCCEvent "mouse_click"
+function handleClick(button, x, y)
+  clickCount = clickCount + 1
+
+  local buttonName = "Unknown"
+  if button == 1 then
+    buttonName = "Left"
+  elseif button == 2 then
+    buttonName = "Right"
+  elseif button == 3 then
+    buttonName = "Middle"
+  end
+
+  document.setElementBodyById("clickPos", x .. ", " .. y)
+  document.setElementBodyById("clickButton", buttonName)
+  document.setElementBodyById("clickCount", tostring(clickCount))
+end
+</script>
+
+<script>
+@onCCEvent "mouse_drag"
+function handleDrag(button, x, y)
+  document.setElementBodyById("dragPos", x .. ", " .. y)
+end
+</script>
+
+<script>
+@onCCEvent "mouse_scroll"
+function handleScroll(direction, x, y)
+  scrollCount = scrollCount + 1
+
+  local dirName = "Unknown"
+  if direction == -1 then
+    dirName = "Up"
+  elseif direction == 1 then
+    dirName = "Down"
+  end
+
+  document.setElementBodyById("scrollDir", dirName .. " at " .. x .. ", " .. y)
+  document.setElementBodyById("scrollCount", tostring(scrollCount))
+end
+</script>
+
+<script>
+@onCCEvent "redstone"
+function handleRedstone()
+  redstoneCount = redstoneCount + 1
+  checkRedstone()
+
+  document.setElementBodyById("redstoneTime", os.date("%H:%M:%S"))
+  document.setElementBodyById("redstoneCount", tostring(redstoneCount))
+end
+</script>
+
+<script>
+function updateCanvas()
+  -- Create a 6x40 canvas with @ character at current position
+  -- Update each row separately since MiniMark elements are single-line
+  local rowIndex = 0
+  for row = -2, 3 do
+    local line = ""
+    for col = -18, 21 do
+      if col == posX and row == posY then
+        line = line .. "@"
+      else
+        line = line .. "."
+      end
+    end
+    document.setElementBodyById("canvas" .. rowIndex, line)
+    rowIndex = rowIndex + 1
+  end
+end
+</script>
+
+<script>
+function checkRedstone()
+  -- Check all sides for redstone
+  local sides = { "top", "bottom", "left", "right", "front", "back" }
+  local active = {}
+
+  for _, side in ipairs(sides) do
+    if rs.getInput(side) then
+      table.insert(active, side)
+    end
+  end
+
+  if #active > 0 then
+    local status = "ON: " .. table.concat(active, ", ")
+    document.setElementBodyById("redstoneStatus", status)
+  else
+    document.setElementBodyById("redstoneStatus", "OFF (all sides)")
+  end
+end
+</script>

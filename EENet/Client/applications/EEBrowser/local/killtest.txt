@@ -1,0 +1,183 @@
+# <text:red>Malicious Script Test Page
+<text:lightGray>Testing timeout protection mechanisms
+
+<hr:"=">
+
+## <text:yellow>Test 1: Simple Infinite Loop
+<text:white>Basic while true loop with no yield - should be killed after timeout
+
+<button label:"Test 1: Infinite Loop" fg:black bg:red pressBg:gray id:"test1Btn" onClick:Test1>
+<text:gray>Status: <id:"test1Status"><text:white>Ready
+
+<script>
+@Test1
+function handleTest1()
+    document.setElementBodyById("test1Status", "Running infinite loop...")
+
+    -- Malicious: infinite loop with no yield
+    while true do
+        -- Just spin forever
+    end
+
+    -- This should never be reached
+    document.setElementBodyById("test1Status", "Completed (BUG!)")
+end
+</script>
+
+<hr:"-">
+
+## <text:yellow>Test 2: CPU-Intensive Loop
+<text:white>Heavy computation in tight loop - should hit timeout
+
+<button label:"Test 2: CPU Burn" fg:black bg:red pressBg:gray id:"test2Btn" onClick:Test2>
+<text:gray>Status: <id:"test2Status"><text:white>Ready
+
+<script>
+@Test2
+function handleTest2()
+    document.setElementBodyById("test2Status", "Burning CPU...")
+
+    -- Malicious: CPU-intensive loop
+    local sum = 0
+    for i = 1, 999999999 do
+        sum = sum + i
+        sum = sum * 2
+        sum = sum / 2
+    end
+
+    document.setElementBodyById("test2Status", "Sum: " .. sum .. " (BUG!)")
+end
+</script>
+
+<hr:"-">
+
+## <text:yellow>Test 3: Nested Loops
+<text:white>Triple-nested loops creating combinatorial explosion
+
+<button label:"Test 3: Nested Loops" fg:black bg:red pressBg:gray id:"test3Btn" onClick:Test3>
+<text:gray>Status: <id:"test3Status"><text:white>Ready
+
+<script>
+@Test3
+function handleTest3()
+    document.setElementBodyById("test3Status", "Running nested loops...")
+
+    -- Malicious: deeply nested loops
+    local count = 0
+    for i = 1, 10000 do
+        for j = 1, 10000 do
+            for k = 1, 10000 do
+                count = count + 1
+            end
+        end
+    end
+
+    document.setElementBodyById("test3Status", "Count: " .. count .. " (BUG!)")
+end
+</script>
+
+<hr:"-">
+
+## <text:yellow>Test 4: Infinite Recursion
+<text:white>Recursive function with no base case - stack overflow
+
+<button label:"Test 4: Recursion" fg:black bg:red pressBg:gray id:"test4Btn" onClick:Test4>
+<text:gray>Status: <id:"test4Status"><text:white>Ready
+
+<script>
+@Test4
+local function recurseForever(n)
+    -- No base case - recurse forever
+    return recurseForever(n + 1)
+end
+
+function handleTest4()
+    document.setElementBodyById("test4Status", "Recursing forever...")
+
+    -- Malicious: infinite recursion
+    recurseForever(1)
+
+    document.setElementBodyById("test4Status", "Completed (BUG!)")
+end
+</script>
+
+<hr:"-">
+
+## <text:yellow>Test 5: Memory Allocation Bomb
+<text:white>Rapidly allocate large tables to exhaust memory
+
+<button label:"Test 5: Memory Bomb" fg:black bg:red pressBg:gray id:"test5Btn" onClick:Test5>
+<text:gray>Status: <id:"test5Status"><text:white>Ready
+
+<script>
+@Test5
+function handleTest5()
+    document.setElementBodyById("test5Status", "Allocating memory...")
+
+    -- Malicious: allocate huge tables
+    local tables = {}
+    for i = 1, 999999 do
+        tables[i] = {}
+        for j = 1, 10000 do
+            tables[i][j] = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+        end
+    end
+
+    document.setElementBodyById("test5Status", "Allocated (BUG!)")
+end
+</script>
+
+<hr:"-">
+
+## <text:yellow>Test 6: String Concatenation Bomb
+<text:white>Rapidly concatenate strings in loop (exponential growth)
+
+<button label:"Test 6: String Bomb" fg:black bg:red pressBg:gray id:"test6Btn" onClick:Test6>
+<text:gray>Status: <id:"test6Status"><text:white>Ready
+
+<script>
+@Test6
+function handleTest6()
+    document.setElementBodyById("test6Status", "Concatenating strings...")
+
+    -- Malicious: string concatenation in loop (very slow in Lua)
+    local str = "A"
+    for i = 1, 100000 do
+        str = str .. "BCDEFGHIJKLMNOPQRSTUVWXYZ"
+    end
+
+    document.setElementBodyById("test6Status", "Length: " .. #str .. " (BUG!)")
+end
+</script>
+
+<hr:"-">
+
+## <text:yellow>Test 7: Benign Script (Control)
+<text:white>Normal script that completes successfully - should NOT timeout
+
+<button label:"Test 7: Normal Script" fg:black bg:green pressBg:lime id:"test7Btn" onClick:Test7>
+<text:gray>Status: <id:"test7Status"><text:white>Ready
+
+<script>
+@Test7
+function handleTest7()
+    document.setElementBodyById("test7Status", "Running normal script...")
+
+    -- Benign: quick calculation
+    local sum = 0
+    for i = 1, 100 do
+        sum = sum + i
+    end
+
+    document.setElementBodyById("test7Status", "Completed! Sum: " .. sum)
+end
+</script>
+
+<hr:"=">
+
+## <text:cyan>Expected Results:
+
+<text:white>Tests 1-6: <text:red>Should TIMEOUT and show error
+<text:white>Test 7: <text:green>Should COMPLETE successfully
+
+<text:lightGray>Check the log for timeout messages. UI should remain responsive throughout.
