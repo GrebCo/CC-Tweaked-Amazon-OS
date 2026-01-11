@@ -3,7 +3,7 @@ local fizzleContext
 local log = function() end
 
 local fizzleEvents = {}
-local cacheFilePath = "EEBrowser/cache/scripts/"
+local cacheFilePath = "applications/EEBrowser/cache/scripts/"
 
 -- sandbox
 local sandbox = {
@@ -345,14 +345,6 @@ local function assignFizzleFunctionsToEventsFromCache()
     if not execSuccess then
         log("[fzzl] ERROR: Failed to execute script: " .. (execErr or "unknown error"))
         return false
-    end
-
-    -- Debug: Check what functions are in the sandbox
-    log("[fzzl] Functions in sandbox:")
-    for k, v in pairs(sandbox) do
-        if type(v) == "function" then
-            log("[fzzl]   - " .. k)
-        end
     end
 
     log("[fzzl] Function-Event Map: " .. textutils.serialize(functionEventMap))

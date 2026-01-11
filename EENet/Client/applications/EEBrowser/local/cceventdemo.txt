@@ -89,36 +89,27 @@ end
 @onCCEvent "key"
 function handleKey(keyCode, isHeld)
   -- WASD movement using keys API
-  print("[handleKey] Called with keyCode: " .. tostring(keyCode))
-
-  local keyName = "Key " .. tostring(keyCode)
-  if keys and keys.getName then
-    keyName = keys.getName(keyCode) or keyName
-  end
+  local keyName = keys.getName(keyCode) or "Unknown"
 
   if keyCode == keys.w then
     -- W key - move up
     keyName = "W (Up)"
     posY = math.max(-2, posY - 1)
-    print("[handleKey] Moving up, new posY: " .. posY)
     updateCanvas()
   elseif keyCode == keys.a then
     -- A key - move left
     keyName = "A (Left)"
     posX = math.max(-18, posX - 1)
-    print("[handleKey] Moving left, new posX: " .. posX)
     updateCanvas()
   elseif keyCode == keys.s then
     -- S key - move down
     keyName = "S (Down)"
     posY = math.min(2, posY + 1)
-    print("[handleKey] Moving down, new posY: " .. posY)
     updateCanvas()
   elseif keyCode == keys.d then
     -- D key - move right
     keyName = "D (Right)"
     posX = math.min(18, posX + 1)
-    print("[handleKey] Moving right, new posX: " .. posX)
     updateCanvas()
   end
 
