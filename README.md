@@ -9,7 +9,7 @@ A lightweight operating system and web browser built for [CC:Tweaked](https://tw
 Run this command in your CC:Tweaked computer to install the latest version:
 
 ```lua
-wget run https://raw.githubusercontent.com/GrebCo/CC-Tweaked-Amazon-OS/refs/heads/main/EENet/Client/applications/EEBrowser/APIInstaller.lua
+wget run https://raw.githubusercontent.com/GrebCo/CC-Tweaked-Amazon-OS/refs/heads/EEnetv2/EENet/Client/applications/EEBrowser/APIInstaller.lua
 ```
 ---
 ## Install the Webserver (For Hosting websites)
