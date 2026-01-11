@@ -11,11 +11,13 @@ function registerFunction(eventName, func)
     table.insert(events[eventName], func)
 end
 
-function triggerEvent(eventName, params)
+function triggerEvent(eventName, ...)
     local funcs = events[eventName]
-    if not funcs then return end
+    if not funcs then
+        return
+    end
     for _, func in ipairs(funcs) do
-        func(params)
+        func(...)
     end
 end
 

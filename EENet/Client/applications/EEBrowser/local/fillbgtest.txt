@@ -1,0 +1,21 @@
+<fillBg:gray>
+# <text:cyan>fillBg Test Page
+
+<text:white>This text will be white on gray
+Even the empty spaces to the right of this will be gray
+
+<text:red>This will be red on gray
+<background:purple>This will be red on purple but the empty space to the right of this will be gray
+
+<fillBg:orange>This line will also be orange
+Everything down here is gonna be orange
+
+<hr:"=">
+
+<text:white>Still orange background!
+
+<fillBg:blue>
+Now we switched to blue background
+
+<fillBg:reset>
+<text:white>Back to normal (black background)

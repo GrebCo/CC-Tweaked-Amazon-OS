@@ -74,6 +74,30 @@ end
 ui.init(contextTable)
 fizzle.init(contextTable)
 
+-------------------------------------------------
+-- Subscribe to CC Events for Fizzle
+-------------------------------------------------
+-- Load fizzle config to get allowed events
+local fizzleConfigPath = "applications/EEBrowser/config/fizzle_config.lua"
+local fizzleConfig = {}
+if fs.exists(fizzleConfigPath) then
+    local configFunc = loadfile(fizzleConfigPath)
+    if configFunc then
+        fizzleConfig = configFunc()
+    end
+end
+
+-- Subscribe to all allowed CC events
+if fizzleConfig.ALLOWED_CC_EVENTS then
+    for _, ccEventName in ipairs(fizzleConfig.ALLOWED_CC_EVENTS) do
+        ui.subscribeGlobalEvent(ccEventName, function(eventName, p1, p2, p3, p4)
+            -- Route to fizzle's CC event handler
+            fizzle.routeCCEvent(eventName, p1, p2, p3, p4)
+        end)
+    end
+    log("[browser] Subscribed to " .. #fizzleConfig.ALLOWED_CC_EVENTS .. " CC events for fizzle")
+end
+
 
 -------------------------------------------------
 -- Scene 0: Confirm Settings Popup

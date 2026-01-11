@@ -1,201 +1,201 @@
-[2026-01-05 15:48:31] [fzzl] triggerFizzleEvent called: onLoad
-[2026-01-05 15:48:31] [fzzl] ERROR: Exception in event 'onLoad': ...Libraries/document.lua:19: attempt to index local 'mmRenderer' (a nil value)
-[2026-01-05 15:48:33] [browser] Triggering fizzle onUpdate event (total calls: 15)
-[2026-01-05 15:48:33] [fzzl] triggerFizzleEvent called: onUpdate
-[2026-01-05 15:48:34] [browser] Triggering fizzle onUpdate event (total calls: 30)
-[2026-01-05 15:48:34] [fzzl] triggerFizzleEvent called: onUpdate
-[2026-01-05 15:48:35] [browser] Triggering fizzle onUpdate event (total calls: 45)
-[2026-01-05 15:48:35] [fzzl] triggerFizzleEvent called: onUpdate
-[2026-01-05 15:48:36] [browser] Triggering fizzle onUpdate event (total calls: 60)
-[2026-01-05 15:48:36] [fzzl] triggerFizzleEvent called: onUpdate
-[2026-01-05 15:48:36] [browser] Triggering fizzle onUpdate event (total calls: 75)
-[2026-01-05 15:48:36] [fzzl] triggerFizzleEvent called: onUpdate
-[2026-01-05 15:48:37] [browser] Triggering fizzle onUpdate event (total calls: 90)
-[2026-01-05 15:48:37] [fzzl] triggerFizzleEvent called: onUpdate
-[2026-01-05 15:48:38] [browser] Triggering fizzle onUpdate event (total calls: 105)
-[2026-01-05 15:48:38] [fzzl] triggerFizzleEvent called: onUpdate
-[2026-01-05 15:48:39] [browser] Triggering fizzle onUpdate event (total calls: 120)
-[2026-01-05 15:48:39] [fzzl] triggerFizzleEvent called: onUpdate
-[2026-01-05 15:48:40] [browser] Triggering fizzle onUpdate event (total calls: 135)
-[2026-01-05 15:48:40] [fzzl] triggerFizzleEvent called: onUpdate
-[2026-01-05 15:48:40] [browser] Triggering fizzle onUpdate event (total calls: 150)
-[2026-01-05 15:48:40] [fzzl] triggerFizzleEvent called: onUpdate
-[2026-01-05 15:48:41] [browser] Triggering fizzle onUpdate event (total calls: 165)
-[2026-01-05 15:48:41] [fzzl] triggerFizzleEvent called: onUpdate
-[2026-01-05 15:48:42] [browser] Triggering fizzle onUpdate event (total calls: 180)
-[2026-01-05 15:48:42] [fzzl] triggerFizzleEvent called: onUpdate
-[2026-01-05 15:48:43] [browser] Triggering fizzle onUpdate event (total calls: 195)
-[2026-01-05 15:48:43] [fzzl] triggerFizzleEvent called: onUpdate
-[2026-01-05 15:48:44] [browser] Triggering fizzle onUpdate event (total calls: 210)
-[2026-01-05 15:48:44] [fzzl] triggerFizzleEvent called: onUpdate
-[2026-01-05 15:48:44] [browser] Triggering fizzle onUpdate event (total calls: 225)
-[2026-01-05 15:48:44] [fzzl] triggerFizzleEvent called: onUpdate
-[2026-01-05 15:48:45] [browser] Triggering fizzle onUpdate event (total calls: 240)
-[2026-01-05 15:48:45] [fzzl] triggerFizzleEvent called: onUpdate
-[2026-01-05 15:48:46] [browser] Triggering fizzle onUpdate event (total calls: 255)
-[2026-01-05 15:48:46] [fzzl] triggerFizzleEvent called: onUpdate
-[2026-01-05 15:48:47] [browser] Triggering fizzle onUpdate event (total calls: 270)
-[2026-01-05 15:48:47] [fzzl] triggerFizzleEvent called: onUpdate
-[2026-01-05 15:48:47] [fzzl] Added script for event 'onLoad'
-[2026-01-05 15:48:47] [fzzl] Added script for event 'onUpdate'
-[2026-01-05 15:48:47] [fzzl] Added script for event 'IncrementCounter'
-[2026-01-05 15:48:47] [fzzl] Added script for event 'ResetCounter'
-[2026-01-05 15:48:47] [fzzl] Added script for event 'ToggleAuto'
-[2026-01-05 15:48:47] [fzzl] Added script for event 'CheckCookie'
-[2026-01-05 15:48:47] [fzzl] Loaded 6 MiniMark scripts into fizzle
-[2026-01-05 15:48:47] [fzzl] Found event tag: onLoad
-[2026-01-05 15:48:48] [fzzl] Registered event: onLoad for function: initialize
-[2026-01-05 15:48:48] [fzzl] Found event tag: onUpdate
-[2026-01-05 15:48:48] [fzzl] Registered event: onUpdate for function: updateLoop
-[2026-01-05 15:48:48] [fzzl] Found event tag: IncrementCounter
-[2026-01-05 15:48:48] [fzzl] Registered event: IncrementCounter for function: handleIncrement
-[2026-01-05 15:48:48] [fzzl] Found event tag: ResetCounter
-[2026-01-05 15:48:48] [fzzl] Registered event: ResetCounter for function: handleReset
-[2026-01-05 15:48:48] [fzzl] Found event tag: ToggleAuto
-[2026-01-05 15:48:48] [fzzl] Registered event: ToggleAuto for function: handleToggleAuto
-[2026-01-05 15:48:48] [fzzl] Found event tag: CheckCookie
-[2026-01-05 15:48:48] [fzzl] Registered event: CheckCookie for function: handleCheckCookie
-[2026-01-05 15:48:48] [fzzl] Total events registered: {
-  "onLoad",
-  "onUpdate",
-  "IncrementCounter",
-  "ResetCounter",
-  "ToggleAuto",
-  "CheckCookie",
-}
-[2026-01-05 15:48:48] [fzzl] Function-Event Map: {
-  handleReset = "ResetCounter",
-  handleIncrement = "IncrementCounter",
-  handleToggleAuto = "ToggleAuto",
-  initialize = "onLoad",
-  updateLoop = "onUpdate",
-  handleCheckCookie = "CheckCookie",
-}
-[2026-01-05 15:48:48] [fzzl] Registered 'handleReset' for event 'ResetCounter'
-[2026-01-05 15:48:48] [fzzl] Registered 'handleIncrement' for event 'IncrementCounter'
-[2026-01-05 15:48:48] [fzzl] Registered 'handleToggleAuto' for event 'ToggleAuto'
-[2026-01-05 15:48:48] [fzzl] Registered 'initialize' for event 'onLoad'
-[2026-01-05 15:48:48] [fzzl] Registered 'updateLoop' for event 'onUpdate'
-[2026-01-05 15:48:48] [fzzl] Registered 'handleCheckCookie' for event 'CheckCookie'
-[2026-01-05 15:48:48] [fzzl] triggerFizzleEvent called: onLoad
-[2026-01-05 15:48:48] [cookie] Wrote cookie 'test_onload' for domain 'local/updateloop' (13 bytes)
-[2026-01-05 15:48:49] [browser] Triggering fizzle onUpdate event (total calls: 285)
-[2026-01-05 15:48:49] [fzzl] triggerFizzleEvent called: onUpdate
-[2026-01-05 15:48:50] [browser] Triggering fizzle onUpdate event (total calls: 300)
-[2026-01-05 15:48:50] [fzzl] triggerFizzleEvent called: onUpdate
-[2026-01-05 15:48:50] [browser] Triggering fizzle onUpdate event (total calls: 315)
-[2026-01-05 15:48:51] [fzzl] triggerFizzleEvent called: onUpdate
-[2026-01-05 15:48:51] [browser] Triggering fizzle onUpdate event (total calls: 330)
-[2026-01-05 15:48:51] [fzzl] triggerFizzleEvent called: onUpdate
-[2026-01-05 15:48:52] [browser] Triggering fizzle onUpdate event (total calls: 345)
-[2026-01-05 15:48:52] [fzzl] triggerFizzleEvent called: onUpdate
-[2026-01-05 15:48:53] [browser] Triggering fizzle onUpdate event (total calls: 360)
-[2026-01-05 15:48:53] [fzzl] triggerFizzleEvent called: onUpdate
-[2026-01-05 15:48:54] [browser] Triggering fizzle onUpdate event (total calls: 375)
-[2026-01-05 15:48:54] [fzzl] triggerFizzleEvent called: onUpdate
-[2026-01-05 15:48:55] [browser] Triggering fizzle onUpdate event (total calls: 390)
-[2026-01-05 15:48:55] [fzzl] triggerFizzleEvent called: onUpdate
-[2026-01-05 15:48:55] [browser] Triggering fizzle onUpdate event (total calls: 405)
-[2026-01-05 15:48:55] [fzzl] triggerFizzleEvent called: onUpdate
-[2026-01-05 15:48:56] [browser] Triggering fizzle onUpdate event (total calls: 420)
-[2026-01-05 15:48:56] [fzzl] triggerFizzleEvent called: onUpdate
-[2026-01-05 15:48:57] [browser] Triggering fizzle onUpdate event (total calls: 435)
-[2026-01-05 15:48:57] [fzzl] triggerFizzleEvent called: onUpdate
-[2026-01-05 15:48:58] [browser] Triggering fizzle onUpdate event (total calls: 450)
-[2026-01-05 15:48:58] [fzzl] triggerFizzleEvent called: onUpdate
-[2026-01-05 15:48:59] [browser] Triggering fizzle onUpdate event (total calls: 465)
-[2026-01-05 15:48:59] [fzzl] triggerFizzleEvent called: onUpdate
-[2026-01-05 15:48:59] [browser] Triggering fizzle onUpdate event (total calls: 480)
-[2026-01-05 15:48:59] [fzzl] triggerFizzleEvent called: onUpdate
-[2026-01-05 15:49:00] [browser] Triggering fizzle onUpdate event (total calls: 495)
-[2026-01-05 15:49:00] [fzzl] triggerFizzleEvent called: onUpdate
-[2026-01-05 15:49:01] [browser] Triggering fizzle onUpdate event (total calls: 510)
-[2026-01-05 15:49:01] [fzzl] triggerFizzleEvent called: onUpdate
-[2026-01-05 15:49:02] [browser] Triggering fizzle onUpdate event (total calls: 525)
-[2026-01-05 15:49:02] [fzzl] triggerFizzleEvent called: onUpdate
-[2026-01-05 15:49:03] [browser] Triggering fizzle onUpdate event (total calls: 540)
-[2026-01-05 15:49:03] [fzzl] triggerFizzleEvent called: onUpdate
-[2026-01-05 15:49:03] [browser] Triggering fizzle onUpdate event (total calls: 555)
-[2026-01-05 15:49:03] [fzzl] triggerFizzleEvent called: onUpdate
-[2026-01-05 15:49:04] [browser] Triggering fizzle onUpdate event (total calls: 570)
-[2026-01-05 15:49:04] [fzzl] triggerFizzleEvent called: onUpdate
-[2026-01-05 15:49:05] [browser] Triggering fizzle onUpdate event (total calls: 585)
-[2026-01-05 15:49:05] [fzzl] triggerFizzleEvent called: onUpdate
-[2026-01-05 15:49:06] [browser] Triggering fizzle onUpdate event (total calls: 600)
-[2026-01-05 15:49:06] [fzzl] triggerFizzleEvent called: onUpdate
-[2026-01-05 15:49:07] [browser] Triggering fizzle onUpdate event (total calls: 615)
-[2026-01-05 15:49:07] [fzzl] triggerFizzleEvent called: onUpdate
-[2026-01-05 15:49:07] [browser] Triggering fizzle onUpdate event (total calls: 630)
-[2026-01-05 15:49:08] [fzzl] triggerFizzleEvent called: onUpdate
-[2026-01-05 15:49:08] [browser] Triggering fizzle onUpdate event (total calls: 645)
-[2026-01-05 15:49:08] [fzzl] triggerFizzleEvent called: onUpdate
-[2026-01-05 15:49:09] [browser] Triggering fizzle onUpdate event (total calls: 660)
-[2026-01-05 15:49:09] [fzzl] triggerFizzleEvent called: onUpdate
-[2026-01-05 15:49:10] [browser] Triggering fizzle onUpdate event (total calls: 675)
-[2026-01-05 15:49:10] [fzzl] triggerFizzleEvent called: onUpdate
-[2026-01-05 15:49:11] [browser] Triggering fizzle onUpdate event (total calls: 690)
-[2026-01-05 15:49:11] [fzzl] triggerFizzleEvent called: onUpdate
-[2026-01-05 15:49:11] [browser] Triggering fizzle onUpdate event (total calls: 705)
-[2026-01-05 15:49:12] [fzzl] triggerFizzleEvent called: onUpdate
-[2026-01-05 15:49:12] [browser] Triggering fizzle onUpdate event (total calls: 720)
-[2026-01-05 15:49:12] [fzzl] triggerFizzleEvent called: onUpdate
-[2026-01-05 15:49:13] [browser] Triggering fizzle onUpdate event (total calls: 735)
-[2026-01-05 15:49:13] [fzzl] triggerFizzleEvent called: onUpdate
-[2026-01-05 15:49:14] [browser] Triggering fizzle onUpdate event (total calls: 750)
-[2026-01-05 15:49:14] [fzzl] triggerFizzleEvent called: onUpdate
-[2026-01-05 15:49:15] [browser] Triggering fizzle onUpdate event (total calls: 765)
-[2026-01-05 15:49:15] [fzzl] triggerFizzleEvent called: onUpdate
-[2026-01-05 15:49:16] [browser] Triggering fizzle onUpdate event (total calls: 780)
-[2026-01-05 15:49:16] [fzzl] triggerFizzleEvent called: onUpdate
-[2026-01-05 15:49:16] [browser] Triggering fizzle onUpdate event (total calls: 795)
-[2026-01-05 15:49:16] [fzzl] triggerFizzleEvent called: onUpdate
-[2026-01-05 15:49:17] [browser] Triggering fizzle onUpdate event (total calls: 810)
-[2026-01-05 15:49:17] [fzzl] triggerFizzleEvent called: onUpdate
-[2026-01-05 15:49:18] [browser] Triggering fizzle onUpdate event (total calls: 825)
-[2026-01-05 15:49:18] [fzzl] triggerFizzleEvent called: onUpdate
-[2026-01-05 15:49:19] [browser] Triggering fizzle onUpdate event (total calls: 840)
-[2026-01-05 15:49:19] [fzzl] triggerFizzleEvent called: onUpdate
-[2026-01-05 15:49:20] [browser] Triggering fizzle onUpdate event (total calls: 855)
-[2026-01-05 15:49:20] [fzzl] triggerFizzleEvent called: onUpdate
-[2026-01-05 15:49:20] [browser] Triggering fizzle onUpdate event (total calls: 870)
-[2026-01-05 15:49:20] [fzzl] triggerFizzleEvent called: onUpdate
-[2026-01-05 15:49:21] [browser] Triggering fizzle onUpdate event (total calls: 885)
-[2026-01-05 15:49:21] [fzzl] triggerFizzleEvent called: onUpdate
-[2026-01-05 15:49:22] [browser] Triggering fizzle onUpdate event (total calls: 900)
-[2026-01-05 15:49:22] [fzzl] triggerFizzleEvent called: onUpdate
-[2026-01-05 15:49:23] [browser] Triggering fizzle onUpdate event (total calls: 915)
-[2026-01-05 15:49:23] [fzzl] triggerFizzleEvent called: onUpdate
-[2026-01-05 15:49:24] [browser] Triggering fizzle onUpdate event (total calls: 930)
-[2026-01-05 15:49:24] [fzzl] triggerFizzleEvent called: onUpdate
-[2026-01-05 15:49:24] [browser] Triggering fizzle onUpdate event (total calls: 945)
-[2026-01-05 15:49:24] [fzzl] triggerFizzleEvent called: onUpdate
-[2026-01-05 15:49:25] [browser] Triggering fizzle onUpdate event (total calls: 960)
-[2026-01-05 15:49:25] [fzzl] triggerFizzleEvent called: onUpdate
-[2026-01-05 15:49:26] [browser] Triggering fizzle onUpdate event (total calls: 975)
-[2026-01-05 15:49:26] [fzzl] triggerFizzleEvent called: onUpdate
-[2026-01-05 15:49:27] [browser] Triggering fizzle onUpdate event (total calls: 990)
-[2026-01-05 15:49:27] [fzzl] triggerFizzleEvent called: onUpdate
-[2026-01-05 15:49:28] [browser] Triggering fizzle onUpdate event (total calls: 1005)
-[2026-01-05 15:49:28] [fzzl] triggerFizzleEvent called: onUpdate
-[2026-01-05 15:49:28] [browser] Triggering fizzle onUpdate event (total calls: 1020)
-[2026-01-05 15:49:28] [fzzl] triggerFizzleEvent called: onUpdate
-[2026-01-05 15:49:29] [browser] Triggering fizzle onUpdate event (total calls: 1035)
-[2026-01-05 15:49:29] [fzzl] triggerFizzleEvent called: onUpdate
-[2026-01-05 15:49:30] [browser] Triggering fizzle onUpdate event (total calls: 1050)
-[2026-01-05 15:49:30] [fzzl] triggerFizzleEvent called: onUpdate
-[2026-01-05 15:49:31] [browser] Triggering fizzle onUpdate event (total calls: 1065)
-[2026-01-05 15:49:31] [fzzl] triggerFizzleEvent called: onUpdate
-[2026-01-05 15:49:32] [browser] Triggering fizzle onUpdate event (total calls: 1080)
-[2026-01-05 15:49:32] [fzzl] triggerFizzleEvent called: onUpdate
-[2026-01-05 15:49:32] [browser] Triggering fizzle onUpdate event (total calls: 1095)
-[2026-01-05 15:49:32] [fzzl] triggerFizzleEvent called: onUpdate
-[2026-01-05 15:49:33] [browser] Triggering fizzle onUpdate event (total calls: 1110)
-[2026-01-05 15:49:33] [fzzl] triggerFizzleEvent called: onUpdate
-[2026-01-05 15:49:34] [browser] Triggering fizzle onUpdate event (total calls: 1125)
-[2026-01-05 15:49:34] [fzzl] triggerFizzleEvent called: onUpdate
-[2026-01-05 15:49:35] [browser] Triggering fizzle onUpdate event (total calls: 1140)
-[2026-01-05 15:49:35] [fzzl] triggerFizzleEvent called: onUpdate
-[2026-01-05 15:49:36] [browser] Triggering fizzle onUpdate event (total calls: 1155)
-[2026-01-05 15:49:36] [fzzl] triggerFizzleEvent called: onUpdate
-[2026-01-05 15:49:36] [browser] Triggering fizzle onUpdate event (total calls: 1170)
-[2026-01-05 15:49:36] [fzzl] triggerFizzleEvent called: onUpdate
+[2026-01-10 04:15:49] [fzzl] triggerFizzleEvent called: onUpdate
+[2026-01-10 04:15:50] [browser] Triggering fizzle onUpdate event (total calls: 57195)
+[2026-01-10 04:15:50] [fzzl] triggerFizzleEvent called: onUpdate
+[2026-01-10 04:15:51] [browser] Triggering fizzle onUpdate event (total calls: 57210)
+[2026-01-10 04:15:51] [fzzl] triggerFizzleEvent called: onUpdate
+[2026-01-10 04:15:51] [browser] Triggering fizzle onUpdate event (total calls: 57225)
+[2026-01-10 04:15:51] [fzzl] triggerFizzleEvent called: onUpdate
+[2026-01-10 04:15:52] [browser] Triggering fizzle onUpdate event (total calls: 57240)
+[2026-01-10 04:15:52] [fzzl] triggerFizzleEvent called: onUpdate
+[2026-01-10 04:15:53] [browser] Triggering fizzle onUpdate event (total calls: 57255)
+[2026-01-10 04:15:53] [fzzl] triggerFizzleEvent called: onUpdate
+[2026-01-10 04:15:54] [browser] Triggering fizzle onUpdate event (total calls: 57270)
+[2026-01-10 04:15:54] [fzzl] triggerFizzleEvent called: onUpdate
+[2026-01-10 04:15:55] [browser] Triggering fizzle onUpdate event (total calls: 57285)
+[2026-01-10 04:15:55] [fzzl] triggerFizzleEvent called: onUpdate
+[2026-01-10 04:15:55] [browser] Triggering fizzle onUpdate event (total calls: 57300)
+[2026-01-10 04:15:55] [fzzl] triggerFizzleEvent called: onUpdate
+[2026-01-10 04:15:56] [browser] Triggering fizzle onUpdate event (total calls: 57315)
+[2026-01-10 04:15:56] [fzzl] triggerFizzleEvent called: onUpdate
+[2026-01-10 04:15:57] [browser] Triggering fizzle onUpdate event (total calls: 57330)
+[2026-01-10 04:15:57] [fzzl] triggerFizzleEvent called: onUpdate
+[2026-01-10 04:15:58] [browser] Triggering fizzle onUpdate event (total calls: 57345)
+[2026-01-10 04:15:58] [fzzl] triggerFizzleEvent called: onUpdate
+[2026-01-10 04:15:59] [browser] Triggering fizzle onUpdate event (total calls: 57360)
+[2026-01-10 04:15:59] [fzzl] triggerFizzleEvent called: onUpdate
+[2026-01-10 04:15:59] [browser] Triggering fizzle onUpdate event (total calls: 57375)
+[2026-01-10 04:15:59] [fzzl] triggerFizzleEvent called: onUpdate
+[2026-01-10 04:16:00] [browser] Triggering fizzle onUpdate event (total calls: 57390)
+[2026-01-10 04:16:00] [fzzl] triggerFizzleEvent called: onUpdate
+[2026-01-10 04:16:01] [browser] Triggering fizzle onUpdate event (total calls: 57405)
+[2026-01-10 04:16:01] [fzzl] triggerFizzleEvent called: onUpdate
+[2026-01-10 04:16:02] [browser] Triggering fizzle onUpdate event (total calls: 57420)
+[2026-01-10 04:16:02] [fzzl] triggerFizzleEvent called: onUpdate
+[2026-01-10 04:16:03] [browser] Triggering fizzle onUpdate event (total calls: 57435)
+[2026-01-10 04:16:03] [fzzl] triggerFizzleEvent called: onUpdate
+[2026-01-10 04:16:03] [browser] Triggering fizzle onUpdate event (total calls: 57450)
+[2026-01-10 04:16:03] [fzzl] triggerFizzleEvent called: onUpdate
+[2026-01-10 04:16:04] [browser] Triggering fizzle onUpdate event (total calls: 57465)
+[2026-01-10 04:16:04] [fzzl] triggerFizzleEvent called: onUpdate
+[2026-01-10 04:16:05] [browser] Triggering fizzle onUpdate event (total calls: 57480)
+[2026-01-10 04:16:05] [fzzl] triggerFizzleEvent called: onUpdate
+[2026-01-10 04:16:06] [browser] Triggering fizzle onUpdate event (total calls: 57495)
+[2026-01-10 04:16:06] [fzzl] triggerFizzleEvent called: onUpdate
+[2026-01-10 04:16:07] [browser] Triggering fizzle onUpdate event (total calls: 57510)
+[2026-01-10 04:16:07] [fzzl] triggerFizzleEvent called: onUpdate
+[2026-01-10 04:16:07] [browser] Triggering fizzle onUpdate event (total calls: 57525)
+[2026-01-10 04:16:07] [fzzl] triggerFizzleEvent called: onUpdate
+[2026-01-10 04:16:08] [browser] Triggering fizzle onUpdate event (total calls: 57540)
+[2026-01-10 04:16:08] [fzzl] triggerFizzleEvent called: onUpdate
+[2026-01-10 04:16:09] [browser] Triggering fizzle onUpdate event (total calls: 57555)
+[2026-01-10 04:16:09] [fzzl] triggerFizzleEvent called: onUpdate
+[2026-01-10 04:16:10] [browser] Triggering fizzle onUpdate event (total calls: 57570)
+[2026-01-10 04:16:10] [fzzl] triggerFizzleEvent called: onUpdate
+[2026-01-10 04:16:11] [browser] Triggering fizzle onUpdate event (total calls: 57585)
+[2026-01-10 04:16:11] [fzzl] triggerFizzleEvent called: onUpdate
+[2026-01-10 04:16:11] [browser] Triggering fizzle onUpdate event (total calls: 57600)
+[2026-01-10 04:16:11] [fzzl] triggerFizzleEvent called: onUpdate
+[2026-01-10 04:16:12] [browser] Triggering fizzle onUpdate event (total calls: 57615)
+[2026-01-10 04:16:12] [fzzl] triggerFizzleEvent called: onUpdate
+[2026-01-10 04:16:13] [browser] Triggering fizzle onUpdate event (total calls: 57630)
+[2026-01-10 04:16:13] [fzzl] triggerFizzleEvent called: onUpdate
+[2026-01-10 04:16:14] [browser] Triggering fizzle onUpdate event (total calls: 57645)
+[2026-01-10 04:16:14] [fzzl] triggerFizzleEvent called: onUpdate
+[2026-01-10 04:16:15] [browser] Triggering fizzle onUpdate event (total calls: 57660)
+[2026-01-10 04:16:15] [fzzl] triggerFizzleEvent called: onUpdate
+[2026-01-10 04:16:16] [browser] Triggering fizzle onUpdate event (total calls: 57675)
+[2026-01-10 04:16:16] [fzzl] triggerFizzleEvent called: onUpdate
+[2026-01-10 04:16:16] [browser] Triggering fizzle onUpdate event (total calls: 57690)
+[2026-01-10 04:16:16] [fzzl] triggerFizzleEvent called: onUpdate
+[2026-01-10 04:16:17] [browser] Triggering fizzle onUpdate event (total calls: 57705)
+[2026-01-10 04:16:17] [fzzl] triggerFizzleEvent called: onUpdate
+[2026-01-10 04:16:18] [browser] Triggering fizzle onUpdate event (total calls: 57720)
+[2026-01-10 04:16:18] [fzzl] triggerFizzleEvent called: onUpdate
+[2026-01-10 04:16:19] [browser] Triggering fizzle onUpdate event (total calls: 57735)
+[2026-01-10 04:16:19] [fzzl] triggerFizzleEvent called: onUpdate
+[2026-01-10 04:16:20] [browser] Triggering fizzle onUpdate event (total calls: 57750)
+[2026-01-10 04:16:20] [fzzl] triggerFizzleEvent called: onUpdate
+[2026-01-10 04:16:21] [browser] Triggering fizzle onUpdate event (total calls: 57765)
+[2026-01-10 04:16:21] [fzzl] triggerFizzleEvent called: onUpdate
+[2026-01-10 04:16:21] [browser] Triggering fizzle onUpdate event (total calls: 57780)
+[2026-01-10 04:16:22] [fzzl] triggerFizzleEvent called: onUpdate
+[2026-01-10 04:16:22] [browser] Triggering fizzle onUpdate event (total calls: 57795)
+[2026-01-10 04:16:22] [fzzl] triggerFizzleEvent called: onUpdate
+[2026-01-10 04:16:23] [browser] Triggering fizzle onUpdate event (total calls: 57810)
+[2026-01-10 04:16:23] [fzzl] triggerFizzleEvent called: onUpdate
+[2026-01-10 04:16:24] [browser] Triggering fizzle onUpdate event (total calls: 57825)
+[2026-01-10 04:16:24] [fzzl] triggerFizzleEvent called: onUpdate
+[2026-01-10 04:16:25] [browser] Triggering fizzle onUpdate event (total calls: 57840)
+[2026-01-10 04:16:25] [fzzl] triggerFizzleEvent called: onUpdate
+[2026-01-10 04:16:26] [browser] Triggering fizzle onUpdate event (total calls: 57855)
+[2026-01-10 04:16:26] [fzzl] triggerFizzleEvent called: onUpdate
+[2026-01-10 04:16:27] [browser] Triggering fizzle onUpdate event (total calls: 57870)
+[2026-01-10 04:16:27] [fzzl] triggerFizzleEvent called: onUpdate
+[2026-01-10 04:16:27] [browser] Triggering fizzle onUpdate event (total calls: 57885)
+[2026-01-10 04:16:27] [fzzl] triggerFizzleEvent called: onUpdate
+[2026-01-10 04:16:28] [browser] Triggering fizzle onUpdate event (total calls: 57900)
+[2026-01-10 04:16:28] [fzzl] triggerFizzleEvent called: onUpdate
+[2026-01-10 04:16:29] [browser] Triggering fizzle onUpdate event (total calls: 57915)
+[2026-01-10 04:16:29] [fzzl] triggerFizzleEvent called: onUpdate
+[2026-01-10 04:16:30] [browser] Triggering fizzle onUpdate event (total calls: 57930)
+[2026-01-10 04:16:30] [fzzl] triggerFizzleEvent called: onUpdate
+[2026-01-10 04:16:31] [browser] Triggering fizzle onUpdate event (total calls: 57945)
+[2026-01-10 04:16:31] [fzzl] triggerFizzleEvent called: onUpdate
+[2026-01-10 04:16:32] [browser] Triggering fizzle onUpdate event (total calls: 57960)
+[2026-01-10 04:16:32] [fzzl] triggerFizzleEvent called: onUpdate
+[2026-01-10 04:16:32] [browser] Triggering fizzle onUpdate event (total calls: 57975)
+[2026-01-10 04:16:33] [fzzl] triggerFizzleEvent called: onUpdate
+[2026-01-10 04:16:33] [browser] Triggering fizzle onUpdate event (total calls: 57990)
+[2026-01-10 04:16:33] [fzzl] triggerFizzleEvent called: onUpdate
+[2026-01-10 04:16:34] [browser] Triggering fizzle onUpdate event (total calls: 58005)
+[2026-01-10 04:16:34] [fzzl] triggerFizzleEvent called: onUpdate
+[2026-01-10 04:16:35] [browser] Triggering fizzle onUpdate event (total calls: 58020)
+[2026-01-10 04:16:35] [fzzl] triggerFizzleEvent called: onUpdate
+[2026-01-10 04:16:36] [browser] Triggering fizzle onUpdate event (total calls: 58035)
+[2026-01-10 04:16:36] [fzzl] triggerFizzleEvent called: onUpdate
+[2026-01-10 04:16:37] [browser] Triggering fizzle onUpdate event (total calls: 58050)
+[2026-01-10 04:16:37] [fzzl] triggerFizzleEvent called: onUpdate
+[2026-01-10 04:16:37] [browser] Triggering fizzle onUpdate event (total calls: 58065)
+[2026-01-10 04:16:37] [fzzl] triggerFizzleEvent called: onUpdate
+[2026-01-10 04:16:38] [browser] Triggering fizzle onUpdate event (total calls: 58080)
+[2026-01-10 04:16:38] [fzzl] triggerFizzleEvent called: onUpdate
+[2026-01-10 04:16:39] [browser] Triggering fizzle onUpdate event (total calls: 58095)
+[2026-01-10 04:16:39] [fzzl] triggerFizzleEvent called: onUpdate
+[2026-01-10 04:16:40] [browser] Triggering fizzle onUpdate event (total calls: 58110)
+[2026-01-10 04:16:40] [fzzl] triggerFizzleEvent called: onUpdate
+[2026-01-10 04:16:41] [browser] Triggering fizzle onUpdate event (total calls: 58125)
+[2026-01-10 04:16:41] [fzzl] triggerFizzleEvent called: onUpdate
+[2026-01-10 04:16:41] [browser] Triggering fizzle onUpdate event (total calls: 58140)
+[2026-01-10 04:16:41] [fzzl] triggerFizzleEvent called: onUpdate
+[2026-01-10 04:16:42] [browser] Triggering fizzle onUpdate event (total calls: 58155)
+[2026-01-10 04:16:42] [fzzl] triggerFizzleEvent called: onUpdate
+[2026-01-10 04:16:43] [browser] Triggering fizzle onUpdate event (total calls: 58170)
+[2026-01-10 04:16:43] [fzzl] triggerFizzleEvent called: onUpdate
+[2026-01-10 04:16:44] [browser] Triggering fizzle onUpdate event (total calls: 58185)
+[2026-01-10 04:16:44] [fzzl] triggerFizzleEvent called: onUpdate
+[2026-01-10 04:16:45] [browser] Triggering fizzle onUpdate event (total calls: 58200)
+[2026-01-10 04:16:45] [fzzl] triggerFizzleEvent called: onUpdate
+[2026-01-10 04:16:45] [browser] Triggering fizzle onUpdate event (total calls: 58215)
+[2026-01-10 04:16:45] [fzzl] triggerFizzleEvent called: onUpdate
+[2026-01-10 04:16:46] [browser] Triggering fizzle onUpdate event (total calls: 58230)
+[2026-01-10 04:16:46] [fzzl] triggerFizzleEvent called: onUpdate
+[2026-01-10 04:16:47] [browser] Triggering fizzle onUpdate event (total calls: 58245)
+[2026-01-10 04:16:47] [fzzl] triggerFizzleEvent called: onUpdate
+[2026-01-10 04:16:48] [browser] Triggering fizzle onUpdate event (total calls: 58260)
+[2026-01-10 04:16:48] [fzzl] triggerFizzleEvent called: onUpdate
+[2026-01-10 04:16:49] [browser] Triggering fizzle onUpdate event (total calls: 58275)
+[2026-01-10 04:16:49] [fzzl] triggerFizzleEvent called: onUpdate
+[2026-01-10 04:16:49] [browser] Triggering fizzle onUpdate event (total calls: 58290)
+[2026-01-10 04:16:49] [fzzl] triggerFizzleEvent called: onUpdate
+[2026-01-10 04:16:50] [browser] Triggering fizzle onUpdate event (total calls: 58305)
+[2026-01-10 04:16:50] [fzzl] triggerFizzleEvent called: onUpdate
+[2026-01-10 04:16:51] [browser] Triggering fizzle onUpdate event (total calls: 58320)
+[2026-01-10 04:16:51] [fzzl] triggerFizzleEvent called: onUpdate
+[2026-01-10 04:16:52] [browser] Triggering fizzle onUpdate event (total calls: 58335)
+[2026-01-10 04:16:52] [fzzl] triggerFizzleEvent called: onUpdate
+[2026-01-10 04:16:53] [browser] Triggering fizzle onUpdate event (total calls: 58350)
+[2026-01-10 04:16:53] [fzzl] triggerFizzleEvent called: onUpdate
+[2026-01-10 04:16:54] [browser] Triggering fizzle onUpdate event (total calls: 58365)
+[2026-01-10 04:16:54] [fzzl] triggerFizzleEvent called: onUpdate
+[2026-01-10 04:16:54] [browser] Triggering fizzle onUpdate event (total calls: 58380)
+[2026-01-10 04:16:54] [fzzl] triggerFizzleEvent called: onUpdate
+[2026-01-10 04:16:55] [browser] Triggering fizzle onUpdate event (total calls: 58395)
+[2026-01-10 04:16:55] [fzzl] triggerFizzleEvent called: onUpdate
+[2026-01-10 04:16:56] [browser] Triggering fizzle onUpdate event (total calls: 58410)
+[2026-01-10 04:16:56] [fzzl] triggerFizzleEvent called: onUpdate
+[2026-01-10 04:16:57] [browser] Triggering fizzle onUpdate event (total calls: 58425)
+[2026-01-10 04:16:57] [fzzl] triggerFizzleEvent called: onUpdate
+[2026-01-10 04:16:58] [browser] Triggering fizzle onUpdate event (total calls: 58440)
+[2026-01-10 04:16:58] [fzzl] triggerFizzleEvent called: onUpdate
+[2026-01-10 04:16:58] [browser] Triggering fizzle onUpdate event (total calls: 58455)
+[2026-01-10 04:16:58] [fzzl] triggerFizzleEvent called: onUpdate
+[2026-01-10 04:16:59] [browser] Triggering fizzle onUpdate event (total calls: 58470)
+[2026-01-10 04:16:59] [fzzl] triggerFizzleEvent called: onUpdate
+[2026-01-10 04:17:00] [browser] Triggering fizzle onUpdate event (total calls: 58485)
+[2026-01-10 04:17:00] [fzzl] triggerFizzleEvent called: onUpdate
+[2026-01-10 04:17:01] [browser] Triggering fizzle onUpdate event (total calls: 58500)
+[2026-01-10 04:17:01] [fzzl] triggerFizzleEvent called: onUpdate
+[2026-01-10 04:17:02] [browser] Triggering fizzle onUpdate event (total calls: 58515)
+[2026-01-10 04:17:02] [fzzl] triggerFizzleEvent called: onUpdate
+[2026-01-10 04:17:02] [browser] Triggering fizzle onUpdate event (total calls: 58530)
+[2026-01-10 04:17:02] [fzzl] triggerFizzleEvent called: onUpdate
+[2026-01-10 04:17:03] [browser] Triggering fizzle onUpdate event (total calls: 58545)
+[2026-01-10 04:17:03] [fzzl] triggerFizzleEvent called: onUpdate
+[2026-01-10 04:17:04] [browser] Triggering fizzle onUpdate event (total calls: 58560)
+[2026-01-10 04:17:04] [fzzl] triggerFizzleEvent called: onUpdate
+[2026-01-10 04:17:05] [browser] Triggering fizzle onUpdate event (total calls: 58575)
+[2026-01-10 04:17:05] [fzzl] triggerFizzleEvent called: onUpdate
+[2026-01-10 04:17:06] [browser] Triggering fizzle onUpdate event (total calls: 58590)
+[2026-01-10 04:17:06] [fzzl] triggerFizzleEvent called: onUpdate
+[2026-01-10 04:17:06] [browser] Triggering fizzle onUpdate event (total calls: 58605)
+[2026-01-10 04:17:06] [fzzl] triggerFizzleEvent called: onUpdate
+[2026-01-10 04:17:07] [browser] Triggering fizzle onUpdate event (total calls: 58620)
+[2026-01-10 04:17:07] [fzzl] triggerFizzleEvent called: onUpdate
+[2026-01-10 04:17:08] [browser] Triggering fizzle onUpdate event (total calls: 58635)
+[2026-01-10 04:17:08] [fzzl] triggerFizzleEvent called: onUpdate
+[2026-01-10 04:17:09] [browser] Triggering fizzle onUpdate event (total calls: 58650)
+[2026-01-10 04:17:09] [fzzl] triggerFizzleEvent called: onUpdate
+[2026-01-10 04:17:10] [browser] Triggering fizzle onUpdate event (total calls: 58665)
+[2026-01-10 04:17:10] [fzzl] triggerFizzleEvent called: onUpdate
+[2026-01-10 04:17:11] [browser] Triggering fizzle onUpdate event (total calls: 58680)
+[2026-01-10 04:17:11] [fzzl] triggerFizzleEvent called: onUpdate
