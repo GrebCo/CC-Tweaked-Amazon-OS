@@ -74,8 +74,19 @@ end
 function requestNewDNS()
     ensureRednet()
 
-    local serverID = rednet.lookup(DNS_PROTOCOL)
-    if not serverID then
+    local serverID = rednet.lookup(DNS_PROTOCOL) 
+    
+    
+    --Handle cases of multiple dns servers. Pick the first one in the list (lowest ID) TODO Test
+    if type(serverID) == "table" then
+        if #serverID > 0 then
+            serverID = serverID[1]
+            log("Multiple DNS servers found. Using first server ID: " .. serverID)
+        else
+            log("DNS lookup returned empty table.")
+            return
+        end
+    elseif not serverID then
         log("DNS server not found.")
         return
     end

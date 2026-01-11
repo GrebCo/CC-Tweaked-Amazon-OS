@@ -365,7 +365,7 @@ local function assignFizzleFunctionsToEventsFromCache()
     return true
 end
 
-
+-- Ref events module trigger event will be done as a couroutine in the future to prevent blocking
 local function triggerFizzleEvent(eventName, params)
     log("[fzzl] triggerFizzleEvent called: " .. eventName)
     events.triggerEvent(eventName, params or {})
