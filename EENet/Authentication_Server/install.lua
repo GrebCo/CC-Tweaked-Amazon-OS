@@ -1,0 +1,22 @@
+print("Installing OTP Authentication Server...")
+
+print("Deleting old files...")
+
+shell.run("delete authServer.lua")
+shell.run("delete startup.lua")
+
+print("Downloading new files...")
+shell.run("wget https://raw.githubusercontent.com/GrebCo/CC-Tweaked-Amazon-OS/refs/heads/main/EENet/Authentication_Server/authServer.lua authServer.lua")
+shell.run("wget https://raw.githubusercontent.com/GrebCo/CC-Tweaked-Amazon-OS/refs/heads/main/EENet/Authentication_Server/startup.lua startup.lua")
+print("Downloading complete.")
+print("")
+print("==============================================")
+print("Installation complete!")
+print("==============================================")
+print("")
+print("IMPORTANT: Make sure you have a ChatBox")
+print("peripheral attached to this computer!")
+print("")
+print("Restarting server in 5 seconds...")
+sleep(5)
+shell.run("reboot")
